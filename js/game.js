@@ -1,7 +1,7 @@
 /* =========================================================
  * 甩锅侠 · 主逻辑（v2：所有人都在甩锅）
  * 核心循环：领导远程丢锅 / 会议室散会喷锅 / 随机事件 → 被砸中就粘在身后，越背越慢
- *          → 贴近任何人自动把尾巴上的锅甩出去（同事也会这样甩给你）
+ *          → 按「甩」把尾巴上的锅扔出去：砸中谁就是谁的，甩空立刻弹回自己身上；锅飞来时按「甩」能反甩
  *          → 18:00 按身上剩余锅数排名，进前三过关
  * 玩家和机器人同事是同一种「打工人」，唯一区别是方向由手指给还是由 AI 给
  * ========================================================= */
@@ -9,7 +9,7 @@
   'use strict';
 
   const OFFICE = window.OFFICE, LEVELS = window.LEVELS;
-  const st = E.createStage(), ctx = st.ctx, inp = E.createInput(st.c);
+  const st = E.createStage(), ctx = st.ctx, inp = E.createInput(st.c, document.getElementById('btnThrow'));
 
   const SPRITES = ['player_normal', 'player_panic', 'player_crushed', 'wok', 'npc_intern', 'npc_pm', 'npc_tester',
     'npc_veteran', 'npc_designer', 'boss', 'director', 'desk', 'meeting_table', 'boss_desk', 'plant', 'printer', 'cooler',
@@ -20,12 +20,21 @@
   const SLOW_PER_POT = 0.032;  // 每口锅减速比例
   const MIN_SPEED_RATE = 0.45; // 最低速度比例
   const HEAD_R = 18;           // 蛇头碰撞半径
-  const THROW_R = 58;          // 甩锅距离（蛇头之间）
-  const THROW_CD = 0.4;        // 两次甩锅最小间隔
+  const THROW_SPEED = 620;     // 甩出去的锅飞多快（要快，慢了没意义）
+  const THROW_TURN = 2.5;      // 甩出去的锅轻微追踪目标的转向速度
+  const THROW_RANGE = 340;     // 甩出去的锅最远飞多远，飞满还没砸中人就算甩空
+  const AIM_RANGE = 280;       // 自动瞄准：前方多远内找人
+  const AIM_CONE = 0.7;        // 自动瞄准：前进方向左右各多少弧度（约 40°）
+  const THROW_CD = 0.6;        // 甩一次后多久才能再甩
+  const PARRY_WIN = 0.22;      // 反甩判定窗口：锅离砸中你还剩几秒内按「甩」才算
+  const PARRY_DECAY = 0.75;    // 每反甩一次，下一次判定窗口缩小到几倍（来回几次必有人接住）
+  const PARRY_SPEEDUP = 1.12;  // 每反甩一次锅加速
+  const PARRY_PTS = 15;        // 反甩成功得分
+  const WHIFF_LOCK = 0.4;      // 按空（没锅可甩也没东西可弹）后多久不能反甩，防止狂按
   const COMBO_WINDOW = 2.5;    // 连甩判定窗口（秒）
-  const RECV_SHIELD = 1.0;     // 刚接锅的人多久内不能再被甩（防止一口气全甩给同一个人）
-  const RECV_STUN = 0.6;       // 接锅后愣多久才能甩出去
-  const NO_RETURN = 3;         // 接锅后多久内不能甩回给刚甩给你的人（防乒乓）
+  const RECV_SHIELD = 0.8;     // 刚接锅的人多久内甩不中（锅会弹开，算甩空）
+  const RECV_STUN = 0.4;       // 接锅后愣多久才能甩出去
+  const NO_RETURN = 1.5;       // 同事接锅后多久内不会主动瞄准刚甩给他的人（玩家不受限）
   const DIGEST_TIME = 15;      // 每人每隔几秒自己消化掉一口锅（所有人相同）
   const MAX_POTS = 20;         // 背满即被压垮
   const POT_SPEED = 125;       // 飞行锅速度
@@ -43,14 +52,15 @@
   const PASS_RANK = 3;         // 进前几名过关
 
   // 同事人格：speed 速度倍率；turn 转向；react 思考间隔；aggr 甩锅积极度；seekR 找人半径；
-  // seekMin 身上几口锅才开始找人甩；dodge 躲锅能力；caution 躲人/躲领导；mult 甩中他的得分倍率
+  // seekMin 身上几口锅才开始找人甩；dodge 躲锅能力；caution 躲人/躲领导；mult 甩中他的得分倍率；
+  // parry 锅飞来时反甩成功的概率；throwR 目标进入多近才出手
   const PERSONAS = {
-    me:       { name: '你', sprite: 'player_normal', speed: 1, turn: 5.2, react: 0.2, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.9, caution: 0.7, mult: 1 },
-    pm:       { name: '产品经理', sprite: 'npc_pm', speed: 0.93, turn: 4.6, react: 0.22, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.8, caution: 0.6, mult: 1 },
-    tester:   { name: '测试小王', sprite: 'npc_tester', speed: 0.88, turn: 4.4, react: 0.24, aggr: 0.85, seekR: 440, seekMin: 1, dodge: 1, caution: 0.8, mult: 1 },
-    intern:   { name: '实习生', sprite: 'npc_intern', speed: 0.85, turn: 4, react: 0.36, aggr: 0.4, seekR: 260, seekMin: 3, dodge: 0.45, caution: 1, mult: 1 },
-    veteran:  { name: '老油条', sprite: 'npc_veteran', speed: 0.95, turn: 4.8, react: 0.2, aggr: 0.65, seekR: 320, seekMin: 2, dodge: 1.3, caution: 1.3, mult: 3, tea: true },
-    designer: { name: '设计师', sprite: 'npc_designer', speed: 0.9, turn: 4.5, react: 0.26, aggr: 0.75, seekR: 400, seekMin: 1, dodge: 0.9, caution: 0.9, mult: 1 },
+    me:       { name: '你', sprite: 'player_normal', speed: 1, turn: 5.2, react: 0.2, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.9, caution: 0.7, mult: 1, parry: 0.5, throwR: 260 },
+    pm:       { name: '产品经理', sprite: 'npc_pm', speed: 0.93, turn: 4.6, react: 0.22, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.8, caution: 0.6, mult: 1, parry: 0.35, throwR: 240 },
+    tester:   { name: '测试小王', sprite: 'npc_tester', speed: 0.88, turn: 4.4, react: 0.24, aggr: 0.85, seekR: 440, seekMin: 1, dodge: 1, caution: 0.8, mult: 1, parry: 0.4, throwR: 220 },
+    intern:   { name: '实习生', sprite: 'npc_intern', speed: 0.85, turn: 4, react: 0.36, aggr: 0.4, seekR: 260, seekMin: 3, dodge: 0.45, caution: 1, mult: 1, parry: 0.1, throwR: 180 },
+    veteran:  { name: '老油条', sprite: 'npc_veteran', speed: 0.95, turn: 4.8, react: 0.2, aggr: 0.65, seekR: 320, seekMin: 2, dodge: 1.3, caution: 1.3, mult: 3, parry: 0.65, throwR: 220, tea: true },
+    designer: { name: '设计师', sprite: 'npc_designer', speed: 0.9, turn: 4.5, react: 0.26, aggr: 0.75, seekR: 400, seekMin: 1, dodge: 0.9, caution: 0.9, mult: 1, parry: 0.3, throwR: 230 },
   };
 
   // 领导类型：count 一次丢几口（分别瞄准锅最少的几个人）；range 视野；everyMul 丢锅间隔倍率
@@ -116,7 +126,8 @@
       id, key, p, name: p.name, isPlayer, sn,
       want: sn.angle, thinkT: E.rand(0, 0.3), target: null,   // AI：想去的方向、思考倒计时、想甩锅的对象
       score: 0, thrown: 0, combo: 0, comboT: 0, maxCombo: 0, victims: {},
-      cool: 0, stun: 0, shield: 0, lock: {},                  // lock[对方 id] = 到这个时间前不能把锅甩回给他
+      cool: 0, stun: 0, shield: 0, lock: {},                  // lock[对方 id] = 到这个时间前同事不会主动瞄准他
+      parryLock: 0, launched: 0, misses: 0, parries: 0,        // 按空惩罚、出手次数、甩空次数、反甩次数
       digestT: DIGEST_TIME, cry: 0, teaCd: E.rand(8, 12), teaT: 0, angry: 0,
       crushed: false, crushedAt: 0,
       stuckT: 0, lastX: x, lastY: y, panicT: 0,                // 卡墙检测
@@ -138,7 +149,7 @@
     return {
       t: 0, player, bots, agents: [player, ...bots],
       leaders: L.leaders.map(makeLeader),
-      flying: [], arcs: [], hot: null, tea: 0,
+      flying: [], throws: [], arcs: [], hot: null, tea: 0,
       pace: null, paceIdx: -1, schedule: buildSchedule(), hintIdx: 0,
       firstThrow: true, revived: false, rescued: false, over: null, lastTick: 0, spawned: 0, leaderHits: 0, hotBooms: 0,
     };
@@ -239,34 +250,167 @@
     }
   }
 
-  /* ---------------- 甩锅：所有人同一套规则 ---------------- */
-  // a 现在能不能把锅甩给 b
+  /* ---------------- 甩锅：按键把锅扔出去（所有人同一套规则） ---------------- */
+  // 同事会不会主动把锅甩给 b（护盾中、刚甩给自己的人不考虑）
   function canThrowTo(a, b) {
     return a !== b && !b.crushed && b.shield <= 0 && !((a.lock[b.id] || 0) > S.t);
   }
-  // 每帧：所有人检查身边有没有能甩的人（玩家先结算，机器人顺序随机）
-  function resolveThrows() {
-    const order = [S.player, ...E.shuffle(S.bots)];
-    for (const a of order) {
-      if (a.crushed || a.cool > 0 || a.stun > 0 || !potsOf(a)) continue;
-      let best = null, bd = THROW_R;
-      for (const b of S.agents) {
-        if (!canThrowTo(a, b)) continue;
-        const d = headDist(a, b);
-        if (d < bd) { bd = d; best = b; }
-      }
-      if (best) doThrow(a, best);
+  // a 手里有没有能甩的东西：没在飞的 P0，或者尾巴上的锅
+  function holdsHot(a) { return !!(S.hot && S.hot.holder === a && !S.hot.inFlight); }
+  function canFire(a) { return !a.crushed && a.cool <= 0 && a.stun <= 0 && (holdsHot(a) || potsOf(a) > 0); }
+  // 自动瞄准：前进方向左右 AIM_CONE、AIM_RANGE 以内，挑「近 + 正前方」的人；没人就返回 null（直线扔出去）
+  function pickAim(a) {
+    let best = null, bs = Infinity;
+    for (const b of S.agents) {
+      if (b === a || b.crushed || b.shield > 0) continue;
+      const d = headDist(a, b);
+      if (d > AIM_RANGE) continue;
+      const off = Math.abs(E.angDiff(a.sn.angle, Math.atan2(b.sn.y - a.sn.y, b.sn.x - a.sn.x)));
+      if (off > AIM_CONE) continue;
+      const score = d * (1 + off * 1.5);
+      if (score < bs) { bs = score; best = b; }
+    }
+    return best;
+  }
+  // 从 a 朝 b 扔锅的角度：按锅的飞行时间预判 b 的走位
+  function leadAngle(a, b) {
+    const tt = headDist(a, b) / THROW_SPEED;
+    const x = b.sn.x + Math.cos(b.sn.angle) * b.sn.speed * tt, y = b.sn.y + Math.sin(b.sn.angle) * b.sn.speed * tt;
+    return Math.atan2(y - a.sn.y, x - a.sn.x);
+  }
+  // 甩出去：P0 优先，否则扔尾巴最后一口锅
+  function fireThrow(a) {
+    const hot = holdsHot(a);
+    if (!hot && !potsOf(a)) return false;
+    const b = pickAim(a);
+    const ang = b ? leadAngle(a, b) : a.sn.angle;
+    const label = hot ? 'P0' : a.sn.segs.pop();
+    if (hot) S.hot.inFlight = true;
+    S.throws.push({
+      owner: a, target: b, x: a.sn.x + Math.cos(ang) * 12, y: a.sn.y + Math.sin(ang) * 12, a: ang,
+      speed: THROW_SPEED, label, hot, dist: 0, range: THROW_RANGE, bounces: 0, spin: 0, rolled: new Set(),
+    });
+    a.cool = THROW_CD;
+    a.launched++;
+    if (a.isPlayer) E.sfx('whoosh');
+    return true;
+  }
+  // 锅 f 离砸中 b 还有几秒；不是朝 b 飞的返回 Infinity
+  function incomingTTI(f, b) {
+    const dx = b.sn.x - f.x, dy = b.sn.y - f.y, d = Math.hypot(dx, dy);
+    if (d < 1) return 0;
+    const dot = (dx * Math.cos(f.a) + dy * Math.sin(f.a)) / d;
+    if (dot < 0.6 && f.target !== b) return Infinity;
+    return Math.max(0, d - HEAD_R - 16) / f.speed;
+  }
+  // 当前反甩窗口：每来回一次就缩小
+  function parryWin(f) { return PARRY_WIN * Math.pow(PARRY_DECAY, f.bounces); }
+  // 玩家按下「甩」：锅正飞向自己且在窗口内 → 反甩；否则能甩就甩；都不行算按空
+  function pressFire(a) {
+    if (a.crushed) return;
+    let best = null, bt = Infinity;
+    for (const f of S.throws) {
+      if (f.owner === a || f.dead) continue;
+      const t = incomingTTI(f, a);
+      if (t <= parryWin(f) && t < bt) { bt = t; best = f; }
+    }
+    if (best && a.parryLock <= 0) { parry(a, best); return; }
+    if (canFire(a) && fireThrow(a)) return;
+    a.parryLock = WHIFF_LOCK;
+  }
+  // b 把飞来的锅 f 原路弹回给扔锅的人：加速、窗口缩小
+  function parry(b, f) {
+    const back = f.owner;
+    f.owner = b;
+    f.target = back.crushed ? null : back;
+    f.bounces++;
+    f.speed *= PARRY_SPEEDUP;
+    f.dist = 0;
+    f.range = f.target ? Math.max(THROW_RANGE, headDist(b, back) + 80) : THROW_RANGE;
+    f.a = f.target ? Math.atan2(back.sn.y - f.y, back.sn.x - f.x) : f.a + Math.PI;
+    f.rolled = new Set();
+    b.score += PARRY_PTS;
+    b.parries++;
+    if (b.isPlayer) {
+      floats.add(f.bounces >= 2 ? `再弹回去！+${PARRY_PTS}` : `反甩！+${PARRY_PTS}`, b.sn.x, b.sn.y - 46, '#2F9E6B');
+      E.sfx('parry');
+      shake = 4;
+    } else if (back.isPlayer) {
+      floats.add(`${b.name}：这锅不是我的`, b.sn.x, b.sn.y - 40, '#E8504A');
+      E.sfx('parry');
+    } else floats.add('弹!', b.sn.x, b.sn.y - 40, '#5E6A84');
+  }
+  // 甩空：锅立刻弹回扔锅的人身上（P0 回到他手里）
+  function missThrow(f, why) {
+    f.dead = true;
+    const a = f.owner;
+    a.combo = 0;
+    if (f.hot) {
+      if (S.hot) { S.hot.holder = a; S.hot.inFlight = false; }
+    } else {
+      if (a.crushed) return;
+      a.sn.segs.push(f.label);
+      S.arcs.push({ x0: f.x, y0: f.y, to: () => tailPos(a), t: 0, dur: 0.25, label: f.label });
+    }
+    a.misses++;
+    if (a.isPlayer) {
+      floats.add(why === 'shield' ? '他刚接锅，弹开了' : '甩空了！锅弹回来', a.sn.x, a.sn.y - 40, '#E8504A');
+      E.sfx('miss');
     }
   }
-  // a 把尾巴上的一口锅甩给 b
-  function doThrow(a, b) {
-    const from = tailPos(a);
-    const label = a.sn.segs.pop();
-    b.sn.segs.push(label);
-    S.arcs.push({ x0: from.x, y0: from.y, to: () => ({ x: b.sn.x, y: b.sn.y }), t: 0, dur: 0.35, label });
+  // 砸中墙（摆设可以飞过去）
+  function inWall(x, y) {
+    if (x < 0 || y < 0 || x > OFFICE.world.w || y > OFFICE.world.h) return true;
+    for (const w of OFFICE.walls) if (x > w.x && x < w.x + w.w && y > w.y && y < w.y + w.h) return true;
+    return false;
+  }
+  // 每帧：甩出去的锅飞行 → 同事判断要不要反甩 → 砸中路上第一个人 / 飞满射程或撞墙算甩空
+  function updateThrows(dt) {
+    for (const f of S.throws) {
+      if (f.dead) continue;
+      if (f.target && !f.target.crushed) {
+        const want = Math.atan2(f.target.sn.y - f.y, f.target.sn.x - f.x);
+        f.a += E.clamp(E.angDiff(f.a, want), -THROW_TURN * dt, THROW_TURN * dt);
+      }
+      const step = f.speed * dt;
+      f.x += Math.cos(f.a) * step;
+      f.y += Math.sin(f.a) * step;
+      f.dist += step;
+      f.spin += dt * 16;
 
-    // 连甩：窗口内连续甩出，倍率递增（最高 ×3）
-    a.cool = THROW_CD;
+      // 同事（以及 ?auto 时的玩家）：锅进入窗口时掷一次骰子决定接不接得住
+      for (const b of S.agents) {
+        if (b === f.owner || b.crushed || (b.isPlayer && !auto) || f.rolled.has(b.id)) continue;
+        if (incomingTTI(f, b) > parryWin(f)) continue;
+        f.rolled.add(b.id);
+        if (b.parryLock <= 0 && Math.random() < b.p.parry * Math.pow(0.8, f.bounces)) { parry(b, f); break; }
+      }
+
+      let victim = null;
+      for (const b of S.agents) {
+        if (b === f.owner || b.crushed) continue;
+        if (E.dist(f.x, f.y, b.sn.x, b.sn.y) < HEAD_R + 16) { victim = b; break; }
+      }
+      if (victim) {
+        if (victim.shield > 0) missThrow(f, 'shield');
+        else { f.dead = true; landThrow(f, victim); }
+      } else if (f.dist >= f.range || inWall(f.x, f.y)) missThrow(f);
+    }
+    S.throws = S.throws.filter((f) => !f.dead);
+  }
+  // 锅 f 砸中 b：归 b；扔锅的人得分、连甩
+  function landThrow(f, b) {
+    const a = f.owner;
+    if (f.hot) {
+      a.score += 20;
+      if (a.isPlayer) { floats.add(`P0 甩给${b.name} +20`, b.sn.x, b.sn.y - 44, '#2F9E6B'); E.sfx('combo'); }
+      grabHot(b, a);
+      b.shield = RECV_SHIELD; b.stun = RECV_STUN;
+      return;
+    }
+    b.sn.segs.push(f.label);
+
+    // 连甩：窗口内连续甩中，倍率递增（最高 ×3）
     a.combo = a.comboT > 0 ? a.combo + 1 : 1;
     a.comboT = COMBO_WINDOW;
     a.maxCombo = Math.max(a.maxCombo, a.combo);
@@ -275,7 +419,7 @@
     a.thrown++;
     a.victims[b.name] = (a.victims[b.name] || 0) + 1;
 
-    // 接锅的人：短暂护盾 + 愣住 + 一段时间内不能甩回来 + 连甩清零 + 记仇
+    // 接锅的人：短暂护盾 + 愣住 + 连甩清零 + 记仇
     b.shield = RECV_SHIELD;
     b.stun = RECV_STUN;
     b.lock[a.id] = S.t + NO_RETURN;
@@ -299,34 +443,24 @@
   }
 
   /* ---------------- P0 烫手山芋 ---------------- */
-  // 某人拿到 P0（from 为传给他的人，被领导砸中时为 null）
+  // 某人拿到 P0（from 为扔给他的人，被领导砸中时为 null）
   function grabHot(a, from) {
-    S.hot = { holder: a, t: S.hot ? S.hot.t : HOT_TIME, passCd: 0.5, from, fromT: S.t };
-    if (a.isPlayer) { E.toast('P0 在你手里！快传给别人', 1800); E.sfx('boss'); shake = 6; }
+    S.hot = { holder: a, t: S.hot ? S.hot.t : HOT_TIME, from, inFlight: false };
+    if (a.isPlayer) { E.toast('P0 在你手里！按「甩」扔给别人', 1800); E.sfx('boss'); shake = 6; }
   }
-  // 每帧：倒计时、碰到人就传、炸在谁手里谁 +4
+  // 每帧：倒计时；扔出去还在飞时到点，炸在扔的人手里；炸在谁手里谁 +4
   function updateHot(dt) {
     const h = S.hot;
     if (!h) return;
     h.t -= dt;
-    h.passCd -= dt;
+    if (h.inFlight) {
+      if (h.t > 0) return;
+      const f = S.throws.find((x) => x.hot && !x.dead);
+      if (f) { f.dead = true; h.holder = f.owner; }
+      h.inFlight = false;
+    }
     const a = h.holder;
     if (a.crushed) h.t = 0;
-    if (h.t > 0 && h.passCd <= 0) {
-      let best = null, bd = THROW_R;
-      for (const b of S.agents) {
-        if (b === a || b.crushed) continue;
-        if (b === h.from && S.t - h.fromT < 1.2) continue; // 不能立刻传回去
-        const d = headDist(a, b);
-        if (d < bd) { bd = d; best = b; }
-      }
-      if (best) {
-        a.score += 20;
-        if (a.isPlayer) { floats.add(`P0 甩给${best.name} +20`, best.sn.x, best.sn.y - 44, '#2F9E6B'); E.sfx('combo'); }
-        grabHot(best, a);
-        return;
-      }
-    }
     if (h.t <= 0) {
       S.hot = null;
       if (a.crushed) return;
@@ -550,12 +684,19 @@
       seek(OFFICE.world.w / 2, OFFICE.world.h / 2, 0.15);
     }
     a.want = steerFree(a, Math.atan2(vy, vx) + E.rand(-0.08, 0.08));
+
+    // 8. 出手：前方瞄得到人、够近就甩（P0 优先、不挑人；平时不主动瞄刚甩给自己的人）
+    if (canFire(a)) {
+      const hot = holdsHot(a), b = pickAim(a);
+      if (b && headDist(a, b) < p.throwR && (hot || (pots >= p.seekMin && (a.lock[b.id] || 0) <= S.t)) &&
+        Math.random() < 0.45 + 0.55 * p.aggr) fireThrow(a);
+    }
   }
 
   /* ---------------- 打工人每帧 ---------------- */
   function updateAgent(a, dt) {
     if (a.crushed) return;
-    a.cool -= dt; a.stun -= dt; a.shield -= dt; a.cry -= dt; a.angry -= dt; a.panicT -= dt;
+    a.cool -= dt; a.stun -= dt; a.shield -= dt; a.cry -= dt; a.angry -= dt; a.panicT -= dt; a.parryLock -= dt;
     a.comboT -= dt;
     if (a.comboT <= 0) a.combo = 0;
 
@@ -584,7 +725,11 @@
     if (ai) {
       a.thinkT -= dt;
       if (a.thinkT <= 0) { a.thinkT = a.p.react * E.rand(0.8, 1.2); think(a); }
-    } else E.pollKeys(inp);
+    } else {
+      E.pollKeys(inp);
+      // 玩家按了「甩」：本帧处理掉所有按键（一般就一次）
+      while (inp.fire > 0) { inp.fire--; pressFire(a); }
+    }
     a.sn.update(dt, ai ? a.want : inp.angle);
     if (E.collide(a.sn, HEAD_R, obstacles)) a.sn.trail[0] = { x: a.sn.x, y: a.sn.y };
     if (a.sn.bounce(HEAD_R, HEAD_R, OFFICE.world.w - HEAD_R, OFFICE.world.h - HEAD_R)) {
@@ -620,7 +765,7 @@
     for (const a of S.agents) updateAgent(a, dt);
     for (const l of S.leaders) updateLeader(l, dt);
     updateFlying(dt);
-    resolveThrows();
+    updateThrows(dt);
     updateHot(dt);
 
     // 甩锅动画推进
@@ -800,11 +945,34 @@
       E.label(ctx, '!', f.x, f.y, 24, '#E8504A');
     }
 
-    // 甩锅范围提示：身上有锅且附近有可甩的人时，画出范围圈
+    // 瞄准提示：身上有锅（或拿着 P0）时，绿圈标出按「甩」会砸向谁；前方没人就画一小段虚线表示直线扔出去
     const P = S.player;
-    if (potsOf(P) && S.agents.some((b) => canThrowTo(P, b) && headDist(P, b) < THROW_R + 60)) {
-      ctx.strokeStyle = 'rgba(47,158,107,.6)'; ctx.lineWidth = 3; ctx.setLineDash([4, 6]);
-      ctx.beginPath(); ctx.arc(me.x, me.y, THROW_R, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+    if (!P.crushed && (potsOf(P) || holdsHot(P))) {
+      const b = pickAim(P), ready = canFire(P);
+      ctx.strokeStyle = ready ? 'rgba(47,158,107,.85)' : 'rgba(94,106,132,.5)'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]);
+      if (b) {
+        ctx.beginPath(); ctx.moveTo(me.x, me.y); ctx.lineTo(b.sn.x, b.sn.y); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(b.sn.x, b.sn.y, 30 + Math.sin(time * 10) * 2, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath(); ctx.moveTo(me.x + Math.cos(me.angle) * 30, me.y + Math.sin(me.angle) * 30);
+        ctx.lineTo(me.x + Math.cos(me.angle) * 110, me.y + Math.sin(me.angle) * 110); ctx.stroke();
+        ctx.globalAlpha = 1;
+      }
+      ctx.setLineDash([]);
+    }
+    // 来锅预警：有人甩的锅正朝你飞来，红圈收紧；进入反甩窗口时变实心提示「按甩！」
+    let incoming = Infinity, inWin = false;
+    for (const f of S.throws) {
+      if (f.owner === P) continue;
+      const t = incomingTTI(f, P);
+      if (t < incoming) { incoming = t; inWin = t <= parryWin(f); }
+    }
+    if (incoming < 0.6) {
+      ctx.strokeStyle = '#E8504A'; ctx.lineWidth = inWin ? 5 : 3;
+      ctx.beginPath(); ctx.arc(me.x, me.y, 26 + incoming * 60, 0, Math.PI * 2); ctx.stroke();
+      if (inWin) E.label(ctx, '按甩!', me.x, me.y - 62, 16, '#FFFDF5', '#E8504A');
     }
 
     // 所有人的锅尾巴先画（压在所有人头下面），再按 y 排序画头和领导
@@ -825,8 +993,17 @@
         drawWok(f.x, f.y, f.label, 44, f.spin, Math.max(0, f.t / 0.5));
       } else if (f.hot) drawHotPot(f.x, f.y, time, null);
     }
+    // 甩出去的锅：带一道拖影，越快越明显
+    for (const f of S.throws) {
+      ctx.strokeStyle = f.owner.isPlayer ? 'rgba(47,158,107,.55)' : 'rgba(232,80,74,.45)';
+      ctx.lineWidth = 10; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(f.x - Math.cos(f.a) * 46, f.y - Math.sin(f.a) * 46); ctx.lineTo(f.x, f.y); ctx.stroke();
+      ctx.lineCap = 'butt';
+      if (f.hot) drawHotPot(f.x, f.y, time, null);
+      else drawWok(f.x, f.y, f.label, 40, f.spin);
+    }
     // 拿在手里的 P0
-    if (S.hot) drawHotPot(S.hot.holder.sn.x, S.hot.holder.sn.y - 52, time, S.hot.t);
+    if (S.hot && !S.hot.inFlight) drawHotPot(S.hot.holder.sn.x, S.hot.holder.sn.y - 52, time, S.hot.t);
 
     // 甩锅飞行动画（抛物线）
     for (const a of S.arcs) {
@@ -854,6 +1031,20 @@
   }
 
   /* ---------------- HUD + 实时排名 ---------------- */
+  // 「甩」按钮状态：锅飞来进入窗口 → 红色「弹」；能甩 → 黄色；冷却中显示转圈；没锅 → 灰色
+  const btnThrow = document.getElementById('btnThrow');
+  function updateThrowBtn() {
+    const P = S.player;
+    btnThrow.hidden = mode !== 'play';
+    if (btnThrow.hidden) return;
+    let parryNow = false;
+    if (P.parryLock <= 0) for (const f of S.throws) if (f.owner !== P && incomingTTI(f, P) <= parryWin(f)) parryNow = true;
+    const has = potsOf(P) > 0 || holdsHot(P);
+    btnThrow.classList.toggle('parry', parryNow);
+    btnThrow.classList.toggle('empty', !parryNow && !has);
+    btnThrow.style.setProperty('--cd', parryNow ? 0 : Math.max(0, P.cool, P.stun) / THROW_CD);
+    btnThrow.firstChild.textContent = parryNow ? '弹!' : holdsHot(P) ? 'P0' : '甩!';
+  }
   function updateHud() {
     const P = S.player, n = potsOf(P);
     const rank = ranking();
@@ -867,6 +1058,7 @@
     document.getElementById('hPotsBar').style.width = Math.min(100, (n / MAX_POTS) * 100) + '%';
     document.getElementById('hPots').classList.toggle('hot', n >= MAX_POTS * 0.6);
     document.getElementById('hClock').classList.toggle('hot', S.t >= L.duration - 13);
+    updateThrowBtn();
     document.getElementById('hRank').classList.toggle('hot', myRank > PASS_RANK);
 
     // 排名面板：内容变了才刷新 DOM；前三名下面画一条「加班线」
@@ -950,6 +1142,7 @@
         S.revived = true;
         P.sn.segs.splice(Math.max(0, P.sn.segs.length - 8));
         S.flying = S.flying.filter((f) => f.target !== P);
+        S.throws = S.throws.filter((f) => f.target !== P);
         S.over = null;
         if (S.t > L.duration - 15) S.t = L.duration - 15;
         E.hidePanel(); mode = 'play';
@@ -984,6 +1177,7 @@
     rankSig = '';
     E.hidePanel();
     clearBanners();
+    inp.fire = 0;
     document.getElementById('hud').hidden = false;
     document.getElementById('rank').hidden = false;
     mode = 'play';
@@ -1024,9 +1218,10 @@
       <h1>${L.name}</h1>
       <p class="sub">${L.desc}</p>
       <ul class="rules">
-        <li><span>👆</span>按住屏幕任意位置拖动，控制方向</li>
+        <li><span>🕹️</span>左下角摇杆控制方向，右下角「甩」把尾巴上的锅扔出去</li>
         <li><span>🤵</span>${leaders}会朝闲着的人丢锅，红色瞄准线出现就躲开；撞上领导一次 +3 口</li>
-        <li><span>🙋</span>贴近任何人，自动把尾巴上的锅甩给他；同事也会这样甩给你</li>
+        <li><span>🎯</span>砸中谁就是谁的；甩空了锅立刻弹回你身上</li>
+        <li><span>🛡️</span>锅朝你飞来时按「甩」，能弹回去；同事也会这样弹你</li>
         <li><span>📢</span>留意群消息：散会、卡纸、P0 事故，锅会从那里飞出来</li>
       </ul>
       <div class="goal">
@@ -1045,7 +1240,7 @@
     simulate(levelIdx, runs) {
       const keepL = L, keepAuto = auto, keepS = S, keepMode = mode;
       L = LEVELS[levelIdx || 0]; auto = true;
-      const out = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLeaderHits: 0, avgCrushT: 0 };
+      const out = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLaunched: 0, avgMiss: 0, avgParry: 0, avgLeaderHits: 0, avgCrushT: 0 };
       for (let r = 0; r < out.runs; r++) {
         S = makeState(); mode = 'play';
         while (!S.over) update(1 / 30);
@@ -1060,10 +1255,14 @@
         out.avgSpawned += S.spawned / out.runs;
         out.avgLeaderHits += S.leaderHits / out.runs;
         out.avgThrown += S.agents.reduce((s, a) => s + a.thrown, 0) / out.runs;
+        out.avgLaunched += S.agents.reduce((s, a) => s + a.launched, 0) / out.runs;
+        out.avgMiss += S.agents.reduce((s, a) => s + a.misses, 0) / out.runs;
+        out.avgParry += S.agents.reduce((s, a) => s + a.parries, 0) / out.runs;
       }
       for (const k in out.avgLeft) out.avgLeft[k] = +out.avgLeft[k].toFixed(1);
       out.avgSpawned = +out.avgSpawned.toFixed(1); out.avgLeaderHits = +out.avgLeaderHits.toFixed(1);
       out.avgCrushT = out.crushedBots ? Math.round(out.avgCrushT / out.crushedBots) : 0; out.avgThrown = +out.avgThrown.toFixed(1);
+      for (const k of ['avgLaunched', 'avgMiss', 'avgParry']) out[k] = +out[k].toFixed(1);
       L = keepL; auto = keepAuto; S = keepS; mode = keepMode;
       floats.list = []; clearBanners();
       return out;
@@ -1093,6 +1292,7 @@
   E.loadSprites(SPRITES).then(showIntro);
 
   E.loop((dt, time) => {
+    if (mode !== 'play') inp.fire = 0;
     if (mode === 'play') {
       update(dt);
       if (S.over) finish(S.over);

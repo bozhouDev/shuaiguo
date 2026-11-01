@@ -57,36 +57,48 @@
     return st;
   };
 
-  /* ---------------- 输入：浮动摇杆 + 键盘 ---------------- */
-  E.STICK_R = 48; // 摇杆底座半径
+  /* ---------------- 输入：固定摇杆 + 甩锅键 + 键盘 ---------------- */
+  E.STICK_R = 52;          // 摇杆底座半径
+  E.STICK_POS = { rx: 0.24, ry: 0.8 }; // 摇杆中心在屏幕上的比例位置（左下）
 
-  // 手指按住屏幕任意位置拖动即可转向；松手后蛇保持当前方向继续走
-  E.createInput = function (el) {
-    const inp = { down: false, ox: 0, oy: 0, x: 0, y: 0, angle: null, keys: {} };
+  // 摇杆中心：按屏幕比例放，但离边缘至少留出底座 + 安全边距
+  E.stickCenter = function () {
+    const w = window.innerWidth, h = window.innerHeight, m = E.STICK_R + 28;
+    return { x: E.clamp(w * E.STICK_POS.rx, m, w / 2), y: E.clamp(h * E.STICK_POS.ry, h / 2, h - m) };
+  };
+
+  // 摇杆固定在左下角：手指按在画面任意位置，方向 = 手指相对摇杆中心的方向；松手后保持当前方向继续走
+  // fireBtn：甩锅按钮（DOM 元素），按下时 inp.fire 计数 +1，由游戏每帧消费
+  E.createInput = function (el, fireBtn) {
+    const inp = { down: false, id: null, x: 0, y: 0, angle: null, keys: {}, fire: 0 };
+    // 根据手指位置更新方向和摇杆头位置
+    const aim = (e) => {
+      const c = E.stickCenter();
+      const dx = e.clientX - c.x, dy = e.clientY - c.y, d = Math.hypot(dx, dy);
+      if (d > 6) inp.angle = Math.atan2(dy, dx);
+      const k = d > E.STICK_R ? E.STICK_R / d : 1;   // 摇杆头不超出底座
+      inp.x = c.x + dx * k; inp.y = c.y + dy * k;
+    };
     el.addEventListener('pointerdown', (e) => {
-      inp.down = true;
-      inp.ox = inp.x = e.clientX;
-      inp.oy = inp.y = e.clientY;
+      if (inp.down) return;           // 只认第一根手指当摇杆，另一只手按甩锅键
+      inp.down = true; inp.id = e.pointerId;
+      aim(e);
       try { el.setPointerCapture(e.pointerId); } catch (_) { /* 部分环境不支持，忽略 */ }
     });
-    el.addEventListener('pointermove', (e) => {
-      if (!inp.down) return;
-      inp.x = e.clientX;
-      inp.y = e.clientY;
-      const dx = inp.x - inp.ox, dy = inp.y - inp.oy;
-      const d = Math.hypot(dx, dy);
-      if (d > 6) inp.angle = Math.atan2(dy, dx);
-      // 底座跟着手指走：拖得再远，反向时也能立刻生效
-      if (d > E.STICK_R) {
-        inp.ox = inp.x - (dx / d) * E.STICK_R;
-        inp.oy = inp.y - (dy / d) * E.STICK_R;
-      }
-    });
-    const up = () => { inp.down = false; };
+    el.addEventListener('pointermove', (e) => { if (inp.down && e.pointerId === inp.id) aim(e); });
+    const up = (e) => { if (e.pointerId === inp.id) { inp.down = false; inp.id = null; } };
     el.addEventListener('pointerup', up);
     el.addEventListener('pointercancel', up);
+    // 甩锅键：用 pointerdown 而不是 click，减少延迟，并且不影响另一根手指的摇杆
+    if (fireBtn) {
+      fireBtn.addEventListener('pointerdown', (e) => { e.preventDefault(); inp.fire++; });
+      fireBtn.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
     window.addEventListener('keydown', (e) => {
-      inp.keys[e.key.toLowerCase()] = true;
+      const k = e.key.toLowerCase();
+      // 空格 / J 甩锅（按住不连发）
+      if ((k === ' ' || k === 'j') && !e.repeat) inp.fire++;
+      inp.keys[k] = true;
       if (e.key === ' ' || e.key.startsWith('Arrow')) e.preventDefault();
     });
     window.addEventListener('keyup', (e) => { inp.keys[e.key.toLowerCase()] = false; });
@@ -104,16 +116,16 @@
     if (x || y) inp.angle = Math.atan2(y, x);
   };
 
-  // 绘制半透明摇杆，让玩家知道自己在拖哪里
+  // 绘制固定摇杆：没按时淡淡显示位置，按住时摇杆头跟着手指
   E.drawStick = function (ctx, inp) {
-    if (!inp.down) return;
+    const c = E.stickCenter();
     ctx.save();
-    ctx.globalAlpha = 0.3;
+    ctx.globalAlpha = inp.down ? 0.32 : 0.16;
     ctx.fillStyle = '#1F2A44';
-    ctx.beginPath(); ctx.arc(inp.ox, inp.oy, E.STICK_R, 0, Math.PI * 2); ctx.fill();
-    ctx.globalAlpha = 0.6;
+    ctx.beginPath(); ctx.arc(c.x, c.y, E.STICK_R, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = inp.down ? 0.75 : 0.35;
     ctx.fillStyle = '#FFFDF5';
-    ctx.beginPath(); ctx.arc(inp.x, inp.y, 20, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(inp.down ? inp.x : c.x, inp.down ? inp.y : c.y, 22, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   };
 
@@ -412,6 +424,9 @@
       case 'win': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, 0.16, 'triangle', 0.08, i * 0.12)); break;
       case 'lose': [392, 330, 262, 196].forEach((f, i) => tone(f, f * 0.98, 0.2, 'square', 0.06, i * 0.15)); break;
       case 'tick': tone(1200, 1200, 0.03, 'sine', 0.03); break;
+      case 'whoosh': tone(700, 260, 0.12, 'sine', 0.07); break;            // 锅甩出去
+      case 'parry': tone(1400, 1400, 0.05, 'square', 0.07); tone(900, 1800, 0.12, 'triangle', 0.08, 0.04); break; // 反甩
+      case 'miss': tone(300, 200, 0.12, 'sine', 0.05); break;              // 甩空，锅弹回来
       default: break;
     }
   };

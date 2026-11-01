@@ -120,8 +120,8 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 
 /* ===== v2：实时排名、群消息、选关、结算排名表 ===== */
 /* 教学提示挪到下方，给顶部的排名和群消息让位 */
-#hint { top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 92px); }
-#toast { bottom: calc(196px + env(safe-area-inset-bottom, 0px)); }
+#hint { top: auto; bottom: calc(20vh + 64px); width: max-content; } /* 放在摇杆和甩锅键上方；不随 left:50% 被挤窄 */
+#toast { bottom: calc(20vh + 112px); }
 /* 左上角实时排名 */
 #rank {
   position: fixed; left: max(12px, env(safe-area-inset-left, 0px)); top: calc(env(safe-area-inset-top, 0px) + 50px); z-index: 5;
@@ -170,3 +170,19 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
   #hud .chip { font-size: 14px; padding: 3px 7px; }
   #hud .bar { width: 40px; }
 }
+/* 右下角甩锅键：--cd 为冷却比例（1 → 0），用转圈遮罩显示 */
+#btnThrow {
+  position: fixed; z-index: 6; right: max(22px, env(safe-area-inset-right, 0px) + 16px); bottom: max(34px, calc(20vh - 46px)); /* 和左下摇杆中心（屏幕 80% 高度）对齐 */
+  width: 92px; height: 92px; border-radius: 50%; padding: 0; touch-action: none; cursor: pointer;
+  background: var(--note); border: 3px solid var(--ink); box-shadow: 3px 4px 0 var(--ink);
+  font-family: var(--display); font-size: 30px; color: var(--ink); --cd: 0;
+}
+#btnThrow b { position: relative; z-index: 1; font-weight: 400; }
+#btnThrow::after {
+  content: ""; position: absolute; inset: -3px; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(rgba(31, 42, 68, .45) calc(var(--cd) * 360deg), transparent 0);
+}
+#btnThrow:active { transform: translate(2px, 3px); box-shadow: 1px 1px 0 var(--ink); }
+#btnThrow.empty { background: #D5DAE3; color: var(--muted); }
+#btnThrow.parry { background: var(--alarm); color: var(--paper); animation: parryPulse .18s infinite alternate; }
+@keyframes parryPulse { to { transform: scale(1.08); } }
