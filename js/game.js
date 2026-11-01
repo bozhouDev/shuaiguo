@@ -1,6 +1,6 @@
 /* =========================================================
  * 甩锅侠 · 主逻辑（v2：所有人都在甩锅）
- * 核心循环：领导远程丢锅 / 会议室散会喷锅 / 随机事件 → 被砸中就粘在身后，越背越慢
+ * 核心循环：领导远程丢锅 / 会议室散会喷锅 / 随机事件 → 被砸中就粘在身后（锅多不减速）
  *          → 按「甩」把尾巴上的锅扔出去：砸中谁就是谁的，甩空立刻弹回自己身上；锅飞来时按「甩」能反甩
  *          → 18:00 按身上剩余锅数排名，进前三过关
  * 玩家和机器人同事是同一种「打工人」，唯一区别是方向由手指给还是由 AI 给
@@ -16,9 +16,7 @@
     'fx_anger', 'fx_tears'];
 
   /* ---------------- 手感参数（调数值主要改这里） ---------------- */
-  const BASE_SPEED = 175;      // 不背锅时的速度
-  const SLOW_PER_POT = 0.032;  // 每口锅减速比例
-  const MIN_SPEED_RATE = 0.45; // 最低速度比例
+  const BASE_SPEED = 145;      // 移动速度（手机屏幕小，不能太快；背多少锅都不减速）
   const HEAD_R = 18;           // 蛇头碰撞半径
   const THROW_SPEED = 620;     // 甩出去的锅飞多快（要快，慢了没意义）
   const THROW_TURN = 2.5;      // 甩出去的锅轻微追踪目标的转向速度
@@ -37,7 +35,7 @@
   const NO_RETURN = 1.5;       // 同事接锅后多久内不会主动瞄准刚甩给他的人（玩家不受限）
   const DIGEST_TIME = 15;      // 每人每隔几秒自己消化掉一口锅（所有人相同）
   const MAX_POTS = 20;         // 背满即被压垮
-  const POT_SPEED = 125;       // 飞行锅速度
+  const POT_SPEED = 105;       // 领导 / 散会飞出来的锅速度（按移动速度同比例放慢，保证横移躲得开）
   const POT_TURN = 1.5;        // 飞行锅转向速度（越小越好躲）
   const POT_LIFE = 7;          // 飞行锅存活时间
   const AIM_TIME = 0.8;        // 领导瞄准预警时长
@@ -45,7 +43,7 @@
   const ALERT_SEE = 480;       // 老板离实习生多近才「看得见」有人欺负他
   const ALERT_CD = 15;         // 老板追完一次后多久内不再追
   const ALERT_CHASE = 4;       // 老板追人时长
-  const ALERT_SPEED = 140;     // 老板追人速度
+  const ALERT_SPEED = 120;     // 老板追人速度（略慢于人，绕障碍追）
   const HOT_TIME = 10;         // P0 烫手山芋倒计时
   const HOT_POTS = 4;          // P0 炸在谁手里，谁 +几口
   const FINAL_RUSH = 10;       // 最后几秒进入排名冲刺
@@ -65,8 +63,8 @@
 
   // 领导类型：count 一次丢几口（分别瞄准锅最少的几个人）；range 视野；everyMul 丢锅间隔倍率
   const LEADER_TYPES = {
-    boss:     { name: '老板', sprite: 'boss', emoji: '🤵', speed: 80, count: 1, range: 700, everyMul: 1 },
-    director: { name: '总监', sprite: 'director', emoji: '👔', speed: 95, count: 2, range: 600, everyMul: 1.3 },
+    boss:     { name: '老板', sprite: 'boss', emoji: '🤵', speed: 68, count: 1, range: 700, everyMul: 1 },
+    director: { name: '总监', sprite: 'director', emoji: '👔', speed: 80, count: 2, range: 600, everyMul: 1.3 },
   };
 
   // 随机事件：先发群消息，2 秒后生效
@@ -90,15 +88,6 @@
   let rankSig = '';              // 排名面板内容签名（不变就不刷新 DOM）
 
   /* ---------------- 工具 ---------------- */
-  // 让物体 o 以速度 spd 朝 (tx, ty) 移动，返回移动前的距离
-  function moveToward(o, tx, ty, spd, dt) {
-    const d = E.dist(o.x, o.y, tx, ty);
-    if (d < 0.5) return d;
-    const step = Math.min(d, spd * dt);
-    o.x += ((tx - o.x) / d) * step;
-    o.y += ((ty - o.y) / d) * step;
-    return d;
-  }
   // 当前身上锅数
   const potsOf = (a) => a.sn.segs.length;
   // 两个打工人蛇头之间的距离
@@ -138,6 +127,7 @@
     const cfg = LEADER_TYPES[def.type], route = OFFICE.routes[def.route];
     return {
       type: def.type, cfg, name: cfg.name, route, x: route[0].x, y: route[0].y, i: 1, wait: 1.5,
+      path: [], goal: null, repathT: 0,                       // 寻路：当前路径、目标点、下次重算倒计时
       state: 'patrol', st: 0, aimT: 0, targets: [], chase: null, hitCd: {}, alertCd: 0,
       throwCd: E.rand(0, 1.5),
     };
@@ -232,7 +222,7 @@
       // 砸中路上碰到的第一个人——躲开了，锅可能就砸在别人头上
       const victim = S.agents.find((a) => !a.crushed && E.dist(f.x, f.y, a.sn.x, a.sn.y) < HEAD_R + 14);
       if (victim) { f.dead = true; potHit(victim, f); }
-      else if (f.life <= 0) { f.phase = 'drop'; f.t = 0.5; }
+      else if (f.life <= 0 || inWall(f.x, f.y)) { f.phase = 'drop'; f.t = 0.5; } // 飞太久或撞墙就掉地上
     }
     S.flying = S.flying.filter((f) => !f.dead);
   }
@@ -472,6 +462,126 @@
     }
   }
 
+  /* ---------------- 领导寻路：网格 A*，领导不再穿墙 / 穿桌子 ---------------- */
+  const NAV_CELL = 20;   // 网格大小
+  const LEADER_R = 20;   // 领导身体半径（障碍物按这个外扩）
+  // 预先算好每个格子能不能走：格子中心落在外扩后的障碍物里就算堵住
+  const NAV = (() => {
+    const W = OFFICE.world, cols = Math.ceil(W.w / NAV_CELL), rows = Math.ceil(W.h / NAV_CELL);
+    const block = new Uint8Array(cols * rows);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const x = (c + 0.5) * NAV_CELL, y = (r + 0.5) * NAV_CELL;
+      let b = x < LEADER_R || y < LEADER_R || x > W.w - LEADER_R || y > W.h - LEADER_R;
+      for (const o of obstacles) {
+        if (b) break;
+        b = x > o.x - LEADER_R && x < o.x + o.w + LEADER_R && y > o.y - LEADER_R && y < o.y + o.h + LEADER_R;
+      }
+      block[r * cols + c] = b ? 1 : 0;
+    }
+    return { cols, rows, block };
+  })();
+  // 坐标 → 格子编号（越界夹到边上）
+  function navIdx(x, y) {
+    const c = E.clamp(Math.floor(x / NAV_CELL), 0, NAV.cols - 1), r = E.clamp(Math.floor(y / NAV_CELL), 0, NAV.rows - 1);
+    return r * NAV.cols + c;
+  }
+  // 某格被堵住时，向外一圈圈找最近的空格
+  function navFree(i) {
+    if (!NAV.block[i]) return i;
+    const c0 = i % NAV.cols, r0 = (i / NAV.cols) | 0;
+    for (let k = 1; k < 12; k++) {
+      for (let dr = -k; dr <= k; dr++) for (let dc = -k; dc <= k; dc++) {
+        if (Math.max(Math.abs(dr), Math.abs(dc)) !== k) continue;
+        const c = c0 + dc, r = r0 + dr;
+        if (c < 0 || r < 0 || c >= NAV.cols || r >= NAV.rows) continue;
+        if (!NAV.block[r * NAV.cols + c]) return r * NAV.cols + c;
+      }
+    }
+    return i;
+  }
+  const navPt = (i) => ({ x: (i % NAV.cols + 0.5) * NAV_CELL, y: (((i / NAV.cols) | 0) + 0.5) * NAV_CELL });
+  // 两点之间是否一路畅通（每 8px 采样一次）
+  function navClear(ax, ay, bx, by) {
+    const d = E.dist(ax, ay, bx, by), n = Math.ceil(d / 8);
+    for (let k = 1; k <= n; k++) if (NAV.block[navIdx(ax + (bx - ax) * k / n, ay + (by - ay) * k / n)]) return false;
+    return true;
+  }
+  // A* 寻路（8 方向，不切墙角），结果再拉直：能直线走到的中间点都省掉
+  function findPath(x0, y0, x1, y1) {
+    const start = navFree(navIdx(x0, y0)), goal = navFree(navIdx(x1, y1));
+    const n = NAV.cols * NAV.rows, g = new Float32Array(n).fill(Infinity), from = new Int32Array(n).fill(-1);
+    const gc = goal % NAV.cols, gr = (goal / NAV.cols) | 0;
+    const h = (i) => { const dc = Math.abs(i % NAV.cols - gc), dr = Math.abs(((i / NAV.cols) | 0) - gr); return Math.max(dc, dr) + 0.414 * Math.min(dc, dr); };
+    // 二叉堆：按 f = g + h 取最小
+    const heap = [], push = (i, f) => {
+      heap.push([f, i]);
+      let k = heap.length - 1;
+      while (k > 0) { const p = (k - 1) >> 1; if (heap[p][0] <= heap[k][0]) break; [heap[p], heap[k]] = [heap[k], heap[p]]; k = p; }
+    }, pop = () => {
+      const top = heap[0], last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        let k = 0;
+        for (;;) {
+          const l = 2 * k + 1, r = l + 1;
+          let m = k;
+          if (l < heap.length && heap[l][0] < heap[m][0]) m = l;
+          if (r < heap.length && heap[r][0] < heap[m][0]) m = r;
+          if (m === k) break;
+          [heap[m], heap[k]] = [heap[k], heap[m]]; k = m;
+        }
+      }
+      return top[1];
+    };
+    g[start] = 0; push(start, h(start));
+    while (heap.length) {
+      const i = pop();
+      if (i === goal) break;
+      const c = i % NAV.cols, r = (i / NAV.cols) | 0;
+      for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        const nc = c + dc, nr = r + dr;
+        if (nc < 0 || nr < 0 || nc >= NAV.cols || nr >= NAV.rows) continue;
+        const j = nr * NAV.cols + nc;
+        if (NAV.block[j]) continue;
+        if (dr && dc && (NAV.block[r * NAV.cols + nc] || NAV.block[nr * NAV.cols + c])) continue; // 不切墙角
+        const ng = g[i] + (dr && dc ? 1.414 : 1);
+        if (ng < g[j]) { g[j] = ng; from[j] = i; push(j, ng + h(j)); }
+      }
+    }
+    if (goal !== start && from[goal] < 0) return [];            // 走不到：原地不动
+    const cells = [];
+    for (let i = goal; i !== start && i >= 0; i = from[i]) cells.push(navPt(i));
+    cells.reverse();
+    if (!NAV.block[navIdx(x1, y1)] && cells.length) cells[cells.length - 1] = { x: x1, y: y1 };
+    // 拉直
+    const out = [];
+    let ax = x0, ay = y0, k = 0;
+    while (k < cells.length) {
+      let far = k;
+      while (far + 1 < cells.length && navClear(ax, ay, cells[far + 1].x, cells[far + 1].y)) far++;
+      out.push(cells[far]);
+      ax = cells[far].x; ay = cells[far].y; k = far + 1;
+    }
+    return out;
+  }
+  // 领导沿路径走向 (tx, ty)：目标挪动较远或到了重算时间才重新寻路；返回离终点的直线距离
+  function walkTo(l, tx, ty, spd, dt, repath) {
+    l.repathT -= dt;
+    if (!l.goal || E.dist(l.goal.x, l.goal.y, tx, ty) > 30 || (repath && l.repathT <= 0)) {
+      l.goal = { x: tx, y: ty };
+      l.path = findPath(l.x, l.y, tx, ty);
+      l.repathT = repath || 0;
+    }
+    let step = spd * dt;
+    while (step > 0 && l.path.length) {
+      const p = l.path[0], d = E.dist(l.x, l.y, p.x, p.y);
+      if (d <= step) { l.x = p.x; l.y = p.y; step -= d; l.path.shift(); }
+      else { l.x += (p.x - l.x) / d * step; l.y += (p.y - l.y) / d * step; step = 0; }
+    }
+    return E.dist(l.x, l.y, tx, ty);
+  }
+
   /* ---------------- 领导 ---------------- */
   // 实习生被欺负太狠：老板（第一位领导）看见了，就冲过来追欺负他的人
   // 老板得在附近才看得见；追完一次要冷却一会儿，否则同事们天天欺负实习生，老板会一直追人
@@ -498,11 +608,11 @@
     return cand.slice(0, l.cfg.count).map((c) => c.a);
   }
   // 领导每帧：巡逻 → 瞄准（预警）→ 丢锅；或追欺负实习生的人；撞上谁就给谁派 3 口
-  // 注意：领导不做障碍物碰撞（见 implementation-notes.md）
+  // 领导走路都走寻路路径，不会穿墙 / 穿桌子
   function updateLeader(l, dt) {
     if (l.state === 'chase') {
       l.st -= dt;
-      moveToward(l, l.chase.sn.x, l.chase.sn.y, ALERT_SPEED, dt);
+      walkTo(l, l.chase.sn.x, l.chase.sn.y, ALERT_SPEED, dt, 0.4);
       if (l.st <= 0 || l.chase.crushed) { l.state = 'patrol'; l.chase = null; l.i = nearestRoute(l); }
     } else if (l.state === 'aim') {
       l.aimT -= dt;
@@ -514,7 +624,7 @@
       if (l.wait > 0) l.wait -= dt;
       else {
         const p = l.route[l.i];
-        if (moveToward(l, p.x, p.y, l.cfg.speed, dt) < 4) { l.wait = p.wait || 0; l.i = (l.i + 1) % l.route.length; }
+        if (walkTo(l, p.x, p.y, l.cfg.speed, dt, 0) < 4 || !l.path.length) { l.wait = p.wait || 0; l.i = (l.i + 1) % l.route.length; }
       }
       if (S.pace) {
         l.throwCd -= dt;
@@ -716,9 +826,8 @@
       else { a.teaCd -= dt; if (a.teaCd <= 0) { a.teaT = 3.5; a.teaCd = E.rand(9, 13); } }
     }
 
-    // 速度：锅越多越慢
-    const slow = Math.max(MIN_SPEED_RATE, 1 - potsOf(a) * SLOW_PER_POT);
-    a.sn.speed = BASE_SPEED * a.p.speed * slow * (a.teaT > 0 && E.dist(a.sn.x, a.sn.y, OFFICE.tea.x, OFFICE.tea.y) < 120 ? 0.4 : 1);
+    // 速度：只看人设和是否在泡茶，背锅不减速
+    a.sn.speed = BASE_SPEED * a.p.speed * (a.teaT > 0 && E.dist(a.sn.x, a.sn.y, OFFICE.tea.x, OFFICE.tea.y) < 120 ? 0.4 : 1);
 
     // 方向：玩家用手指，机器人用 AI
     const ai = !a.isPlayer || auto;
