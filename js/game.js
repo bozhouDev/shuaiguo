@@ -19,7 +19,7 @@
     'designer_normal', 'designer_hit', 'designer_angry', 'designer_flat',
     'veteran_normal', 'veteran_tea', 'veteran_hit', 'veteran_flat', 'intern_normal', 'intern_cry', 'intern_hit', 'intern_flat',
     'boss_walk', 'boss_aim', 'boss_chase', 'boss_idle', 'director_walk', 'director_aim', 'director_chase', 'director_idle',
-    'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact', 'ui_wok', 'desk', 'meeting_table', 'boss_desk', 'plant', 'plant_small', 'printer', 'cooler',
+    'ui_coach_hand', 'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact', 'ui_wok', 'desk', 'meeting_table', 'boss_desk', 'plant', 'plant_small', 'printer', 'cooler',
     'cabinet', 'whiteboard', 'tea_counter', 'sofa'];
   for (const who of ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director'])
     for (const d of 'dus') for (let i = 0; i < 4; i++) SPRITES.push(`${who}_walk_${d}${i}`);
@@ -880,6 +880,46 @@
    * 步骤和文案在 levels.js 的 tutorial 里，这里只写每种步骤「怎么布置、怎么算完成」
    * 带教里的保护：锅不走时间；扇形里没人、站在领导视野里时按「甩」都只提醒不扔；同事站着不动，老板只按剧本丢锅
    * --------------------------------------------------------------------------------------- */
+  // 参考图生成的透明白手套从图集读取，保留宽手掌、长食指和黄色点击线。
+  const coachHand = document.createElement('div');
+  coachHand.id = 'coachHand';
+  coachHand.hidden = true;
+  coachHand.setAttribute('aria-hidden', 'true');
+  coachHand.innerHTML = '<img data-px="ui_coach_hand" alt="">';
+  document.body.appendChild(coachHand);
+  // 最后一步只有开始按钮可操作；进入和离开时清空输入，避免按住摇杆或键盘带入正式局。
+  function coachLocked() { return !!(S && S.tut && S.tut.def && S.tut.def.btn); }
+  function resetCoachInput() {
+    if (inp.id !== null) {
+      try { document.getElementById('stage').releasePointerCapture(inp.id); } catch (_) { /* 指针可能已释放 */ }
+    }
+    inp.down = false; inp.id = null; inp.mag = 0; inp.angle = null; inp.fire = 0; inp.keys = {};
+  }
+  // 捕获阶段拦住触屏、鼠标和快捷键；开始按钮仍可用点击、Enter 和空格激活。
+  for (const name of ['pointerdown', 'pointermove', 'pointerup', 'click', 'keydown', 'keyup', 'contextmenu']) {
+    window.addEventListener(name, (e) => {
+      if (!coachLocked() || mode !== 'play') return;
+      const onStart = e.target instanceof Element && e.target.closest('#hint .h-go');
+      if (onStart && (!name.startsWith('key') || ['Enter', ' '].includes(e.key))) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+    }, { capture: true, passive: false });
+  }
+  // 手指跟随真正的控件位置，旋转屏幕、窄屏和横幅换行后也能指准。
+  function updateCoachHand() {
+    const T = mode === 'play' && S && S.tut;
+    let target = null;
+    if (T && T.step) {
+      if (T.def.btn) {
+        const button = document.querySelector('#hint .h-go');
+        if (button) { const r = button.getBoundingClientRect(); target = { x: r.right - 16, y: r.bottom - 12 }; }
+      } else if (T.step.do === 'walk' && !inp.down && !E.pollKeys(inp)) target = E.stickCenter();
+      else if (T.def.fire && potsOf(S.player) && pickAim(S.player) && !seenBy(S.player)) {
+        const r = btnThrow.getBoundingClientRect(); target = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      }
+    }
+    coachHand.hidden = !target;
+    if (target) { coachHand.style.left = `${target.x - 19}px`; coachHand.style.top = `${target.y - 17}px`; }
+  }
   const TUT_BOSS_SPEED = 2;  // 带教时老板走路的倍速，别让人干等
   const TUT_RING_R = 34;     // 走进黄圈多近算到
   // 按人设名找场上的同事
@@ -955,6 +995,9 @@
     rank: {
       btn: '开始上班',
       enter() {
+        resetCoachInput();
+        document.body.classList.add('coach-locked');
+        document.querySelector('#hint .h-go').focus({ preventScroll: true });
         S.tut.showRank = true;
         const chip = document.getElementById('hRank').parentElement;
         chip.classList.remove('pulse'); void chip.offsetWidth; chip.classList.add('pulse');
@@ -999,6 +1042,7 @@
   // 带教结束（做完或跳过）：上班时钟从现在起算，带教里的锅开始走时间，大家回到正常状态
   function startWork() {
     if (!S || !S.tut) return;
+    resetCoachInput();
     S.tut = null;
     S.t0 = S.t;
     for (const a of S.agents) for (const pot of a.sn.segs) if (pot.due === Infinity) pot.due = S.t + potLife();
@@ -1194,6 +1238,8 @@
 
   /* ---------------- 主更新 ---------------- */
   function update(dt) {
+    // 最后一句等玩家确认，所有角色、飞锅和截止时间一起冻结。
+    if (coachLocked()) return;
     S.t += dt;
     if (S.tea > 0) S.tea -= dt;
     if (S.tut) updateTutorial(dt);
@@ -1817,6 +1863,8 @@
   /* ---------------- 流程 ---------------- */
   // 隐藏所有横幅
   function clearBanners() {
+    document.body.classList.remove('coach-locked');
+    coachHand.hidden = true;
     document.getElementById('hint').classList.remove('on');
     document.getElementById('msg').classList.remove('on');
     hintTimer = msgTimer = 0;
@@ -2131,5 +2179,6 @@
     updateBanners(mode === 'play' ? dt : 0);
     if (mode === 'lobby') updateLobby(dt);
     if (S) { draw(time); updateHud(); }
+    updateCoachHand();
   });
 })();

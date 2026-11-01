@@ -466,7 +466,8 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
   filter: drop-shadow(0 4px 0 rgba(15, 22, 40, .55)); font-family: var(--pop-font); color: #fff;
 }
 #hint .h-tab {
-  position: absolute; left: 22px; top: -38px; padding: 0 12px; line-height: 28px; font-size: 17px; font-weight: 900; color: var(--ink); letter-spacing: .06em;
+  /* 标题牌压矮 8px，底边仍贴住横幅，减少向顶栏凸出的高度。 */
+  position: absolute; left: 22px; top: -30px; padding: 0 12px; line-height: 20px; font-size: 17px; font-weight: 900; color: var(--ink); letter-spacing: .06em;
   border: 6px solid transparent; border-image: var(--frame-yellow) 4 fill / 6px stretch; box-shadow: inset 0 -3px 0 var(--pop-gold);
 }
 #hint .h-ico {
@@ -510,3 +511,12 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
   .lb-day b img { height: 20px; }
   .lb-day span img { height: 20px; }
 }
+
+/* 带教手指：指尖落在目标上，装饰层不截获点击；最后一步只开放开始按钮。 */
+#coachHand { position: fixed; z-index: 12; width: 80px; height: 88px; pointer-events: none; }
+#coachHand img { display: block; width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; animation: coachTap 1.1s steps(2, end) infinite; }
+@keyframes coachTap { 0%, 100% { transform: translate(7px, 9px); } 45%, 65% { transform: translate(0, 0); } }
+.coach-locked #stage, .coach-locked #hud, .coach-locked #btnThrow { pointer-events: none; }
+.coach-locked #hint .h-go { position: relative; z-index: 1; }
+#hint .h-go:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { #coachHand img { animation: none; } }
