@@ -331,37 +331,51 @@
   E.spr = {};
   const SPR_SCALE = 3; // 预渲染倍率：SVG 先画到离屏画布，避免每帧光栅化 SVG
 
-  // 批量加载 assets/ 下的 SVG，并预渲染到离屏画布
-  E.loadSprites = function (names, base) {
+  // 批量加载素材并缓存到离屏画布。ext 为 'svg'（默认，按 3 倍预渲染）或 'png'（像素图，原尺寸缓存）
+  E.loadSprites = function (names, base, ext) {
+    const type = ext || 'svg';
+    const scale = type === 'svg' ? SPR_SCALE : 1;
     return Promise.all(names.map((name) => new Promise((resolve) => {
       const img = new Image();
       img.onload = () => {
         const w = img.naturalWidth || 128, h = img.naturalHeight || 128;
         const c = document.createElement('canvas');
-        c.width = w * SPR_SCALE; c.height = h * SPR_SCALE;
+        c.width = w * scale; c.height = h * scale;
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         E.spr[name] = { canvas: c, w, h };
         resolve();
       };
       img.onerror = () => { console.warn('素材加载失败：', name); resolve(); };
-      img.src = `${base || 'assets/'}${name}.svg`;
+      img.src = `${base || 'assets/'}${name}.${type}`;
     })));
   };
 
-  // 以 (cx, cy) 为中心画精灵，宽度 w，高度按比例；可选旋转与透明度
+  // 以 (cx, cy) 为中心画精灵，宽度 w，高度按比例；可选旋转、翻转、透明度
+  // opt.h：改为按高度 h 定尺寸（全身角色用，宽度按比例），此时 w 参数被忽略
   E.drawSprite = function (ctx, name, cx, cy, w, opt) {
     const s = E.spr[name];
     if (!s) return;
-    const h = (w * s.h) / s.w;
     const o = opt || {};
+    if (o.h) w = (o.h * s.w) / s.h;
+    const h = (w * s.h) / s.w;
     ctx.save();
     if (o.alpha != null) ctx.globalAlpha = o.alpha;
+    ctx.imageSmoothingQuality = 'high';
     ctx.translate(cx, cy);
     if (o.rot) ctx.rotate(o.rot);
     if (o.flip) ctx.scale(-1, 1);
     if (o.sy) ctx.scale(1, o.sy);
     ctx.drawImage(s.canvas, -w / 2, -h / 2, w, h);
     ctx.restore();
+  };
+
+  // 画站在地上的角色：脚底落在 (x, footY)，高度 h；返回画出的宽高，方便摆名字和徽标
+  E.drawStanding = function (ctx, name, x, footY, h, opt) {
+    const s = E.spr[name];
+    if (!s) return { w: 0, h: 0 };
+    const w = (h * s.w) / s.h;
+    E.drawSprite(ctx, name, x, footY - h / 2, w, opt);
+    return { w, h };
   };
 
   /* ---------------- 碰撞：圆 vs 矩形 ---------------- */

@@ -1,0 +1,54 @@
+"""
+把 sprites/ 里切好的原尺寸素材按用途缩放后输出到 ../assets/px/，供游戏加载。
+用法：python3 build_px.py
+缩放目标 ≈ 游戏里的绘制尺寸 × 3（适配 3 倍屏），原图更小的不放大。
+"""
+import os
+from PIL import Image
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+SRC = os.path.join(ROOT, 'sprites')
+OUT = os.path.join(ROOT, '..', 'assets', 'px')
+
+# 按前缀决定「最长边」上限（像素）
+LIMITS = [
+    (('player_', 'pm_', 'tester_', 'designer_', 'veteran_', 'intern_'), 230),  # 同事：游戏里约 64–70px 高
+    (('boss_desk',), 640),                                                   # 老板桌（要排在 boss_ 前面）
+    (('boss_', 'director_'), 300),                                           # 领导：约 84–96px 高
+    (('wok',), 150),                                                         # 锅：约 32–48px
+    (('fx_',), 120),                                                         # 特效
+    (('ui_',), 96),                                                          # 状态栏图标
+    (('desk', 'meeting_table', 'tea_counter', 'sofa', 'whiteboard', 'cabinet'), 720),
+    (('cooler', 'printer', 'plant'), 300),
+]
+
+
+def limit_of(name):
+    """找出素材名对应的最长边上限。"""
+    for prefixes, lim in LIMITS:
+        if name.startswith(prefixes):
+            return lim
+    return 400
+
+
+def main():
+    os.makedirs(OUT, exist_ok=True)
+    total = 0
+    for fn in sorted(os.listdir(SRC)):
+        if not fn.endswith('.png'):
+            continue
+        im = Image.open(os.path.join(SRC, fn)).convert('RGBA')
+        lim = limit_of(fn[:-4])
+        k = min(1.0, lim / max(im.size))
+        if k < 1:
+            # 缩小用 BOX 取平均，像素块边缘比 LANCZOS 更干净、不出振铃
+            im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.BOX)
+        path = os.path.join(OUT, fn)
+        im.save(path, optimize=True)
+        total += os.path.getsize(path)
+        print(f'{fn:22s} {im.width}×{im.height}')
+    print(f'合计 {total / 1024:.0f} KB')
+
+
+if __name__ == '__main__':
+    main()

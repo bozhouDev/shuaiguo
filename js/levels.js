@@ -18,9 +18,9 @@
 
     // 房间地面（纯视觉）
     rooms: [
-      { name: '会议室', x: 0, y: 0, w: 424, h: 264, floor: '#D9CBB0' },
-      { name: '老板办公室', x: 600, y: 0, w: 360, h: 264, floor: '#D6CBE3' },
-      { name: '茶水间', x: 0, y: 1216, w: 300, h: 224, floor: '#CFE5D6' },
+      { name: '会议室', x: 0, y: 0, w: 424, h: 264, tile: 'wood' },
+      { name: '老板办公室', x: 600, y: 0, w: 360, h: 264, tile: 'lilac' },
+      { name: '茶水间', x: 0, y: 1216, w: 300, h: 224, tile: 'mint' },
     ],
 
     // 墙体（碰撞），每个房间都留了门
@@ -32,15 +32,19 @@
 
     // 摆设：sprite 为素材名，x/y 为左上角，w 为绘制宽度；hit 为碰撞框（没有则可穿过）
     props: [
-      { sprite: 'meeting_table', x: 60, y: 60, w: 300, hit: { x: 92, y: 90, w: 260, h: 90 } },
-      { sprite: 'boss_desk', x: 700, y: 70, w: 220, hit: { x: 706, y: 100, w: 204, h: 84 } },
+      { sprite: 'meeting_table', x: 70, y: 40, w: 280, hit: { x: 100, y: 70, w: 220, h: 110 } },
+      { sprite: 'whiteboard', x: 330, y: 24, w: 70 },
+      { sprite: 'boss_desk', x: 715, y: 40, w: 200, hit: { x: 720, y: 80, w: 190, h: 100 } },
+      { sprite: 'cabinet', x: 626, y: 30, w: 64, hit: { x: 626, y: 30, w: 64, h: 60 } },
       ...desks,
       { sprite: 'printer', x: 840, y: 1250, w: 96, hit: { x: 844, y: 1264, w: 88, h: 60 } },
-      { sprite: 'cooler', x: 30, y: 1290, w: 64, hit: { x: 40, y: 1322, w: 44, h: 48 } },
+      { sprite: 'cooler', x: 30, y: 1260, w: 52, hit: { x: 34, y: 1290, w: 44, h: 60 } },
+      { sprite: 'tea_counter', x: 100, y: 1236, w: 120, hit: { x: 104, y: 1240, w: 112, h: 50 } },
+      { sprite: 'sofa', x: 110, y: 1374, w: 110 },
       { sprite: 'plant', x: 480, y: 30, w: 64 },
       { sprite: 'plant', x: 900, y: 1380, w: 56 },
-      { sprite: 'plant', x: 220, y: 1380, w: 56 },
-      { sprite: 'plant', x: 446, y: 1180, w: 50 },
+      { sprite: 'plant_small', x: 236, y: 1384, w: 44 },
+      { sprite: 'plant_small', x: 452, y: 1180, w: 44 },
     ],
 
     // 会喷锅的地点（锅不会凭空出现，一定从这些地方或领导手里飞出来）

@@ -1,0 +1,126 @@
+"""
+把 sheets/ 下的洋红底素材表抠图并切成单张透明 PNG，输出到 sprites/。
+用法：python3 cut_sheets.py
+做法：洋红判定为背景 → 按行投影切行 → 每行按列投影切格 → 裁到紧贴边界。
+"""
+import os
+import sys
+import numpy as np
+from PIL import Image
+
+ROOT = os.path.dirname(os.path.abspath(__file__))
+SHEETS = os.path.join(ROOT, 'sheets')
+OUT = os.path.join(ROOT, 'sprites')
+
+# 每张素材表里的素材名，按「从上到下、从左到右」的顺序
+NAMES = {
+    's1_player': ['player_normal', 'player_panic', 'player_crushed', 'player_win'],
+    's2_pm_tester': ['pm_normal', 'pm_hit', 'pm_angry', 'pm_flat',
+                     'tester_normal', 'tester_hit', 'tester_angry', 'tester_flat'],
+    's3_designer_veteran': ['designer_normal', 'designer_hit', 'designer_angry', 'designer_flat',
+                            'veteran_normal', 'veteran_tea', 'veteran_hit', 'veteran_flat'],
+    's4_intern_director': ['intern_normal', 'intern_cry', 'intern_hit', 'intern_flat',
+                           'director_walk', 'director_aim', 'director_chase', 'director_idle'],
+    's5_boss_items': ['boss_walk', 'boss_aim', 'boss_chase', 'boss_idle',
+                      'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact'],
+    's6_props': ['desk', 'meeting_table', 'boss_desk', 'cooler', 'printer', 'plant', 'plant_small',
+                 'cabinet', 'whiteboard', 'tea_counter', 'sofa'],
+    's7_ui': ['ui_clock', 'ui_wok', 'ui_crown', 'ui_star', 'ui_star_empty',
+              'ui_pause', 'ui_sound_on', 'ui_sound_off', 'ui_warning', 'ui_exit'],
+}
+
+# 每张表每行有几个素材（用于在每行里挑最宽的几道空隙切开）
+ROWS = {
+    's1_player': [4], 's2_pm_tester': [4, 4], 's3_designer_veteran': [4, 4],
+    's4_intern_director': [4, 4], 's5_boss_items': [4, 7], 's6_props': [3, 4, 4], 's7_ui': [5, 5],
+}
+
+# 自动切不准的行，手工给出列边界（原图像素坐标）：(表名, 第几行) → [(x0, x1), ...]
+# s5 第 2 行：泪水两股之间的空隙比「锅」和「飞行锅」之间还宽，按空隙切会错位
+COL_OVERRIDE = {
+    ('s5_boss_items', 1): [(0, 235), (235, 515), (515, 690), (690, 915), (915, 1090), (1090, 1300), (1300, 1536)],
+}
+
+ROW_GAP = 16   # 行与行之间至少多少像素空白才算分行
+MIN_SIZE = 24  # 小于这个尺寸的碎块当噪点丢掉
+
+
+def key_magenta(rgb):
+    """返回不透明度蒙版：洋红及其抗锯齿描边视为背景。"""
+    r, g, b = [rgb[..., i].astype(np.int32) for i in range(3)]
+    lo = np.minimum(r, b)
+    # 洋红：红、蓝都高，绿明显低于两者（紫色衣服的绿通道较高，不会被误抠）
+    bg = (r > 140) & (b > 140) & (g < lo * 0.45)
+    return ~bg
+
+
+def runs(profile, gap):
+    """把一维投影中非零的连续区间找出来，间隔小于 gap 的空白会被合并。"""
+    idx = np.flatnonzero(profile)
+    if idx.size == 0:
+        return []
+    spans, start, prev = [], idx[0], idx[0]
+    for i in idx[1:]:
+        if i - prev > gap:
+            spans.append((start, prev + 1))
+            start = i
+        prev = i
+    spans.append((start, prev + 1))
+    return [s for s in spans if s[1] - s[0] >= MIN_SIZE]
+
+
+def split_cols(profile, k):
+    """在一行的列投影里挑出最宽的 k-1 道空白切开，返回 k 个 (x0, x1)。"""
+    idx = np.flatnonzero(profile)
+    gaps = []  # (宽度, 起点, 终点)
+    for a, b in zip(idx[:-1], idx[1:]):
+        if b - a > 1:
+            gaps.append((b - a - 1, a + 1, b))
+    if len(gaps) < k - 1:
+        return None
+    cuts = sorted(sorted(gaps, reverse=True)[:k - 1], key=lambda g: g[1])
+    bounds, start = [], idx[0]
+    for _, g0, g1 in cuts:
+        bounds.append((start, g0))
+        start = g1
+    bounds.append((start, idx[-1] + 1))
+    return bounds
+
+
+def cut(sheet):
+    """切一张素材表，返回 [(名字, RGBA 图)]；数量对不上时报错。"""
+    img = Image.open(os.path.join(SHEETS, sheet + '.png')).convert('RGB')
+    rgb = np.array(img)
+    mask = key_magenta(rgb)
+    rgba = np.dstack([rgb, (mask * 255).astype(np.uint8)])
+    pieces = []
+    rows = runs(mask.any(axis=1), ROW_GAP)
+    if len(rows) != len(ROWS[sheet]):
+        raise SystemExit(f'{sheet}: 切出 {len(rows)} 行，预期 {len(ROWS[sheet])} 行')
+    for r, ((y0, y1), k) in enumerate(zip(rows, ROWS[sheet])):
+        row = mask[y0:y1]
+        cols = COL_OVERRIDE.get((sheet, r)) or split_cols(row.any(axis=0), k)
+        if cols is None:
+            raise SystemExit(f'{sheet}: 第 {len(pieces) + 1} 块所在行素材粘连，切不开')
+        for x0, x1 in cols:
+            # 裁到紧贴素材的边界
+            cell = mask[y0:y1, x0:x1]
+            ys, xs = np.flatnonzero(cell.any(axis=1)), np.flatnonzero(cell.any(axis=0))
+            pieces.append(rgba[y0 + ys[0]:y0 + ys[-1] + 1, x0 + xs[0]:x0 + xs[-1] + 1])
+    names = NAMES[sheet]
+    if len(pieces) != len(names):
+        raise SystemExit(f'{sheet}: 切出 {len(pieces)} 块，预期 {len(names)} 块，需要调 ROWS/COL_OVERRIDE 或重出图')
+    return [(n, Image.fromarray(p, 'RGBA')) for n, p in zip(names, pieces)]
+
+
+def main():
+    os.makedirs(OUT, exist_ok=True)
+    sheets = sys.argv[1:] or list(NAMES)
+    for sheet in sheets:
+        for name, im in cut(sheet):
+            im.save(os.path.join(OUT, name + '.png'))
+            print(f'{sheet:22s} → {name:16s} {im.width}×{im.height}')
+
+
+if __name__ == '__main__':
+    main()

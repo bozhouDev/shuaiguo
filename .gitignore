@@ -2,3 +2,5 @@
 .DS_Store
 # v1 旧代码备份，不进仓库
 _backup_v1/
+# 像素素材切图中间产物（可由 assets_pixel/cut_sheets.py 重新生成）
+assets_pixel/sprites/
