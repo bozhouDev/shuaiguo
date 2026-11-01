@@ -1121,6 +1121,7 @@
   // 走路动画：每帧按位移更新朝向（d 朝下 / u 朝上 / s 侧面，往左走时镜像）和步伐
   // o 上挂 walk 记录；返回 { name 当前帧贴图, flip, dir, walking }，素材缺失时返回 null
   const STEP_PX = 13;  // 每走多少像素换一帧
+  const STAND_FRAME = 3; // 站着不动时显示的走路帧序号
   function walkFrame(o, base, x, y) {
     const w = o.walk || (o.walk = { x, y, vx: 0, vy: 0, dir: 'd', flip: false, dist: 0, still: 99 });
     const dx = x - w.x, dy = y - w.y, d = Math.hypot(dx, dy);
@@ -1133,8 +1134,11 @@
       else if (w.dir !== 's') w.dir = w.vy > 0 ? 'd' : 'u';
       if (w.dir === 's') w.flip = w.vx < 0;
     } else w.still++;
-    const walking = w.still <= 6;
-    const name = `${base}_walk_${w.dir}${walking ? Math.floor(w.dist / STEP_PX) % 4 : 1}`; // 停下时用双脚并拢那帧
+    // 连续 2 帧没动就算停下（只留 1 帧容错，防止偶尔一帧位移太小时闪成站姿）
+    const walking = w.still < 2;
+    if (!walking) w.dist = 0; // 停下后步伐归零，再起步时直接从迈步那帧开始，反应更跟手
+    // 停下时用站姿那帧：第 3 帧两脚都着地、并拢站着（第 1 帧侧面是后脚抬起的迈步姿势，看着像还在走）
+    const name = `${base}_walk_${w.dir}${walking ? Math.floor(w.dist / STEP_PX) % 4 : STAND_FRAME}`;
     return E.spr[name] ? { name, flip: w.flip, dir: w.dir, walking } : null;
   }
   // 按状态挑同事 / 玩家的贴图：被砸、喝茶、压垮等用专门的正面姿势，其余时候播走路动画
