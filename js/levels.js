@@ -7,11 +7,19 @@
 (function () {
   'use strict';
 
-  // 工位网格：3 列 × 4 行，过道宽约 80px
+  // 工位网格：3 列 × 4 行；每格 240 宽，工位按格子中心缩到 DESK_SCALE，过道随之变宽（缩 85% 后约 116px）
   const DESK_COLS = [40, 360, 680];
   const DESK_ROWS = [340, 560, 780, 1000];
+  const DESK_SCALE = 0.85;
+  const DESK_CELL_W = 240, DESK_CELL_H = 158;          // 原尺寸：绘制宽 240，按素材比例高约 158
   const desks = [];
-  for (const y of DESK_ROWS) for (const x of DESK_COLS) desks.push({ sprite: 'desk', x, y, w: 240, hit: { x: x + 6, y: y + 6, w: 228, h: 80 } });
+  for (const y0 of DESK_ROWS) for (const x0 of DESK_COLS) {
+    const w = Math.round(DESK_CELL_W * DESK_SCALE);
+    const x = x0 + (DESK_CELL_W - w) / 2, y = y0 + Math.round(DESK_CELL_H * (1 - DESK_SCALE) / 2);
+    // 碰撞框只挡桌面那一截（椅子那半截能走过去），同样按比例缩
+    const k = DESK_SCALE;
+    desks.push({ sprite: 'desk', x, y, w, hit: { x: x + Math.round(6 * k), y: y + Math.round(6 * k), w: Math.round(228 * k), h: Math.round(80 * k) } });
+  }
 
   window.OFFICE = {
     world: { w: 960, h: 1440 },

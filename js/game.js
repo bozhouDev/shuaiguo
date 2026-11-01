@@ -118,7 +118,7 @@
   // 创建一个打工人（玩家或机器人同事共用这一个结构）
   function makeAgent(id, key, x, y, isPlayer) {
     const p = PERSONAS[key];
-    const sn = new E.Snake(x, y, { speed: BASE_SPEED * p.speed, turn: p.turn, spacing: 26 });
+    const sn = new E.Snake(x, y, { speed: BASE_SPEED * p.speed, turn: p.turn, spacing: 22 }); // 锅缩小后尾巴间距同步收紧
     sn.angle = isPlayer ? 0 : E.rand(0, Math.PI * 2);
     for (let i = 0; i < L.startPots; i++) sn.segs.push(E.pick(OFFICE.potLabels));
     return {
@@ -946,7 +946,9 @@
   /* ---------------- 绘制 ---------------- */
   // 画一口锅：像素锅（带手柄，所以整体放大 WOK_K 倍）+ 便利贴上的字
   const WOK_K = 1.25;
+  const POT_SCALE = 0.8; // 所有锅（背着的、飞着的、P0）统一缩放；只影响画面，不影响判定
   function drawWok(x, y, label, size, rot, alpha) {
+    size *= POT_SCALE;
     const w = size * WOK_K, h = w * (E.spr.wok ? E.spr.wok.h / E.spr.wok.w : 1);
     E.drawSprite(ctx, 'wok', x, y, w, { rot, alpha });
     if (!label) return;
