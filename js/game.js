@@ -1297,12 +1297,13 @@
     ctx.restore();
 
     // 屏幕外提示：领导、P0、冲你来的同事、可甩锅的同事
-    for (const l of S.leaders) E.edgeHint(ctx, st, l.x - camX, l.y - camY, l.cfg.emoji, '#E8504A');
+    // 角标用各人自己的像素头像；圈的颜色表示状态（红 = 领导 / 冲你来，绿 = 能甩给他，灰 = 刚接锅甩不了）
+    for (const l of S.leaders) E.edgeHint(ctx, st, l.x - camX, l.y - camY, { sprite: `${l.cfg.sprite}_idle` }, '#E8504A');
     for (const b of S.bots) {
       if (b.crushed) continue;
       const hunting = b.target === P && potsOf(b) > 0;
       const color = hunting ? '#E8504A' : canThrowTo(P, b) ? '#2F9E6B' : '#9AA6C4';
-      E.edgeHint(ctx, st, b.sn.x - camX, b.sn.y - camY, hunting ? '💢' : '🙋', color);
+      E.edgeHint(ctx, st, b.sn.x - camX, b.sn.y - camY, { sprite: `${b.p.sprite}_normal` }, color, hunting ? 'fx_anger' : null);
     }
     if (S.hot && !S.hot.holder.isPlayer) E.edgeHint(ctx, st, S.hot.holder.sn.x - camX, S.hot.holder.sn.y - camY, '🔥', '#E8504A');
     E.drawStick(ctx, inp);

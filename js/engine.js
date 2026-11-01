@@ -225,8 +225,9 @@
     ctx.closePath();
   };
   // 目标在屏幕外时，在屏幕边缘画方向提示
-  E.edgeHint = function (ctx, st, sx, sy, emo, color) {
-    const m = 34, top = 70;
+  // icon：{ sprite } 画该素材裁出的像素头像，或字符串画 emoji；color 圆圈和箭头颜色；badge 右上角小徽标素材（可选）
+  E.edgeHint = function (ctx, st, sx, sy, icon, color, badge) {
+    const m = 36, top = 70, R = 21;
     if (sx > 0 && sx < st.w && sy > top && sy < st.h) return;
     const cx = st.w / 2, cy = (st.h + top) / 2;
     const a = Math.atan2(sy - cy, sx - cx);
@@ -236,11 +237,47 @@
     ctx.save();
     ctx.fillStyle = color;
     ctx.translate(x, y);
-    ctx.beginPath(); ctx.arc(0, 0, 17, 0, Math.PI * 2); ctx.fill();
+    // 指向箭头 + 状态色圆圈
+    ctx.save();
     ctx.rotate(a);
-    ctx.beginPath(); ctx.moveTo(26, 0); ctx.lineTo(15, -8); ctx.lineTo(15, 8); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(R + 11, 0); ctx.lineTo(R - 2, -9); ctx.lineTo(R - 2, 9); ctx.closePath(); ctx.fill();
     ctx.restore();
-    E.emoji(ctx, emo, x, y, 18);
+    ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
+    const head = typeof icon === 'string' ? null : E.headCrop(icon.sprite);
+    if (head) {
+      // 像素头像：浅色底 + 圆形裁切，不做平滑保留像素感
+      ctx.fillStyle = '#FFF8E7';
+      ctx.beginPath(); ctx.arc(0, 0, R - 3, 0, Math.PI * 2); ctx.fill();
+      ctx.save();
+      ctx.clip();
+      ctx.imageSmoothingEnabled = false;
+      const d = (R - 3) * 2.15;            // 头像略大于圆，裁掉边角留白
+      ctx.drawImage(head.canvas, head.sx, head.sy, head.size, head.size, -d / 2, -d / 2 + 2, d, d);
+      ctx.restore();
+    }
+    ctx.restore();
+    if (!head) E.emoji(ctx, typeof icon === 'string' ? icon : '❓', x, y, 18);
+    // 右上角小徽标（如冲你来时的怒气）
+    if (badge) E.drawSprite(ctx, badge, x + R * 0.75, y - R * 0.75, 20);
+  };
+
+  // 从全身像素图裁出头像区域（缓存）：取上部较窄的一段算头的水平中心，裁一个正方形
+  const headCache = {};
+  E.headCrop = function (name) {
+    if (headCache[name] !== undefined) return headCache[name];
+    const s = E.spr[name];
+    if (!s) return null;                    // 素材还没加载好，下次再算
+    const c = s.canvas, W = c.width, H = c.height;
+    let sumX = 0, n = 0;
+    try {
+      const data = c.getContext('2d').getImageData(0, 0, W, Math.round(H * 0.3)).data;
+      for (let i = 3; i < data.length; i += 4) if (data[i] > 128) { sumX += ((i - 3) / 4) % W; n++; }
+    } catch (e) { /* 读不到像素（跨域等）就用图片中心 */ }
+    const size = Math.min(W, Math.round(H * 0.46));   // 头大约占全身上部 45%
+    const hx = n ? sumX / n : W / 2;
+    const sx = Math.max(0, Math.min(W - size, Math.round(hx - size / 2)));
+    headCache[name] = { canvas: c, sx, sy: 0, size };
+    return headCache[name];
   };
 
   /* ---------------- 飘字特效 ---------------- */
