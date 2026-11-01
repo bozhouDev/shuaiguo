@@ -1695,23 +1695,12 @@
   }
 
   /* ---------------- 大厅 ---------------- */
-  // 大厅是盖在画布上的一层 DOM（#lobby）：像素背景 + 主角待机 + 同事路过 + 关卡日历 + 按钮
-  // 大厅期间画布不重绘（见主循环），只更新这里的几个小人
+  // 大厅是盖在画布上的一层 DOM（#lobby）：像素门厅背景 + 标题 + 主角（头顶三口锅）和两边的同事 + 关卡日历 + 去上班
+  // 布局按用户给的图稿；小人和锅的待机动画全用 CSS，大厅期间画布不重绘（见主循环）
   const LOBBY_LINES = ['这锅不是我的', '这个你来跟一下', '我就路过一下', '收到，马上甩', '先对齐一下口径', '谁提的需求谁负责'];
-  const lobby = { el: document.getElementById('lobby'), walkers: [], heroT: 0, line: -1 };
+  const lobby = { el: document.getElementById('lobby'), heroT: 0, line: -1 };
 
-  // 路过的同事：who 角色名，y 站位（占大厅高度比例），speed 像素/秒，woks 身后拖着几口锅
-  function makeWalker(who, y, x, dir, speed, woks) {
-    const el = document.createElement('div');
-    el.className = 'lb-walker';
-    el.style.top = `${y * 100}%`;
-    // 身后的锅先放进去，人最后放，保证人盖在锅上面
-    el.innerHTML = Array.from({ length: woks }, (_, i) => `<img class="lb-wok" src="${E.pxUrl('wok')}" alt="" style="--i:${i + 1}">`).join('') +
-      `<img class="lb-body" src="${E.pxUrl(`${who}_walk_s0`)}" alt="">`;
-    return { el, body: el.querySelector('.lb-body'), who, x, dir, speed, woks, dist: 0, frame: 0 };
-  }
-
-  // 显示大厅：重画关卡日历和按钮，摆好路过的同事
+  // 显示大厅：按当前进度重画工牌星数、关卡日历和当前关
   function showLobby() {
     mode = 'lobby';
     E.bgm(true);
@@ -1721,37 +1710,48 @@
     document.getElementById('hud').hidden = true;
     const prog = loadProgress();
     const stars = LEVELS.reduce((sum, lv) => sum + ((prog.best[lv.id] && prog.best[lv.id].stars) || 0), 0);
-    // 关卡日历：每关一页，锁住的显示锁；点一页就把它设成当前关
+    // 关卡日历：每关一页，锁住的显示锁；当前关是深蓝金边，顶上挂「当前」标签、外侧冒光；点一页就切到那一关
     const days = LEVELS.map((lv) => {
       const locked = lv.id > prog.unlocked;
       const b = prog.best[lv.id];
       const got = b ? b.stars : 0;
+      const on = lv === L;
       const starImgs = [1, 2, 3].map((i) => `<img src="${E.pxUrl(`ui_${i <= got ? 'star' : 'star_empty'}`)}" alt="">`).join('');
-      return `<button class="lb-day${lv === L ? ' on' : ''}" data-act="pick" data-id="${lv.id}" ${locked ? 'disabled' : ''} aria-label="第 ${lv.id} 关 ${lv.name}">
-        <b><img class="ico" src="${E.pxUrl('ui_calendar')}" alt="">${lv.name.split('·')[0].trim()}</b>
+      return `<button class="lb-day${on ? ' on' : ''}" data-act="pick" data-id="${lv.id}" ${locked ? 'disabled' : ''} aria-label="第 ${lv.id} 关 ${lv.name}">
+        ${on ? '<em class="lb-tag">当前</em><i class="lb-spk"></i><i class="lb-spk"></i><i class="lb-spk"></i>' : ''}
+        <b><img src="${E.pxUrl('ui_calendar')}" alt="">${lv.name.split('·')[0].trim()}</b>
         <span>${locked ? `<img class="lb-lock" src="${E.pxUrl('ui_lock')}" alt="未解锁">` : starImgs}</span></button>`;
     }).join('');
+    const wok = E.pxUrl('wok');
     lobby.el.innerHTML = `
       <div class="lb-top">
         <span class="chip"><img class="ico" src="${E.pxUrl('ui_badge')}" alt="">工牌 <b>${stars}</b>/${LEVELS.length * 3}<img class="ico lb-star" src="${E.pxUrl('ui_star')}" alt="星"></span>
         <button class="chip" type="button" data-act="settings" aria-label="设置">${pxIcon('gear')}</button>
       </div>
-      <div class="lb-title"><h1>甩锅侠</h1><p>今天这锅，反正不是我的</p></div>
+      <div class="lb-title">
+        <h1 class="rays"><i></i><i></i><i></i><i></i><i></i><i></i>甩锅侠</h1>
+        <p>今天这锅，反正不是我的</p>
+      </div>
       <div class="lb-floor">
-        <button class="lb-hero" type="button" data-act="hero" aria-label="主角">
-          <span class="lb-say" hidden></span>
-          <img src="${E.pxUrl('player_normal')}" alt="">
-        </button>
+        <div class="lb-crew">
+          <div class="lb-woks">
+            <img src="${wok}" alt=""><img src="${wok}" alt=""><img src="${wok}" alt="">
+            <i></i><i></i><i></i><i></i>
+          </div>
+          <div class="lb-mate left"><img src="${E.pxUrl('intern_walk_s1')}" alt=""><b class="lb-whoosh"></b></div>
+          <div class="lb-mate right"><img src="${E.pxUrl('veteran_walk_s1')}" alt=""><b class="lb-whoosh"></b></div>
+          <button class="lb-hero" type="button" data-act="hero" aria-label="主角">
+            <span class="lb-say" hidden></span>
+            <img src="${E.pxUrl('player_normal')}" alt="">
+          </button>
+        </div>
       </div>
       <div class="lb-menu">
         <div class="lb-days">${days}</div>
-        <button class="btn" data-act="go">去上班<small>第 ${L.id} 关 · ${L.name}</small></button>
-        <button class="btn ghost" data-act="rules"><img class="ico" src="${E.pxUrl('ui_book')}" alt="">玩法</button>
+        <p class="lb-cur"><span>第 ${L.id} 关 · ${L.name}</span></p>
+        <button class="lb-go" type="button" data-act="go"><img src="${E.pxUrl('ui_badge')}" alt=""><span>去上班</span><i></i></button>
+        <button class="lb-rules" type="button" data-act="rules"><img src="${E.pxUrl('ui_book')}" alt="">玩法</button>
       </div>`;
-    // 两个路过的同事：实习生身后拖着三口锅，老油条空手溜达（幸灾乐祸的对照）
-    const floor = lobby.el.querySelector('.lb-floor');
-    lobby.walkers = [makeWalker('intern', 0.08, 0.15, 1, 38, 3), makeWalker('veteran', 0.52, 0.85, -1, 26, 0)];
-    for (const w of lobby.walkers) floor.prepend(w.el);
     lobby.heroT = 0;
     lobby.el.hidden = false;
   }
@@ -1759,25 +1759,11 @@
   // 离开大厅（进关卡介绍 / 开局时调用）
   function hideLobby() {
     lobby.el.hidden = true;
-    lobby.walkers = [];
     document.getElementById('hud').hidden = false;
   }
 
-  // 每帧更新大厅：同事左右来回走（按走过的距离换帧，和游戏里一致），主角说完话恢复站姿
+  // 每帧更新大厅：主角说完台词后恢复站姿（其余待机动画都是 CSS）
   function updateLobby(dt) {
-    const fw = lobby.el.clientWidth || 1;
-    for (const w of lobby.walkers) {
-      w.x += (w.dir * w.speed * dt) / fw;
-      w.dist += w.speed * dt;
-      // 走到两侧边缘就掉头；身后拖着锅的要多留出锅串的长度，掉头前锅不出屏
-      const m = (30 + w.woks * 24) / fw;
-      if (w.x > 1 - m) { w.x = 1 - m; w.dir = -1; }
-      if (w.x < m) { w.x = m; w.dir = 1; }
-      const f = Math.floor(w.dist / 13) % 4;
-      if (f !== w.frame) { w.frame = f; w.body.src = E.pxUrl(`${w.who}_walk_s${f}`); }
-      w.el.style.left = `${w.x * 100}%`;
-      w.el.style.setProperty('--dir', w.dir); // 往左走用侧面帧镜像
-    }
     if (lobby.heroT > 0) {
       lobby.heroT -= dt;
       if (lobby.heroT <= 0) {
