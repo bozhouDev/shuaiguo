@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="88" viewBox="0 0 64 88">
+  <!-- 饮水机 -->
+  <ellipse cx="32" cy="82" rx="26" ry="5" fill="#1F2A44" opacity=".16"/>
+  <path d="M18 6 L46 6 L48 34 L16 34 Z" fill="#9FD3F2" stroke="#1F2A44" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M22 12 L24 30" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+  <rect x="10" y="32" width="44" height="48" rx="6" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5"/>
+  <rect x="18" y="44" width="10" height="8" rx="2" fill="#E8504A" stroke="#1F2A44" stroke-width="2.5"/>
+  <rect x="36" y="44" width="10" height="8" rx="2" fill="#3A6FD8" stroke="#1F2A44" stroke-width="2.5"/>
+  <rect x="16" y="60" width="32" height="6" rx="2" fill="#C9D1DA" stroke="#1F2A44" stroke-width="2"/>
+</svg>

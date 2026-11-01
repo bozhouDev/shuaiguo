@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 产品经理：丸子头、圆框眼镜、紫色西装 -->
+  <ellipse cx="64" cy="120" rx="34" ry="6" fill="#1F2A44" opacity=".18"/>
+  <path d="M24 122 C26 98 42 90 64 90 C86 90 102 98 104 122 Z" fill="#B79CE8" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M52 91 L64 108 L76 91 Z" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5" stroke-linejoin="round"/>
+  <circle cx="64" cy="14" r="13" fill="#3B2A2A" stroke="#1F2A44" stroke-width="4"/>
+  <circle cx="64" cy="54" r="36" fill="#FFE2C6" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M28 54 C24 30 42 20 64 20 C86 20 104 30 100 54 C96 42 90 36 80 34 C70 40 50 40 40 36 C34 40 30 46 28 54 Z" fill="#3B2A2A" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <circle cx="50" cy="60" r="10" fill="none" stroke="#1F2A44" stroke-width="3.5"/>
+  <circle cx="78" cy="60" r="10" fill="none" stroke="#1F2A44" stroke-width="3.5"/>
+  <path d="M60 60 L68 60" stroke="#1F2A44" stroke-width="3.5"/>
+  <circle cx="50" cy="61" r="3" fill="#1F2A44"/>
+  <circle cx="78" cy="61" r="3" fill="#1F2A44"/>
+  <path d="M54 78 Q64 84 74 78" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="38" cy="72" rx="5" ry="3" fill="#F59A8C" opacity=".6"/>
+  <ellipse cx="90" cy="72" rx="5" ry="3" fill="#F59A8C" opacity=".6"/>
+</svg>

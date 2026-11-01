@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <!-- 生气符号 💢 -->
+  <g fill="none" stroke="#E8504A" stroke-width="6" stroke-linecap="round">
+    <path d="M8 18 Q18 18 18 8"/><path d="M30 8 Q30 18 40 18"/>
+    <path d="M40 30 Q30 30 30 40"/><path d="M18 40 Q18 30 8 30"/>
+  </g>
+</svg>

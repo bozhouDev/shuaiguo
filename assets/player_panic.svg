@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 打工人·慌张：锅背多了 -->
+  <ellipse cx="64" cy="118" rx="32" ry="6" fill="#1F2A44" opacity=".18"/>
+  <path d="M46 90 L58 110 M82 90 L70 110" stroke="#3A6FD8" stroke-width="5" stroke-linecap="round"/>
+  <rect x="53" y="104" width="22" height="17" rx="3" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5"/>
+  <rect x="57" y="108" width="7" height="8" rx="1.5" fill="#3A6FD8"/>
+  <circle cx="64" cy="56" r="40" fill="#FFDDBE" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M25 52 C22 24 42 12 64 12 C88 12 106 26 103 52 C96 40 86 34 74 34 C70 40 58 42 46 38 C38 40 30 44 25 52 Z" fill="#2A3350" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <circle cx="49" cy="58" r="9" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5"/>
+  <circle cx="79" cy="58" r="9" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5"/>
+  <circle cx="49" cy="58" r="3" fill="#1F2A44"/>
+  <circle cx="79" cy="58" r="3" fill="#1F2A44"/>
+  <path d="M38 44 L54 48 M74 48 L90 44" stroke="#1F2A44" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M50 80 Q55 74 60 80 Q65 86 70 80 Q75 74 80 80" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M100 30 C106 42 106 50 100 54 C94 50 94 42 100 30 Z" fill="#7CC8F2" stroke="#1F2A44" stroke-width="3"/>
+  <path d="M22 60 C26 68 26 74 22 76 C18 74 18 68 22 60 Z" fill="#7CC8F2" stroke="#1F2A44" stroke-width="2.5"/>
+</svg>

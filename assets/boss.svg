@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 老板：油头、墨镜、深蓝西装、红领带 -->
+  <ellipse cx="64" cy="122" rx="40" ry="6" fill="#1F2A44" opacity=".22"/>
+  <path d="M16 124 C18 96 38 86 64 86 C90 86 110 96 112 124 Z" fill="#2A3350" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M50 87 L64 104 L78 87 Z" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M60 94 L64 92 L68 94 L66 120 L64 124 L62 120 Z" fill="#E8504A" stroke="#1F2A44" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M38 92 L50 87 L58 112 Z M90 92 L78 87 L70 112 Z" fill="#3B4670" stroke="#1F2A44" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="64" cy="52" r="38" fill="#F7CFA6" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M26 50 C22 22 44 10 66 10 C90 10 106 24 102 48 C94 34 80 26 62 28 C46 30 34 38 26 50 Z" fill="#141A2C" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M46 20 Q66 12 88 22" stroke="#5B6A94" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M34 50 L94 50 L92 60 C90 68 76 68 72 60 L68 54 L60 54 L56 60 C52 68 38 68 36 60 Z" fill="#141A2C" stroke="#1F2A44" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M40 55 L48 55" stroke="#5B6A94" stroke-width="3" stroke-linecap="round"/>
+  <path d="M48 76 Q64 70 80 76 L76 80 Q64 76 52 80 Z" fill="#141A2C"/>
+  <path d="M54 84 Q66 90 78 82" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+</svg>

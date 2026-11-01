@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 老油条：地中海、Polo衫、保温杯、眯眼微笑 -->
+  <ellipse cx="64" cy="120" rx="34" ry="6" fill="#1F2A44" opacity=".18"/>
+  <path d="M22 122 C24 98 42 90 64 90 C86 90 104 98 106 122 Z" fill="#C8B98A" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M54 90 L64 102 L74 90" fill="none" stroke="#1F2A44" stroke-width="3.5" stroke-linejoin="round"/>
+  <circle cx="64" cy="56" r="37" fill="#FFD7B0" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M27 58 C26 46 30 38 36 34 C34 44 34 52 36 60 Z M101 58 C102 46 98 38 92 34 C94 44 94 52 92 60 Z" fill="#9AA0A8" stroke="#1F2A44" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M50 26 Q60 20 72 24" stroke="#FFF3E2" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M42 60 Q49 54 56 60 M72 60 Q79 54 86 60" stroke="#1F2A44" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M40 48 Q48 44 56 48 M72 48 Q80 44 88 48" stroke="#9AA0A8" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M52 72 Q64 68 76 72" stroke="#7A6A5A" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <path d="M52 80 Q64 88 76 80" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="92" y="78" width="20" height="40" rx="5" fill="#C9D1DA" stroke="#1F2A44" stroke-width="4"/>
+  <rect x="90" y="72" width="24" height="10" rx="3" fill="#C0392B" stroke="#1F2A44" stroke-width="3.5"/>
+  <path d="M97 86 L97 110" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity=".8"/>
+</svg>

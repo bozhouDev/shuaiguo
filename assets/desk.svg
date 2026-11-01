@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="132" viewBox="0 0 240 132">
+  <!-- 双人工位（俯视）：桌面碰撞区约为 x6~234, y6~86 -->
+  <rect x="10" y="12" width="228" height="80" rx="9" fill="#1F2A44" opacity=".16"/>
+  <circle cx="62" cy="108" r="17" fill="#5E6A84" stroke="#1F2A44" stroke-width="4"/>
+  <circle cx="178" cy="108" r="17" fill="#5E6A84" stroke="#1F2A44" stroke-width="4"/>
+  <rect x="6" y="6" width="228" height="80" rx="9" fill="#E9D8B8" stroke="#1F2A44" stroke-width="4"/>
+  <path d="M120 8 L120 84" stroke="#C9B48E" stroke-width="3"/>
+  <rect x="30" y="14" width="64" height="32" rx="4" fill="#2B2F36" stroke="#1F2A44" stroke-width="3.5"/>
+  <rect x="35" y="18" width="54" height="23" rx="2" fill="#6FB7E8"/>
+  <path d="M40 24 L70 24 M40 30 L80 30 M40 36 L62 36" stroke="#FFFDF5" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
+  <rect x="146" y="14" width="64" height="32" rx="4" fill="#2B2F36" stroke="#1F2A44" stroke-width="3.5"/>
+  <rect x="151" y="18" width="54" height="23" rx="2" fill="#8FD3A8"/>
+  <path d="M156 24 L186 24 M156 30 L196 30 M156 36 L176 36" stroke="#FFFDF5" stroke-width="2.5" stroke-linecap="round" opacity=".8"/>
+  <rect x="36" y="56" width="52" height="14" rx="3" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3"/>
+  <rect x="152" y="56" width="52" height="14" rx="3" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3"/>
+  <circle cx="104" cy="62" r="7" fill="#E8504A" stroke="#1F2A44" stroke-width="3"/>
+  <rect x="212" y="52" width="16" height="22" rx="2" fill="#FFFDF5" stroke="#1F2A44" stroke-width="2.5" transform="rotate(12 220 63)"/>
+  <rect x="12" y="54" width="14" height="14" rx="2" fill="#FFD84D" stroke="#1F2A44" stroke-width="2.5" transform="rotate(-10 19 61)"/>
+</svg>

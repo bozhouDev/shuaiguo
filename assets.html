@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>甩锅侠素材</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+<style>
+  /* 素材预览：方便逐个检查 SVG */
+  :root { --ink: #1F2A44; --paper: #FFFDF5; --board: #C9D3DD; color-scheme: light; }
+  body { margin: 0; background: var(--board); color: var(--ink); font-family: -apple-system, "PingFang SC", sans-serif; padding: 24px 16px; }
+  h1 { font-family: "ZCOOL KuaiLe", sans-serif; font-weight: 400; margin: 0 0 16px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+  figure { margin: 0; background: var(--paper); border: 3px solid var(--ink); border-radius: 12px; padding: 12px; display: grid; gap: 8px; justify-items: center; }
+  img { max-width: 100%; height: 110px; object-fit: contain; }
+  figcaption { font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>甩锅侠 · SVG 素材</h1>
+<div class="grid" id="grid"></div>
+<script>
+  // 素材清单：文件名 → 中文说明
+  const LIST = {
+    player_normal: '打工人·正常', player_panic: '打工人·慌张', player_crushed: '打工人·压垮', wok: '锅',
+    npc_pm: '产品经理', npc_tester: '测试小王', npc_intern: '实习生', npc_veteran: '老油条', npc_designer: '设计师', boss: '老板', director: '总监',
+    desk: '双人工位', meeting_table: '会议桌', boss_desk: '老板桌', printer: '打印机', cooler: '饮水机',
+    plant: '绿植', fx_anger: '生气特效', fx_tears: '眼泪特效',
+  };
+  // 渲染预览卡片
+  document.getElementById('grid').innerHTML = Object.entries(LIST)
+    .map(([k, v]) => `<figure><img src="assets/${k}.svg" alt="${v}"><figcaption>${v}<br><code>${k}.svg</code></figcaption></figure>`).join('');
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 打工人·正常：得意的甩锅脸 -->
+  <ellipse cx="64" cy="118" rx="32" ry="6" fill="#1F2A44" opacity=".18"/>
+  <path d="M46 90 L58 110 M82 90 L70 110" stroke="#3A6FD8" stroke-width="5" stroke-linecap="round"/>
+  <rect x="53" y="104" width="22" height="17" rx="3" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5"/>
+  <rect x="57" y="108" width="7" height="8" rx="1.5" fill="#3A6FD8"/>
+  <circle cx="64" cy="56" r="40" fill="#FFDDBE" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M25 52 C22 24 42 12 64 12 C88 12 106 26 103 52 C96 40 86 34 74 34 C70 40 58 42 46 38 C38 40 30 44 25 52 Z" fill="#2A3350" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M60 18 C70 16 80 18 88 24" stroke="#5B6A94" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <ellipse cx="40" cy="70" rx="7" ry="4" fill="#F59A8C" opacity=".65"/>
+  <ellipse cx="88" cy="70" rx="7" ry="4" fill="#F59A8C" opacity=".65"/>
+  <path d="M41 58 Q49 51 57 58" stroke="#1F2A44" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M71 58 Q79 51 87 58" stroke="#1F2A44" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+  <path d="M38 48 L54 46 M74 46 L90 48" stroke="#1F2A44" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M52 74 Q66 86 80 72" stroke="#1F2A44" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+</svg>

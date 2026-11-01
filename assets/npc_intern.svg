@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 实习生：绿色卫衣、乱发、紧张的大眼睛 -->
+  <ellipse cx="64" cy="120" rx="34" ry="6" fill="#1F2A44" opacity=".18"/>
+  <path d="M24 122 C26 98 42 90 64 90 C86 90 102 98 104 122 Z" fill="#8FD3A8" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M52 94 L55 110 M76 94 L73 110" stroke="#1F2A44" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="64" cy="54" r="36" fill="#FFE2C6" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M28 50 C26 26 42 16 60 16 L66 6 L72 16 L82 9 L82 20 C96 26 102 38 100 50 C92 38 80 33 66 33 C54 33 40 38 28 50 Z" fill="#8A5A36" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <circle cx="50" cy="58" r="8.5" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5"/>
+  <circle cx="78" cy="58" r="8.5" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5"/>
+  <circle cx="51" cy="59" r="4" fill="#1F2A44"/>
+  <circle cx="79" cy="59" r="4" fill="#1F2A44"/>
+  <ellipse cx="64" cy="76" rx="4" ry="5" fill="#1F2A44"/>
+  <ellipse cx="40" cy="70" rx="6" ry="3.5" fill="#F59A8C" opacity=".6"/>
+  <ellipse cx="88" cy="70" rx="6" ry="3.5" fill="#F59A8C" opacity=".6"/>
+  <path d="M98 34 C103 43 103 49 98 52 C93 49 93 43 98 34 Z" fill="#7CC8F2" stroke="#1F2A44" stroke-width="2.5"/>
+</svg>

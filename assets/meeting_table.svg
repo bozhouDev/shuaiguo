@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="150" viewBox="0 0 300 150">
+  <!-- 会议桌 + 一圈椅子（俯视） -->
+  <g fill="#5E6A84" stroke="#1F2A44" stroke-width="4">
+    <circle cx="70" cy="18" r="14"/><circle cx="130" cy="18" r="14"/><circle cx="190" cy="18" r="14"/><circle cx="250" cy="18" r="14"/>
+    <circle cx="70" cy="132" r="14"/><circle cx="130" cy="132" r="14"/><circle cx="190" cy="132" r="14"/><circle cx="250" cy="132" r="14"/>
+    <circle cx="18" cy="75" r="14"/>
+  </g>
+  <rect x="32" y="30" width="260" height="90" rx="45" fill="#B98A5E" stroke="#1F2A44" stroke-width="4.5"/>
+  <rect x="44" y="40" width="236" height="70" rx="35" fill="#C89A6C"/>
+  <rect x="80" y="54" width="24" height="18" rx="2" fill="#FFFDF5" stroke="#1F2A44" stroke-width="2.5" transform="rotate(-8 92 63)"/>
+  <rect x="190" y="70" width="24" height="18" rx="2" fill="#FFFDF5" stroke="#1F2A44" stroke-width="2.5" transform="rotate(10 202 79)"/>
+  <circle cx="150" cy="75" r="12" fill="#2B2F36" stroke="#1F2A44" stroke-width="3"/>
+  <circle cx="150" cy="75" r="4" fill="#8FD3A8"/>
+</svg>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>甩锅侠</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="stage"></canvas>
+<!-- 顶部 HUD：时钟、背锅进度、当前名次、连甩、暂停/静音 -->
+<div id="hud">
+  <span class="chip" id="hClock">09:00</span>
+  <span class="chip" id="hPots">🍳 <span id="hPotsN">0/20</span><span class="bar red"><i id="hPotsBar"></i></span></span>
+  <span class="chip" id="hRank">第 1/4 名</span>
+  <span class="chip hot" id="hCombo" hidden>连甩 ×2</span>
+  <span class="hud-right">
+    <button class="chip" id="btnMute" type="button" aria-label="静音">🔊</button>
+    <button class="chip" id="btnPause" type="button" aria-label="暂停">Ⅱ</button>
+  </span>
+</div>
+<!-- 实时排名（左上角）：前三名下方是加班线 -->
+<ol id="rank" hidden></ol>
+<!-- 工作群消息：散会、随机事件的预告 -->
+<div id="msg"></div>
+<div id="hint"></div>
+<div id="ui" class="overlay" hidden></div>
+<div id="toast"></div>
+<script src="js/engine.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

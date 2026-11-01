@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 测试小王：反戴鸭舌帽、格子衬衫、没睡醒的眼神 -->
+  <ellipse cx="64" cy="120" rx="34" ry="6" fill="#1F2A44" opacity=".18"/>
+  <path d="M24 122 C26 98 42 90 64 90 C86 90 102 98 104 122 Z" fill="#F2A65A" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M40 96 L40 122 M64 90 L64 122 M88 96 L88 122 M28 108 L100 108" stroke="#C9772E" stroke-width="3"/>
+  <circle cx="64" cy="56" r="36" fill="#FFDDBE" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M28 50 C28 26 44 16 64 16 C84 16 100 26 100 50 Z" fill="#3A6FD8" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M84 22 C96 18 110 22 114 30 C104 32 94 32 88 30 Z" fill="#2A55B0" stroke="#1F2A44" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M42 62 L56 62 M72 62 L86 62" stroke="#1F2A44" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="M42 66 Q49 70 56 66 M72 66 Q79 70 86 66" stroke="#9AA6C4" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M56 80 L72 80" stroke="#1F2A44" stroke-width="4" stroke-linecap="round"/>
+  <path d="M46 84 Q64 96 82 84" stroke="#B89A86" stroke-width="2.5" fill="none" stroke-dasharray="2 4"/>
+</svg>

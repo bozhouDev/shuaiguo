@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 总监：背头、黑框眼镜、灰西装、蓝领带、手里一摞文件 -->
+  <ellipse cx="64" cy="122" rx="40" ry="6" fill="#1F2A44" opacity=".22"/>
+  <path d="M16 124 C18 96 38 86 64 86 C90 86 110 96 112 124 Z" fill="#8A94A8" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M50 87 L64 104 L78 87 Z" fill="#FFFDF5" stroke="#1F2A44" stroke-width="3.5" stroke-linejoin="round"/>
+  <path d="M60 94 L64 92 L68 94 L66 120 L64 124 L62 120 Z" fill="#3D7BD9" stroke="#1F2A44" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M38 92 L50 87 L58 112 Z M90 92 L78 87 L70 112 Z" fill="#A3ACBE" stroke="#1F2A44" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="64" cy="52" r="38" fill="#F3C9A0" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M27 46 C26 22 44 12 64 12 C86 12 104 22 101 46 C96 34 84 28 66 30 C50 30 36 36 27 46 Z" fill="#4A4F5C" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M44 22 Q64 14 86 24" stroke="#8E95A6" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="36" y="48" width="24" height="16" rx="3" fill="#FFFDF5" stroke="#1F2A44" stroke-width="4.5"/>
+  <rect x="68" y="48" width="24" height="16" rx="3" fill="#FFFDF5" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M60 54 L68 54" stroke="#1F2A44" stroke-width="4"/>
+  <circle cx="48" cy="57" r="3.5" fill="#1F2A44"/>
+  <circle cx="80" cy="57" r="3.5" fill="#1F2A44"/>
+  <path d="M40 42 L56 45 M72 45 L88 42" stroke="#1F2A44" stroke-width="4" stroke-linecap="round"/>
+  <path d="M52 80 L76 78" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <rect x="88" y="88" width="30" height="34" rx="3" fill="#FFFDF5" stroke="#1F2A44" stroke-width="4" transform="rotate(10 103 105)"/>
+  <rect x="86" y="84" width="30" height="34" rx="3" fill="#FFD84D" stroke="#1F2A44" stroke-width="4" transform="rotate(-6 101 101)"/>
+  <path d="M93 94 L109 92 M93 102 L109 100 M93 110 L104 109" stroke="#1F2A44" stroke-width="3" stroke-linecap="round"/>
+</svg>

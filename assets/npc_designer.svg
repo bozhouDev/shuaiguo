@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- 设计师：红色贝雷帽、短发、橙色卫衣、耳环 -->
+  <ellipse cx="64" cy="120" rx="34" ry="6" fill="#1F2A44" opacity=".18"/>
+  <path d="M24 122 C26 98 42 90 64 90 C86 90 102 98 104 122 Z" fill="#F29A4A" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M50 92 Q64 104 78 92" fill="none" stroke="#1F2A44" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M56 98 L54 112 M72 98 L74 112" stroke="#1F2A44" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="64" cy="56" r="36" fill="#FFE2C6" stroke="#1F2A44" stroke-width="4.5"/>
+  <path d="M28 60 C24 40 38 28 64 28 C90 28 104 40 100 60 C96 50 92 46 86 44 C80 50 56 50 44 44 C36 48 30 54 28 60 Z" fill="#2B2B38" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M26 36 C30 16 62 8 92 16 C104 20 108 30 98 36 C80 30 50 30 26 36 Z" fill="#E8504A" stroke="#1F2A44" stroke-width="4.5" stroke-linejoin="round"/>
+  <path d="M60 12 L62 6" stroke="#1F2A44" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="50" cy="62" r="4" fill="#1F2A44"/>
+  <circle cx="78" cy="62" r="4" fill="#1F2A44"/>
+  <path d="M44 54 L56 56 M72 56 L84 54" stroke="#1F2A44" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M56 78 Q64 82 72 78" stroke="#1F2A44" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <circle cx="28" cy="68" r="4" fill="#FFD84D" stroke="#1F2A44" stroke-width="2.5"/>
+  <circle cx="100" cy="68" r="4" fill="#FFD84D" stroke="#1F2A44" stroke-width="2.5"/>
+  <ellipse cx="40" cy="72" rx="5" ry="3" fill="#F59A8C" opacity=".6"/>
+  <ellipse cx="88" cy="72" rx="5" ry="3" fill="#F59A8C" opacity=".6"/>
+</svg>
