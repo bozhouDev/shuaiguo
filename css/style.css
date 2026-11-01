@@ -206,3 +206,12 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 .card { box-shadow: 6px 6px 0 var(--ink); }
 /* 甩锅键保留圆形，只加像素感的内高光 */
 #btnThrow { box-shadow: inset 0 -5px 0 rgba(0, 0, 0, .18), 3px 4px 0 var(--ink); }
+/* 像素图标：跟随字号缩放 */
+.ico { height: 1.15em; width: auto; vertical-align: -0.22em; margin-right: 3px; }
+#hud button.chip .ico { margin: 0; }
+#rank li em .ico, .ranklist .ico { height: 1em; margin-right: 2px; }
+/* 结算：像素星星 + 右上角主角立绘 */
+.stars { display: flex; gap: 6px; }
+.stars img { height: 38px; width: auto; }
+.card { position: relative; }
+.hero { position: absolute; right: 14px; top: 10px; height: 92px; width: auto; pointer-events: none; }

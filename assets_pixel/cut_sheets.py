@@ -29,10 +29,16 @@ NAMES = {
               'ui_pause', 'ui_sound_on', 'ui_sound_off', 'ui_warning', 'ui_exit'],
 }
 
+# 四向走路表：w_<角色>.png，3 行（朝下 d / 朝上 u / 朝右 s）× 4 帧 → <角色>_walk_<方向><帧号>
+WALKERS = ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director']
+for _who in WALKERS:
+    NAMES['w_' + _who] = [f'{_who}_walk_{d}{i}' for d in 'dus' for i in range(4)]
+
 # 每张表每行有几个素材（用于在每行里挑最宽的几道空隙切开）
 ROWS = {
     's1_player': [4], 's2_pm_tester': [4, 4], 's3_designer_veteran': [4, 4],
     's4_intern_director': [4, 4], 's5_boss_items': [4, 7], 's6_props': [3, 4, 4], 's7_ui': [5, 5],
+    **{'w_' + w: [4, 4, 4] for w in WALKERS},
 }
 
 # 自动切不准的行，手工给出列边界（原图像素坐标）：(表名, 第几行) → [(x0, x1), ...]
@@ -87,6 +93,18 @@ def split_cols(profile, k):
     return bounds
 
 
+def walk_rows(mask):
+    """走路表是规整的 3 行：在三分线附近找投影最空的那一行切开（行距很窄，按空隙阈值会粘连）。"""
+    prof = mask.sum(axis=1)
+    h = mask.shape[0]
+    cuts = [0] + [int(np.argmin(prof[c - 60:c + 60]) + c - 60) for c in (h // 3, 2 * h // 3)] + [h]
+    rows = []
+    for y0, y1 in zip(cuts[:-1], cuts[1:]):
+        ys = np.flatnonzero(mask[y0:y1].any(axis=1))
+        rows.append((y0 + ys[0], y0 + ys[-1] + 1))  # 收紧到这一行素材的上下边界
+    return rows
+
+
 def cut(sheet):
     """切一张素材表，返回 [(名字, RGBA 图)]；数量对不上时报错。"""
     img = Image.open(os.path.join(SHEETS, sheet + '.png')).convert('RGB')
@@ -95,6 +113,8 @@ def cut(sheet):
     rgba = np.dstack([rgb, (mask * 255).astype(np.uint8)])
     pieces = []
     rows = runs(mask.any(axis=1), ROW_GAP)
+    if sheet.startswith('w_'):
+        rows = walk_rows(mask)
     if len(rows) != len(ROWS[sheet]):
         raise SystemExit(f'{sheet}: 切出 {len(rows)} 行，预期 {len(ROWS[sheet])} 行')
     for r, ((y0, y1), k) in enumerate(zip(rows, ROWS[sheet])):
@@ -106,7 +126,11 @@ def cut(sheet):
             # 裁到紧贴素材的边界
             cell = mask[y0:y1, x0:x1]
             ys, xs = np.flatnonzero(cell.any(axis=1)), np.flatnonzero(cell.any(axis=0))
-            pieces.append(rgba[y0 + ys[0]:y0 + ys[-1] + 1, x0 + xs[0]:x0 + xs[-1] + 1])
+            if sheet.startswith('w_'):
+                # 走路帧：同一行共用上下边界，脚底对齐、高度一致，播放时人不会忽大忽小
+                pieces.append(rgba[y0:y1, x0 + xs[0]:x0 + xs[-1] + 1])
+            else:
+                pieces.append(rgba[y0 + ys[0]:y0 + ys[-1] + 1, x0 + xs[0]:x0 + xs[-1] + 1])
     names = NAMES[sheet]
     if len(pieces) != len(names):
         raise SystemExit(f'{sheet}: 切出 {len(pieces)} 块，预期 {len(names)} 块，需要调 ROWS/COL_OVERRIDE 或重出图')

@@ -44,6 +44,8 @@ def main():
             # 缩小用 BOX 取平均，像素块边缘比 LANCZOS 更干净、不出振铃
             im = im.resize((max(1, round(im.width * k)), max(1, round(im.height * k))), Image.BOX)
         path = os.path.join(OUT, fn)
+        # 像素画颜色少：转成 128 色调色板 PNG（保留透明），体积约降到三分之一
+        im = im.quantize(colors=128, method=Image.Quantize.FASTOCTREE, dither=Image.Dither.NONE)
         im.save(path, optimize=True)
         total += os.path.getsize(path)
         print(f'{fn:22s} {im.width}×{im.height}')

@@ -18,8 +18,10 @@
     'designer_normal', 'designer_hit', 'designer_angry', 'designer_flat',
     'veteran_normal', 'veteran_tea', 'veteran_hit', 'veteran_flat', 'intern_normal', 'intern_cry', 'intern_hit', 'intern_flat',
     'boss_walk', 'boss_aim', 'boss_chase', 'boss_idle', 'director_walk', 'director_aim', 'director_chase', 'director_idle',
-    'wok', 'fx_anger', 'desk', 'meeting_table', 'boss_desk', 'plant', 'plant_small', 'printer', 'cooler',
+    'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact', 'ui_wok', 'desk', 'meeting_table', 'boss_desk', 'plant', 'plant_small', 'printer', 'cooler',
     'cabinet', 'whiteboard', 'tea_counter', 'sofa'];
+  for (const who of ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director'])
+    for (const d of 'dus') for (let i = 0; i < 4; i++) SPRITES.push(`${who}_walk_${d}${i}`);
   // 角色绘制尺寸：脚底相对蛇头坐标的下移量、各类人物的高度、躺平时的宽度
   const FOOT_DY = 20, PLAYER_H = 70, NPC_H = 64, FLAT_W = 74;
 
@@ -29,10 +31,10 @@
   const HEAD_R = 18;           // 蛇头碰撞半径
   const THROW_SPEED = 620;     // 甩出去的锅飞多快（要快，慢了没意义）
   const THROW_TURN = 6;        // 甩出去的锅追踪目标的转向速度（擦边也能拐进去）
-  const THROW_RANGE = 360;     // 甩出去的锅最远飞多远，飞满还没砸中人就算甩空
+  const THROW_RANGE = 200;     // 甩出去的锅最远飞多远，飞满还没砸中人就算甩空（比扇形略远，留点余量给走动的目标）
   const THROW_HIT_R = HEAD_R + 22; // 甩出去的锅砸中判定半径（比领导的锅宽松）
-  const AIM_RANGE = 300;       // 自动瞄准：扇形半径
-  const AIM_CONE = 0.95;       // 自动瞄准：扇形半角，前进方向左右各约 55°
+  const AIM_RANGE = 150;       // 自动瞄准：扇形半径（v2.5 从 300 减半，要贴近了才甩得中）
+  const AIM_CONE = 0.26;       // 自动瞄准：扇形半角，前进方向左右各约 15°（总开角约 30°）
   const THROW_CD = 0.6;        // 甩一次后多久才能再甩
   const PARRY_WIN = 0.22;      // 反甩判定窗口：锅离砸中你还剩几秒内按「甩」才算
   const PARRY_DECAY = 0.75;    // 每反甩一次，下一次判定窗口缩小到几倍（来回几次必有人接住）
@@ -63,12 +65,12 @@
   // seekMin 身上几口锅才开始找人甩；dodge 躲锅能力；caution 躲人/躲领导；mult 甩中他的得分倍率；
   // parry 锅飞来时反甩成功的概率；throwR 目标进入多近才出手
   const PERSONAS = {
-    me:       { name: '你', sprite: 'player', speed: 1, turn: 5.2, react: 0.2, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.9, caution: 0.7, mult: 1, parry: 0.5, throwR: 260 },
-    pm:       { name: '产品经理', sprite: 'pm', speed: 0.93, turn: 4.6, react: 0.22, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.8, caution: 0.6, mult: 1, parry: 0.35, throwR: 240 },
-    tester:   { name: '测试小王', sprite: 'tester', speed: 0.88, turn: 4.4, react: 0.24, aggr: 0.85, seekR: 440, seekMin: 1, dodge: 1, caution: 0.8, mult: 1, parry: 0.4, throwR: 220 },
-    intern:   { name: '实习生', sprite: 'intern', speed: 0.85, turn: 4, react: 0.36, aggr: 0.4, seekR: 260, seekMin: 3, dodge: 0.45, caution: 1, mult: 1, parry: 0.1, throwR: 180 },
-    veteran:  { name: '老油条', sprite: 'veteran', speed: 0.95, turn: 4.8, react: 0.2, aggr: 0.65, seekR: 320, seekMin: 2, dodge: 1.3, caution: 1.3, mult: 3, parry: 0.65, throwR: 220, tea: true },
-    designer: { name: '设计师', sprite: 'designer', speed: 0.9, turn: 4.5, react: 0.26, aggr: 0.75, seekR: 400, seekMin: 1, dodge: 0.9, caution: 0.9, mult: 1, parry: 0.3, throwR: 230 },
+    me:       { name: '你', sprite: 'player', speed: 1, turn: 5.2, react: 0.2, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.9, caution: 0.7, mult: 1, parry: 0.5, throwR: 130 },
+    pm:       { name: '产品经理', sprite: 'pm', speed: 0.93, turn: 4.6, react: 0.22, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.8, caution: 0.6, mult: 1, parry: 0.35, throwR: 120 },
+    tester:   { name: '测试小王', sprite: 'tester', speed: 0.88, turn: 4.4, react: 0.24, aggr: 0.85, seekR: 440, seekMin: 1, dodge: 1, caution: 0.8, mult: 1, parry: 0.4, throwR: 110 },
+    intern:   { name: '实习生', sprite: 'intern', speed: 0.85, turn: 4, react: 0.36, aggr: 0.4, seekR: 260, seekMin: 3, dodge: 0.45, caution: 1, mult: 1, parry: 0.1, throwR: 90 },
+    veteran:  { name: '老油条', sprite: 'veteran', speed: 0.95, turn: 4.8, react: 0.2, aggr: 0.65, seekR: 320, seekMin: 2, dodge: 1.3, caution: 1.3, mult: 3, parry: 0.65, throwR: 110, tea: true },
+    designer: { name: '设计师', sprite: 'designer', speed: 0.9, turn: 4.5, react: 0.26, aggr: 0.75, seekR: 400, seekMin: 1, dodge: 0.9, caution: 0.9, mult: 1, parry: 0.3, throwR: 115 },
   };
 
   // 领导类型：count 一次丢几口（分别瞄准锅最少的几个人）；range 视野；everyMul 丢锅间隔倍率
@@ -150,7 +152,7 @@
     return {
       t: 0, player, bots, agents: [player, ...bots],
       leaders: L.leaders.map(makeLeader),
-      flying: [], throws: [], arcs: [], hot: null, tea: 0,
+      flying: [], throws: [], arcs: [], fx: [], hot: null, tea: 0,
       pace: null, paceIdx: -1, schedule: buildSchedule(), hintIdx: 0,
       firstThrow: true, revived: false, rescued: false, over: null, lastTick: 0, spawned: 0, leaderHits: 0, hotBooms: 0,
     };
@@ -238,7 +240,12 @@
     S.flying = S.flying.filter((f) => !f.dead);
   }
   // 飞行锅砸中某人
+  // 冒一个一次性特效（如撞击星）：name 贴图名，size 绘制宽度，dur 持续秒数
+  function spawnFx(name, x, y, size, dur) {
+    S.fx.push({ name, x, y, size, t: 0, dur: dur || 0.35 });
+  }
   function potHit(a, f) {
+    spawnFx('fx_impact', a.sn.x, a.sn.y - 26, 54);
     if (f.hot) { grabHot(a, null); return; }
     a.sn.segs.push(f.label);
     a.combo = 0;
@@ -344,6 +351,7 @@
     f.rolled = new Set();
     b.score += PARRY_PTS;
     b.parries++;
+    spawnFx('fx_impact', f.x, f.y, 40, 0.25); // 反甩：在锅的位置闪一下
     if (b.isPlayer) {
       floats.add(f.bounces >= 2 ? `再弹回去！+${PARRY_PTS}` : `反甩！+${PARRY_PTS}`, b.sn.x, b.sn.y - 46, '#2F9E6B');
       E.sfx('parry');
@@ -414,6 +422,7 @@
   // 锅 f 砸中 b：归 b；扔锅的人得分、连甩
   function landThrow(f, b) {
     const a = f.owner;
+    spawnFx('fx_impact', b.sn.x, b.sn.y - 26, f.hot ? 70 : 56); // 砸中瞬间的撞击星
     if (f.hot) {
       a.score += 20;
       if (a.isPlayer) { floats.add(`P0 甩给${b.name} +20`, b.sn.x, b.sn.y - 44, '#2F9E6B'); E.sfx('combo'); }
@@ -666,6 +675,7 @@
       if (a.crushed || (l.hitCd[a.id] || 0) > S.t) continue;
       if (E.dist(l.x, l.y, a.sn.x, a.sn.y) < HEAD_R + 28) {
         addPots(a, LEADER_HIT_POTS, l.x, l.y);
+        spawnFx('fx_impact', a.sn.x, a.sn.y - 26, 72, 0.45);
         S.leaderHits++;
         l.hitCd[a.id] = S.t + 3;
         if (l.chase === a) { l.state = 'patrol'; l.chase = null; l.i = nearestRoute(l); }
@@ -909,6 +919,9 @@
     // 甩锅动画推进
     for (const a of S.arcs) a.t += dt;
     S.arcs = S.arcs.filter((a) => a.t < a.dur);
+    // 一次性特效推进
+    for (const e of S.fx) e.t += dt;
+    S.fx = S.fx.filter((e) => e.t < e.dur);
 
     // 压垮：机器人出局（排最后），玩家当场失败
     for (const a of S.agents) {
@@ -965,6 +978,26 @@
     ctx.fillText(label.length > 4 ? label.slice(0, 4) : label, 0, 1);
     ctx.restore();
   }
+  // 画一口正在飞的锅（带速度线的贴图）：a 为飞行方向；往左飞时镜像，免得锅柄朝下
+  const FLY_DIR = -0.45; // 贴图里锅本身朝向（右上方）的角度
+  function drawFlyingWok(x, y, label, size, a) {
+    size *= POT_SCALE;
+    const left = Math.cos(a) < 0;
+    const rot = left ? a - (Math.PI - FLY_DIR) : a - FLY_DIR;
+    const w = size * 1.35;
+    E.drawSprite(ctx, 'wok_flying', x, y, w, { rot, flip: left });
+    if (!label) return;
+    // 便利贴大约在贴图中心偏右上，镜像时偏左上
+    const fs = Math.round(size * (label.length > 2 ? 0.13 : 0.18));
+    ctx.save();
+    ctx.translate(x, y); ctx.rotate(rot);
+    ctx.translate((left ? -1 : 1) * w * 0.06, -w * 0.05);
+    ctx.rotate(left ? 0.1 : -0.1);
+    ctx.font = `${fs}px ${E.DISPLAY_FONT}`;
+    ctx.fillStyle = '#1F2A44'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(label.length > 4 ? label.slice(0, 4) : label, 0, 1);
+    ctx.restore();
+  }
   // 画 P0 烫手山芋（红光 + 倒计时）
   function drawHotPot(x, y, time, left) {
     const r = 26 + Math.sin(time * 14) * 3;
@@ -981,60 +1014,95 @@
       drawWok(pos[i].x, pos[i].y, a.isPlayer ? a.sn.segs[i] : '', size, a.crushed ? 0.3 : Math.sin(time * 6 + i + a.id) * 0.12, a.crushed ? 0.6 : null);
     }
   }
-  // 按状态挑同事 / 玩家的贴图：「基础名_状态」，缺这个状态的图就退回 normal
+  // 走路动画：每帧按位移更新朝向（d 朝下 / u 朝上 / s 侧面，往左走时镜像）和步伐
+  // o 上挂 walk 记录；返回 { name 当前帧贴图, flip, dir, walking }，素材缺失时返回 null
+  const STEP_PX = 13;  // 每走多少像素换一帧
+  function walkFrame(o, base, x, y) {
+    const w = o.walk || (o.walk = { x, y, vx: 0, vy: 0, dir: 'd', flip: false, dist: 0, still: 99 });
+    const dx = x - w.x, dy = y - w.y, d = Math.hypot(dx, dy);
+    w.x = x; w.y = y;
+    if (d > 0.3 && d < 60) { // 位移太大是瞬移（复活、开局摆位），不算走路
+      w.dist += d; w.still = 0;
+      w.vx = w.vx * 0.7 + dx * 0.3; w.vy = w.vy * 0.7 + dy * 0.3; // 平滑一下，斜着走时朝向不来回抖
+      const ax = Math.abs(w.vx), ay = Math.abs(w.vy);
+      if (w.dir === 's' ? ay > ax * 1.4 : ax > ay * 1.4) w.dir = w.dir === 's' ? (w.vy > 0 ? 'd' : 'u') : 's';
+      else if (w.dir !== 's') w.dir = w.vy > 0 ? 'd' : 'u';
+      if (w.dir === 's') w.flip = w.vx < 0;
+    } else w.still++;
+    const walking = w.still <= 6;
+    const name = `${base}_walk_${w.dir}${walking ? Math.floor(w.dist / STEP_PX) % 4 : 1}`; // 停下时用双脚并拢那帧
+    return E.spr[name] ? { name, flip: w.flip, dir: w.dir, walking } : null;
+  }
+  // 按状态挑同事 / 玩家的贴图：被砸、喝茶、压垮等用专门的正面姿势，其余时候播走路动画
+  // 每帧只能调用一次（里面会推进走路步伐）
   function personSprite(a, huntingMe) {
     const base = a.p.sprite, pots = potsOf(a);
-    let st;
-    if (a.isPlayer) st = mode === 'over' && pots >= MAX_POTS ? 'crushed' : (a.stun > 0 || pots >= 10) ? 'panic' : 'normal';
+    const walk = walkFrame(a, base, a.sn.x, a.sn.y);
+    let st = null;
+    if (a.isPlayer) { if (mode === 'over' && pots >= MAX_POTS) st = 'crushed'; else if (a.stun > 0) st = 'panic'; }
     else if (a.crushed) st = 'flat';
     else if (a.stun > 0 || a.angry > 1.4) st = 'hit'; // 刚接锅的前 0.6 秒显示被砸中
-    else if (a.cry > 0) st = 'cry';
     else if (a.teaT > 0) st = 'tea';
-    else if (huntingMe || a.angry > 0) st = 'angry';
-    else st = 'normal';
+    if (!st && walk) return walk;
+    // 没有走路帧时退回旧的单张姿势
+    if (!st) st = a.isPlayer ? (pots >= 10 ? 'panic' : 'normal') : a.cry > 0 ? 'cry' : (huntingMe || a.angry > 0) ? 'angry' : 'normal';
     const name = `${base}_${st}`;
-    return E.spr[name] ? name : `${base}_normal`;
+    return { name: E.spr[name] ? name : `${base}_normal`, flip: false, dir: 'd', walking: false };
   }
   // 脚下的影子
   function drawShadow(x, y, rx, color) {
     ctx.fillStyle = color || 'rgba(31,42,68,.22)';
     ctx.beginPath(); ctx.ellipse(x, y, rx, rx * 0.34, 0, 0, Math.PI * 2); ctx.fill();
   }
+  // 头顶 / 脸上的状态特效：晕（愣住）、怒（追人）、汗（锅太多）、泪（实习生哭）
+  function drawStatusFx(a, spr, x, top, h, time, angry) {
+    if (a.stun > 0) E.drawSprite(ctx, 'fx_dizzy', x, top - 12, 30, { rot: time * 5 });
+    if (angry) E.drawSprite(ctx, 'fx_anger', x + 20, top + 6 + Math.sin(time * 12) * 2, 18);
+    if (potsOf(a) >= (a.isPlayer ? 10 : 12)) E.drawSprite(ctx, 'fx_sweat', x - 22, top + 10 + (time * 24) % 6, 16);
+    // 泪：正面画两股，侧面缩小挪到脸朝的那一侧；背面看不到脸不画
+    if (a.cry > 0 && spr.dir === 'd') E.drawSprite(ctx, 'fx_tears', x, top + h * 0.4, h * 0.42);
+    else if (a.cry > 0 && spr.dir === 's') E.drawSprite(ctx, 'fx_tears', x + (spr.flip ? -1 : 1) * h * 0.1, top + h * 0.38, h * 0.26);
+  }
+  // 头顶锅数徽标：像素小锅 + 数字
+  function drawPotBadge(x, y, pots) {
+    E.drawSprite(ctx, 'ui_wok', x - 8, y, 16);
+    E.label(ctx, String(pots), x + 6, y, 12, pots >= 12 ? '#E8504A' : '#1F2A44');
+  }
   // 画某人（全身像素小人，含状态特效）；(sn.x, sn.y) 是身体中心，脚底在 FOOT_DY 之下
   function drawHead(a, time) {
     const x = a.sn.x, y = a.sn.y, pots = potsOf(a), foot = y + FOOT_DY;
-    if (a.isPlayer) {
-      drawShadow(x, foot, 24, 'rgba(255,216,77,.7)');
-      E.drawStanding(ctx, personSprite(a), x, foot + Math.sin(time * 10) * 0.8, PLAYER_H);
-      E.label(ctx, '你', x, foot + 12, 13, '#1F2A44', '#FFD84D');
-      return;
-    }
+    const huntingMe = !a.isPlayer && !a.crushed && a.target === S.player && pots > 0;
+    const spr = personSprite(a, huntingMe);
     if (a.crushed) {
-      const s = E.spr[personSprite(a)];
+      const s = E.spr[spr.name];
       drawShadow(x, foot, 30);
-      if (s) E.drawSprite(ctx, personSprite(a), x, foot - (FLAT_W * s.h / s.w) / 2, FLAT_W, { alpha: 0.9 });
+      if (s) E.drawSprite(ctx, spr.name, x, foot - (FLAT_W * s.h / s.w) / 2, FLAT_W, { alpha: 0.9 });
       E.label(ctx, '被压垮', x, y - 14, 12, '#5E6A84');
       E.label(ctx, a.name, x, foot + 12, 12, '#5E6A84');
       return;
     }
-    const huntingMe = a.target === S.player && potsOf(a) > 0;
+    const h = a.isPlayer ? PLAYER_H : NPC_H, top = foot - h;
     if (huntingMe) {
       ctx.fillStyle = 'rgba(232,80,74,.2)';
       ctx.beginPath(); ctx.arc(x, y, 32, 0, Math.PI * 2); ctx.fill();
     }
-    drawShadow(x, foot, 20);
-    E.drawStanding(ctx, personSprite(a, huntingMe), x, foot + Math.sin(time * 6 + a.id) * 1.2, NPC_H);
-    const top = foot - NPC_H; // 头顶
-    if (huntingMe) E.drawSprite(ctx, 'fx_anger', x + 20, top + 6 + Math.sin(time * 12) * 2, 18);
+    if (a.isPlayer) drawShadow(x, foot, 24, 'rgba(255,216,77,.7)');
+    else drawShadow(x, foot, 20);
+    // 播走路帧时不再上下晃（步伐本身就是动画）；站着的姿势轻轻呼吸
+    const bob = spr.walking ? 0 : Math.sin(time * 6 + a.id) * 1.2;
+    E.drawStanding(ctx, spr.name, x, foot + bob, h, { flip: spr.flip });
+    drawStatusFx(a, spr, x, top, h, time, huntingMe || (!a.isPlayer && a.angry > 0));
+    if (a.isPlayer) { E.label(ctx, '你', x, foot + 12, 13, '#1F2A44', '#FFD84D'); return; }
     if (a.teaT > 0) E.label(ctx, '泡茶中…', x, top - 8, 12, '#2F9E6B');
     E.label(ctx, a.name, x, foot + 12, 12, '#1F2A44');
-    // 头顶锅数徽标
-    if (pots > 0) E.label(ctx, '🍳' + pots, x - 24, top + 2, 12, pots >= 12 ? '#E8504A' : '#1F2A44');
+    if (pots > 0) drawPotBadge(x - 24, top + 2, pots);
   }
-  // 领导贴图：瞄准 / 追人 / 原地等待 / 巡逻走路
+  // 领导贴图：瞄准、原地等待用专门姿势，巡逻和追人播走路动画（每帧只调用一次）
   function leaderSprite(l) {
-    const st = l.state === 'aim' ? 'aim' : l.state === 'chase' ? 'chase' : l.wait > 0 ? 'idle' : 'walk';
-    return `${l.cfg.sprite}_${st}`;
+    const base = l.cfg.sprite, walk = walkFrame(l, base, l.x, l.y);
+    if (l.state === 'aim') return { name: `${base}_aim` };
+    if (l.state !== 'chase' && l.wait > 0) return { name: `${base}_idle` };
+    return walk || { name: `${base}_${l.state === 'chase' ? 'chase' : 'walk'}` };
   }
   // 画领导（含危险圈）；领导的锅直接画在贴图手里（瞄准姿势）
   function drawLeader(l, time) {
@@ -1042,10 +1110,14 @@
     ctx.setLineDash([7, 6]); ctx.strokeStyle = chase ? '#E8504A' : 'rgba(232,80,74,.5)'; ctx.lineWidth = chase ? 4 : 2;
     ctx.beginPath(); ctx.arc(l.x, l.y, 46, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
     drawShadow(l.x, foot, 26);
+    const spr = leaderSprite(l);
     const shake = l.state === 'aim' ? Math.sin(time * 30) * 1.2 : 0;
-    E.drawStanding(ctx, leaderSprite(l), l.x + shake, foot, h);
+    E.drawStanding(ctx, spr.name, l.x + shake, foot, h, { flip: spr.flip });
     E.label(ctx, l.name, l.x, foot + 13, 13, '#E8504A');
-    if (chase) E.label(ctx, '！', l.x + 30, foot - h - 4, 26, '#E8504A');
+    if (chase) {
+      E.drawSprite(ctx, 'fx_anger', l.x + 24, foot - h + 8 + Math.sin(time * 12) * 2, 22);
+      E.label(ctx, '！', l.x - 26, foot - h - 4, 26, '#E8504A');
+    }
   }
   // 瞄准线：领导丢锅前，从领导到目标的红色虚线 + 目标头上的准星
   function drawAims(time) {
@@ -1187,7 +1259,7 @@
         ctx.fillStyle = 'rgba(31,42,68,.2)';
         ctx.beginPath(); ctx.ellipse(f.x, f.y + 22, 16, 5, 0, 0, Math.PI * 2); ctx.fill();
         if (f.hot) drawHotPot(f.x, f.y, time, null);
-        else drawWok(f.x, f.y, f.label, 44, f.spin);
+        else drawFlyingWok(f.x, f.y, f.label, 44, f.a);
       } else if (f.phase === 'drop') {
         drawWok(f.x, f.y, f.label, 44, f.spin, Math.max(0, f.t / 0.5));
       } else if (f.hot) drawHotPot(f.x, f.y, time, null);
@@ -1195,11 +1267,11 @@
     // 甩出去的锅：带一道拖影，越快越明显
     for (const f of S.throws) {
       ctx.strokeStyle = f.owner.isPlayer ? 'rgba(47,158,107,.55)' : 'rgba(232,80,74,.45)';
-      ctx.lineWidth = 10; ctx.lineCap = 'round';
+      ctx.lineWidth = 6; ctx.lineCap = 'round';
       ctx.beginPath(); ctx.moveTo(f.x - Math.cos(f.a) * 46, f.y - Math.sin(f.a) * 46); ctx.lineTo(f.x, f.y); ctx.stroke();
       ctx.lineCap = 'butt';
       if (f.hot) drawHotPot(f.x, f.y, time, null);
-      else drawWok(f.x, f.y, f.label, 40, f.spin);
+      else drawFlyingWok(f.x, f.y, f.label, 40, f.a);
     }
     // 拿在手里的 P0
     if (S.hot && !S.hot.inFlight) drawHotPot(S.hot.holder.sn.x, S.hot.holder.sn.y - 52, time, S.hot.t);
@@ -1212,6 +1284,13 @@
       const x = a.x0 + (to.x - a.x0) * k;
       const y = a.y0 + (to.y - a.y0) * k - Math.sin(Math.PI * k) * 50;
       drawWok(x, y, a.label, 34, k * 8);
+    }
+
+    // 一次性特效：先弹大再回落，后半段淡出
+    for (const e of S.fx) {
+      const k = e.t / e.dur;
+      const sc = k < 0.25 ? 0.5 + k * 2.6 : 1.15 - (k - 0.25) * 0.3;
+      E.drawSprite(ctx, e.name, e.x, e.y, e.size * sc, { alpha: k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4, rot: k * 0.5 });
     }
 
     floats.draw(ctx, 0, 0);
@@ -1256,9 +1335,9 @@
     document.getElementById('hCombo').hidden = P.combo < 2;
     document.getElementById('hPotsBar').style.width = Math.min(100, (n / MAX_POTS) * 100) + '%';
     document.getElementById('hPots').classList.toggle('hot', n >= MAX_POTS * 0.6);
-    document.getElementById('hClock').classList.toggle('hot', S.t >= L.duration - 13);
+    document.getElementById('hClock').parentElement.classList.toggle('hot', S.t >= L.duration - 13);
     updateThrowBtn();
-    document.getElementById('hRank').classList.toggle('hot', myRank > PASS_RANK);
+    document.getElementById('hRank').parentElement.classList.toggle('hot', myRank > PASS_RANK);
 
     // 排名面板：内容变了才刷新 DOM；前三名下面画一条「加班线」
     const sig = rank.map((a) => `${a.id}:${potsOf(a)}:${a.crushed ? 1 : 0}`).join('|') + (rush ? 'R' : '');
@@ -1266,7 +1345,7 @@
       rankSig = sig;
       const el = document.getElementById('rank');
       el.innerHTML = rank.map((a, i) => `<li class="${a.isPlayer ? 'me' : ''}${i === PASS_RANK - 1 && rank.length > PASS_RANK ? ' cut' : ''}${a.crushed ? ' out' : ''}">
-        <b>${i + 1}</b><span>${a.name}</span><em>${a.crushed ? '压垮' : '🍳' + potsOf(a)}</em></li>`).join('');
+        <b>${i + 1}</b><span>${a.name}</span><em>${a.crushed ? '压垮' : `<img class="ico" src="assets/px/ui_wok.png" alt="锅">${potsOf(a)}`}</em></li>`).join('');
       el.classList.toggle('rush', rush);
     }
     // 最后 10 秒：每秒滴答一声
@@ -1311,8 +1390,11 @@
     const table = rank.map((a, i) => `<li class="${a.isPlayer ? 'me' : ''}${i === PASS_RANK - 1 && rank.length > PASS_RANK ? ' cut' : ''}">
       <b>${i + 1}</b><span>${a.name}</span><em>${a.crushed ? '压垮' : potsOf(a) + ' 口'}</em><i>${a.score} 分</i></li>`).join('');
     const next = LEVELS[LEVELS.indexOf(L) + 1];
-    const starHtml = `<div class="stars">${[1, 2, 3].map((i) => `<span class="${i <= stars ? 'on' : ''}">★</span>`).join('')}</div>`;
+    // 星级用像素星星图标；顶部配一张主角：压垮 → 埋在锅堆里，过关 → 庆祝下班，没过关 → 慌张
+    const starHtml = `<div class="stars">${[1, 2, 3].map((i) => `<img src="assets/px/ui_${i <= stars ? 'star' : 'star_empty'}.png" alt="${i <= stars ? '★' : '☆'}">`).join('')}</div>`;
+    const hero = crushed ? 'player_crushed' : stars ? 'player_win' : 'player_panic';
     E.showPanel(`
+      <img class="hero" src="assets/px/${hero}.png" alt="">
       <span class="badge">${badge}</span>
       <h1>${title}</h1>
       ${starHtml}
@@ -1474,7 +1556,7 @@
   const btnMute = document.getElementById('btnMute');
   btnMute.addEventListener('click', () => {
     E.muted = !E.muted;
-    btnMute.textContent = E.muted ? '🔇' : '🔊';
+    document.getElementById('icoSound').src = `assets/px/ui_sound_${E.muted ? 'off' : 'on'}.png`; // 切换喇叭图标
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
   window.addEventListener('keydown', (e) => { if (e.key === 'Escape' || e.key === 'p') pauseGame(); });
