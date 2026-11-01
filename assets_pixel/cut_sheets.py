@@ -27,6 +27,7 @@ NAMES = {
                  'cabinet', 'whiteboard', 'tea_counter', 'sofa'],
     's7_ui': ['ui_clock', 'ui_wok', 'ui_crown', 'ui_star', 'ui_star_empty',
               'ui_pause', 'ui_sound_on', 'ui_sound_off', 'ui_warning', 'ui_exit'],
+    's8_lobby_ui': ['ui_lock', 'ui_badge', 'ui_book', 'ui_calendar'],  # 大厅图标（gen_lobby.sh）
 }
 
 # 四向走路表：w_<角色>.png，3 行（朝下 d / 朝上 u / 朝右 s）× 4 帧 → <角色>_walk_<方向><帧号>
@@ -37,7 +38,7 @@ for _who in WALKERS:
 # 每张表每行有几个素材（用于在每行里挑最宽的几道空隙切开）
 ROWS = {
     's1_player': [4], 's2_pm_tester': [4, 4], 's3_designer_veteran': [4, 4],
-    's4_intern_director': [4, 4], 's5_boss_items': [4, 7], 's6_props': [3, 4, 4], 's7_ui': [5, 5],
+    's4_intern_director': [4, 4], 's5_boss_items': [4, 7], 's6_props': [3, 4, 4], 's7_ui': [5, 5], 's8_lobby_ui': [4],
     **{'w_' + w: [4, 4, 4] for w in WALKERS},
 }
 

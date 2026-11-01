@@ -199,3 +199,72 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 .stars img { height: 38px; width: auto; }
 .card { position: relative; }
 .hero { position: absolute; right: 14px; top: 10px; height: 92px; width: auto; pointer-events: none; }
+
+/* ===== v4：大厅（像素办公室门厅 + 主角待机 + 同事路过 + 关卡日历） ===== */
+#lobby {
+  position: fixed; inset: 0; z-index: 15; overflow: hidden; display: flex; flex-direction: column;
+  background: var(--carpet) url(../assets/px/lobby_bg.png) center top / cover no-repeat;
+  image-rendering: pixelated;
+  padding: calc(env(safe-area-inset-top, 0px) + 10px) max(16px, env(safe-area-inset-right, 0px)) calc(env(safe-area-inset-bottom, 0px) + 18px) max(16px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box;
+}
+/* 宽屏：背景按高度铺满、居中，两侧露地毯色；内容收在中间一列 */
+@media (min-aspect-ratio: 2/3) {
+  #lobby { background-size: auto 100%; background-position: center; padding-left: calc(50vw - min(50vw, 33.3vh) + 16px); padding-right: calc(50vw - min(50vw, 33.3vh) + 16px); }
+}
+#lobby img { image-rendering: pixelated; }
+.lb-top { display: flex; justify-content: space-between; align-items: center; font-family: var(--display); }
+.lb-top .chip { background: var(--panel); color: #FFF6D8; border: 2px solid #0F1628; box-shadow: inset 0 2px 0 var(--panel-hi), 2px 2px 0 #0F1628; font-size: 15px; }
+.lb-top .chip b { font-weight: 400; color: var(--note); margin: 0 1px 0 4px; }
+.lb-top .lb-star { margin: 0 0 0 3px; }
+.lb-top button.chip .ico { margin: 0; }
+/* 标题：叠在背景墙上，站酷快乐体 + 墨水蓝硬阴影 */
+.lb-title { text-align: center; margin-top: 6vh; }
+.lb-title h1 {
+  font-family: var(--display); font-weight: 400; font-size: clamp(56px, 17vw, 84px); line-height: 1; margin: 0;
+  color: var(--note); -webkit-text-stroke: 3px var(--ink); paint-order: stroke fill; text-shadow: 5px 5px 0 var(--ink);
+  letter-spacing: .04em;
+}
+.lb-title p {
+  display: inline-block; margin: 12px 0 0; padding: 3px 10px; font-family: var(--display); font-size: 16px;
+  background: var(--paper); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); transform: rotate(-1.5deg);
+}
+/* 中间空地：主角站中间，同事在前后路过 */
+.lb-floor { position: relative; flex: 1; min-height: 150px; }
+.lb-walker { position: absolute; width: 0; height: 64px; --dir: 1; pointer-events: none; }
+.lb-walker .lb-body { position: absolute; left: 0; bottom: 0; height: 64px; transform: translateX(-50%) scaleX(var(--dir)); }
+/* 实习生身后拖着的锅：排在背后，越后越低一点，像游戏里的尾巴 */
+.lb-wok { position: absolute; bottom: -4px; height: 26px; left: calc(var(--dir) * var(--i) * -24px); transform: translateX(-50%); }
+.lb-hero {
+  position: absolute; left: 50%; bottom: 8%; transform: translateX(-50%); padding: 0; border: 0; background: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center;
+}
+.lb-hero img { height: clamp(110px, 17vh, 150px); animation: lbIdle 1.2s steps(2) infinite; }
+/* 主角脚下的黄色光晕（和游戏里一致） */
+.lb-hero::after { content: ""; position: absolute; bottom: -6px; width: 70%; height: 14px; background: rgba(255, 216, 77, .55); border: 2px solid rgba(201, 138, 0, .7); border-radius: 50%; z-index: -1; }
+@keyframes lbIdle { 50% { transform: translateY(-3px); } }
+/* 主角台词气泡：白底、墨水蓝边、硬阴影 */
+.lb-say {
+  position: absolute; bottom: calc(100% + 4px); white-space: nowrap; font-family: var(--display); font-size: 17px; color: var(--ink);
+  background: #fff; border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); padding: 4px 10px;
+}
+.lb-say::after { content: ""; position: absolute; left: 50%; top: 100%; margin-left: -6px; border: 6px solid transparent; border-top-color: var(--ink); }
+/* 底部菜单 */
+.lb-menu { width: 100%; max-width: 360px; margin: 0 auto; }
+.lb-menu .btn { border-radius: 0; }
+.lb-menu .btn small { display: block; font-family: var(--body); font-size: 12px; color: var(--ink); opacity: .75; margin-top: 2px; }
+.lb-menu .btn.ghost .ico { margin-right: 6px; }
+/* 关卡日历：每关一页，选中的那页是便利贴黄 */
+.lb-days { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 8px; }
+.lb-day {
+  display: grid; gap: 4px; justify-items: center; padding: 6px 4px 7px; cursor: pointer; color: var(--ink);
+  background: var(--paper); border: 2px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); border-top: 7px solid var(--alarm);
+}
+.lb-day b { font-family: var(--display); font-weight: 400; font-size: 18px; }
+.lb-day span { display: flex; gap: 2px; height: 18px; align-items: center; }
+.lb-day span img { height: 17px; }
+.lb-day.on { background: var(--note); }
+.lb-day:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.lb-day:disabled { cursor: not-allowed; background: #D5DAE3; border-top-color: #9AA6C4; color: var(--muted); box-shadow: 2px 2px 0 var(--ink); }
+.lb-day:focus-visible, .lb-hero:focus-visible { outline: 3px solid var(--alarm); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .lb-hero img { animation: none; } }

@@ -100,7 +100,7 @@
   let auto = query.has('auto');  // ?auto=1：玩家也交给 AI（调试 / 平衡测试用）
   let L = LEVELS[0];             // 当前关卡
   let S = null;                  // 当前对局状态
-  let mode = 'loading';          // loading | intro | play | pause | over
+  let mode = 'loading';          // loading | lobby | intro | play | pause | over
   let shake = 0;                 // 屏幕震动
   let hintTimer = 0;             // 当前提示剩余显示时间
   let msgTimer = 0;              // 群消息剩余显示时间
@@ -1517,10 +1517,10 @@
       ${stars && next ? `<button class="btn" data-act="next">下一关：${next.name}</button>` : ''}
       ${stars && !next ? '<button class="btn ghost" data-act="soon">更多关卡开发中</button>' : ''}
       <button class="btn ${stars && next ? 'ghost' : ''}" data-act="retry">再来一局</button>
-      <button class="btn ghost" data-act="menu">选关</button>
+      <button class="btn ghost" data-act="menu">回大厅</button>
       <button class="btn ghost" data-act="share">晒战绩</button>`, {
       retry: startGame,
-      menu: showIntro,
+      menu: showLobby,
       share: E.fakeShare,
       soon: () => E.toast('第 3 关还在做，先把前两关打到三星吧'),
       next: () => { L = next; showIntro(); },
@@ -1571,11 +1571,24 @@
       <p class="sub">${L.name} · 现在 ${clockAt(S.t)}</p>
       <button class="btn" data-act="resume">继续上班</button>
       <button class="btn ghost" data-act="retry">重新开始</button>
-      <button class="btn ghost" data-act="menu">选关</button>`, {
+      <button class="btn ghost" data-act="menu">回大厅</button>`, {
       resume: () => { E.hidePanel(); mode = 'play'; },
       retry: startGame,
-      menu: showIntro,
+      menu: showLobby,
     });
+  }
+  // 玩法规则列表（关卡介绍和大厅「玩法」共用），领导名字按当前关卡填
+  function rulesHtml() {
+    const leaders = L.leaders.map((d) => LEADER_TYPES[d.type].name).join('、');
+    return `
+      <ul class="rules">
+        <li><span>⏰</span>每口锅都有截止时间（${potLife()} 秒），甩来甩去不重置；到点在谁身上，谁背锅</li>
+        <li><span>🕹️</span>左下角摇杆控制方向，右下角「甩」把最急的那口锅扔出去</li>
+        <li><span>👀</span>${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅</li>
+        <li><span>☄️</span>天降锅只砸你，躲不掉；${leaders}的普通锅看到红线就躲</li>
+        <li><span>🛡️</span>锅朝你飞来时按「甩」能弹回去；P0 只有 ${P0_LIFE} 秒，炸了背锅 +${P0_BLAME}</li>
+        <li><span>💥</span>身上堆满 ${MAX_POTS} 口锅当场压垮，直接失败</li>
+      </ul>`;
   }
   // 关卡介绍 + 选关
   function showIntro() {
@@ -1588,31 +1601,162 @@
       const locked = lv.id > prog.unlocked;
       const b = prog.best[lv.id];
       return `<button class="lv${lv === L ? ' on' : ''}" data-act="pick" data-id="${lv.id}" ${locked ? 'disabled' : ''}>
-        ${locked ? '🔒 ' : ''}第 ${lv.id} 关<small>${b ? '★'.repeat(b.stars) : locked ? '前一关进前三解锁' : '未通关'}</small></button>`;
+        ${locked ? '<img class="ico" src="assets/px/ui_lock.png" alt="">' : ''}第 ${lv.id} 关<small>${b ? '★'.repeat(b.stars) : locked ? '前一关进前三解锁' : '未通关'}</small></button>`;
     }).join('');
-    const leaders = L.leaders.map((d) => LEADER_TYPES[d.type].name).join('、');
     E.showPanel(`
       <div class="lvtabs">${tabs}</div>
       <span class="badge">第 ${L.id} 关 · ${1 + L.bots.length} 人</span>
       <h1>${L.name}</h1>
       <p class="sub">${L.desc}</p>
-      <ul class="rules">
-        <li><span>⏰</span>每口锅都有截止时间（${potLife()} 秒），甩来甩去不重置；到点在谁身上，谁背锅</li>
-        <li><span>🕹️</span>左下角摇杆控制方向，右下角「甩」把最急的那口锅扔出去</li>
-        <li><span>👀</span>${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅</li>
-        <li><span>☄️</span>天降锅只砸你，躲不掉；${leaders}的普通锅看到红线就躲</li>
-        <li><span>🛡️</span>锅朝你飞来时按「甩」能弹回去；P0 只有 ${P0_LIFE} 秒，炸了背锅 +${P0_BLAME}</li>
-        <li><span>💥</span>身上堆满 ${MAX_POTS} 口锅当场压垮，直接失败</li>
-      </ul>
+      ${rulesHtml()}
       <div class="goal">
         <b>目标</b> 18:00 按背锅次数排名（少的在前）：第 1 名 ★★★ · 第 2 名 ★★ · 第 3 名 ★，进前三过关
         ${best ? `<br><b>最好成绩</b> ${'★'.repeat(best.stars)}${best.blames != null ? ` · 背锅 ${best.blames} 次` : ''}` : ''}
       </div>
-      <button class="btn" data-act="start">开始上班</button>`, {
+      <button class="btn" data-act="start">开始上班</button>
+      <button class="btn ghost" data-act="lobby">回大厅</button>`, {
       start: startGame,
+      lobby: showLobby,
       pick: (btn) => { L = LEVELS.find((lv) => lv.id === Number(btn.dataset.id)); showIntro(); },
     });
   }
+
+  /* ---------------- 大厅 ---------------- */
+  // 大厅是盖在画布上的一层 DOM（#lobby）：像素背景 + 主角待机 + 同事路过 + 关卡日历 + 按钮
+  // 大厅期间画布不重绘（见主循环），只更新这里的几个小人
+  const LOBBY_LINES = ['这锅不是我的', '这个你来跟一下', '我就路过一下', '收到，马上甩', '先对齐一下口径', '谁提的需求谁负责'];
+  const lobby = { el: document.getElementById('lobby'), walkers: [], heroT: 0, line: -1 };
+
+  // 路过的同事：who 角色名，y 站位（占大厅高度比例），speed 像素/秒，woks 身后拖着几口锅
+  function makeWalker(who, y, x, dir, speed, woks) {
+    const el = document.createElement('div');
+    el.className = 'lb-walker';
+    el.style.top = `${y * 100}%`;
+    // 身后的锅先放进去，人最后放，保证人盖在锅上面
+    el.innerHTML = Array.from({ length: woks }, (_, i) => `<img class="lb-wok" src="assets/px/wok.png" alt="" style="--i:${i + 1}">`).join('') +
+      `<img class="lb-body" src="assets/px/${who}_walk_s0.png" alt="">`;
+    return { el, body: el.querySelector('.lb-body'), who, x, dir, speed, woks, dist: 0, frame: 0 };
+  }
+
+  // 显示大厅：重画关卡日历和按钮，摆好路过的同事
+  function showLobby() {
+    mode = 'lobby';
+    S = null;
+    E.hidePanel();
+    clearBanners();
+    document.getElementById('hud').hidden = true;
+    const prog = loadProgress();
+    const stars = LEVELS.reduce((sum, lv) => sum + ((prog.best[lv.id] && prog.best[lv.id].stars) || 0), 0);
+    // 关卡日历：每关一页，锁住的显示锁；点一页就把它设成当前关
+    const days = LEVELS.map((lv) => {
+      const locked = lv.id > prog.unlocked;
+      const b = prog.best[lv.id];
+      const got = b ? b.stars : 0;
+      const starImgs = [1, 2, 3].map((i) => `<img src="assets/px/ui_${i <= got ? 'star' : 'star_empty'}.png" alt="">`).join('');
+      return `<button class="lb-day${lv === L ? ' on' : ''}" data-act="pick" data-id="${lv.id}" ${locked ? 'disabled' : ''} aria-label="第 ${lv.id} 关 ${lv.name}">
+        <b><img class="ico" src="assets/px/ui_calendar.png" alt="">${lv.name.split('·')[0].trim()}</b>
+        <span>${locked ? '<img class="lb-lock" src="assets/px/ui_lock.png" alt="未解锁">' : starImgs}</span></button>`;
+    }).join('');
+    lobby.el.innerHTML = `
+      <div class="lb-top">
+        <span class="chip"><img class="ico" src="assets/px/ui_badge.png" alt="">工牌 <b>${stars}</b>/${LEVELS.length * 3}<img class="ico lb-star" src="assets/px/ui_star.png" alt="星"></span>
+        <button class="chip" type="button" data-act="mute" aria-label="静音"><img class="ico" src="assets/px/ui_sound_${E.muted ? 'off' : 'on'}.png" alt=""></button>
+      </div>
+      <div class="lb-title"><h1>甩锅侠</h1><p>今天这锅，反正不是我的</p></div>
+      <div class="lb-floor">
+        <button class="lb-hero" type="button" data-act="hero" aria-label="主角">
+          <span class="lb-say" hidden></span>
+          <img src="assets/px/player_normal.png" alt="">
+        </button>
+      </div>
+      <div class="lb-menu">
+        <div class="lb-days">${days}</div>
+        <button class="btn" data-act="go">去上班<small>第 ${L.id} 关 · ${L.name}</small></button>
+        <button class="btn ghost" data-act="rules"><img class="ico" src="assets/px/ui_book.png" alt="">玩法</button>
+      </div>`;
+    // 两个路过的同事：实习生身后拖着三口锅，老油条空手溜达（幸灾乐祸的对照）
+    const floor = lobby.el.querySelector('.lb-floor');
+    lobby.walkers = [makeWalker('intern', 0.08, 0.15, 1, 38, 3), makeWalker('veteran', 0.52, 0.85, -1, 26, 0)];
+    for (const w of lobby.walkers) floor.prepend(w.el);
+    lobby.heroT = 0;
+    lobby.el.hidden = false;
+  }
+
+  // 离开大厅（进关卡介绍 / 开局时调用）
+  function hideLobby() {
+    lobby.el.hidden = true;
+    lobby.walkers = [];
+    document.getElementById('hud').hidden = false;
+  }
+
+  // 每帧更新大厅：同事左右来回走（按走过的距离换帧，和游戏里一致），主角说完话恢复站姿
+  function updateLobby(dt) {
+    const fw = lobby.el.clientWidth || 1;
+    for (const w of lobby.walkers) {
+      w.x += (w.dir * w.speed * dt) / fw;
+      w.dist += w.speed * dt;
+      // 走到两侧边缘就掉头；身后拖着锅的要多留出锅串的长度，掉头前锅不出屏
+      const m = (30 + w.woks * 24) / fw;
+      if (w.x > 1 - m) { w.x = 1 - m; w.dir = -1; }
+      if (w.x < m) { w.x = m; w.dir = 1; }
+      const f = Math.floor(w.dist / 13) % 4;
+      if (f !== w.frame) { w.frame = f; w.body.src = `assets/px/${w.who}_walk_s${f}.png`; }
+      w.el.style.left = `${w.x * 100}%`;
+      w.el.style.setProperty('--dir', w.dir); // 往左走用侧面帧镜像
+    }
+    if (lobby.heroT > 0) {
+      lobby.heroT -= dt;
+      if (lobby.heroT <= 0) {
+        const hero = lobby.el.querySelector('.lb-hero');
+        if (hero) { hero.querySelector('img').src = 'assets/px/player_normal.png'; hero.querySelector('.lb-say').hidden = true; }
+      }
+    }
+  }
+
+  // 点主角：换成得意姿势，头顶冒一句甩锅台词（不和上一句重复）
+  function pokeHero(btn) {
+    let i;
+    do { i = Math.floor(Math.random() * LOBBY_LINES.length); } while (i === lobby.line && LOBBY_LINES.length > 1);
+    lobby.line = i;
+    const say = btn.querySelector('.lb-say');
+    say.textContent = LOBBY_LINES[i];
+    say.hidden = false;
+    btn.querySelector('img').src = 'assets/px/player_win.png';
+    lobby.heroT = 1.6;
+    E.sfx('throw');
+  }
+
+  // 切换静音（大厅和局内 HUD 的喇叭图标一起换）
+  function toggleMute() {
+    E.muted = !E.muted;
+    const src = `assets/px/ui_sound_${E.muted ? 'off' : 'on'}.png`;
+    document.getElementById('icoSound').src = src;
+    const lb = lobby.el.querySelector('[data-act="mute"] img');
+    if (lb) lb.src = src;
+  }
+
+  // 大厅「玩法」：只看规则，看完回大厅
+  function showRules() {
+    E.showPanel(`
+      <span class="badge">玩法</span>
+      <h1>怎么甩锅</h1>
+      <p class="sub">背锅越少，排名越前；进前三准点下班</p>
+      ${rulesHtml()}
+      <button class="btn" data-act="close">知道了</button>`, { close: E.hidePanel });
+  }
+
+  // 大厅按钮：委托到 #lobby 一处监听
+  lobby.el.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-act]');
+    if (!b || mode !== 'lobby') return;
+    E.unlockAudio();
+    const act = b.dataset.act;
+    if (act === 'go') { hideLobby(); showIntro(); }
+    else if (act === 'pick') { L = LEVELS.find((lv) => lv.id === Number(b.dataset.id)); showLobby(); }
+    else if (act === 'rules') showRules();
+    else if (act === 'hero') pokeHero(b);
+    else if (act === 'mute') toggleMute();
+  });
 
   /* ---------------- 调试：纯 AI 对局模拟（平衡数值用） ---------------- */
   // 在控制台运行 SG_DEBUG.simulate(关卡序号, 局数)：玩家也交给 AI，快速跑完多局，统计排名和锅数
@@ -1657,10 +1801,7 @@
   /* ---------------- 启动 ---------------- */
   document.getElementById('btnPause').addEventListener('click', pauseGame);
   const btnMute = document.getElementById('btnMute');
-  btnMute.addEventListener('click', () => {
-    E.muted = !E.muted;
-    document.getElementById('icoSound').src = `assets/px/ui_sound_${E.muted ? 'off' : 'on'}.png`; // 切换喇叭图标
-  });
+  btnMute.addEventListener('click', toggleMute);
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
   window.addEventListener('keydown', (e) => { if (e.key === 'Escape' || e.key === 'p') pauseGame(); });
 
@@ -1670,10 +1811,15 @@
     L = LEVELS.find((lv) => lv.id === qLevel);
     const prog = loadProgress();
     if (prog.unlocked < qLevel) { prog.unlocked = qLevel; saveProgress(prog); }
+  } else {
+    // 默认选中最新解锁的那一关
+    const un = loadProgress().unlocked;
+    L = LEVELS.filter((lv) => lv.id <= un).pop() || LEVELS[0];
   }
 
   E.showPanel('<h1>加载中…</h1><p class="sub">正在把锅摆好</p>', {});
-  E.loadSprites(SPRITES, 'assets/px/', 'png').then(showIntro);
+  // 素材加载完先进大厅；带 ?level= 调试参数时直接进关卡介绍
+  E.loadSprites(SPRITES, 'assets/px/', 'png').then(() => (qLevel ? showIntro() : showLobby()));
 
   E.loop((dt, time) => {
     if (mode !== 'play') inp.fire = 0;
@@ -1683,6 +1829,7 @@
     }
     if (mode === 'play' || mode === 'over') floats.update(dt);
     updateBanners(mode === 'play' ? dt : 0);
+    if (mode === 'lobby') updateLobby(dt);
     if (S) { draw(time); updateHud(); }
   });
 })();

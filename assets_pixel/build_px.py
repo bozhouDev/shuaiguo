@@ -20,6 +20,7 @@ LIMITS = [
     (('ui_',), 96),                                                          # 状态栏图标
     (('desk', 'meeting_table', 'tea_counter', 'sofa', 'whiteboard', 'cabinet'), 720),
     (('cooler', 'printer', 'plant'), 300),
+    (('lobby_',), 768),                                                      # 大厅整张背景（竖屏 2:3）
 ]
 
 
