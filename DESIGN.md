@@ -1,4 +1,4 @@
-# 甩锅侠 · 美术与界面设计规范（DESIGN.md）
+# 这锅你来背 · 美术与界面设计规范（DESIGN.md）
 
 > 2026-11-01 定稿 v1。本文件是新素材、新界面、新特效的唯一标准；和本文件冲突的旧做法，以本文件为准。
 > 风格参考图：`../prototypes/style-explore/c_pixel.png`（主角在办公室里走的那张）。实机效果：`assets_pixel/ingame/`。

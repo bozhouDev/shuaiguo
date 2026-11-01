@@ -50,7 +50,7 @@ keys=(${@:-${(k)JOB}})
 for key in $keys; do
   refargs=()
   for r in ${=REFS[$key]}; do refargs+=(-i "$r"); done
-  PROMPT="You are producing final production art for the 2D pixel-art mobile game 甩锅侠 (an office game where coworkers throw cooking woks = blame at each other). Reference images are attached for style.
+  PROMPT="You are producing final production art for the 2D pixel-art mobile game 这锅你来背 (an office game where coworkers throw cooking woks = blame at each other). Reference images are attached for style.
 
 ${JOB[$key]}
 

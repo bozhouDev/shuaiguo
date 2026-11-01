@@ -41,7 +41,7 @@ REF[w_director]=director_walk
 
 keys=(${@:-${(k)WHO}})
 for key in $keys; do
-  PROMPT="You are producing final production sprite sheets for the 2D pixel-art mobile game 甩锅侠 (an office game). Reference images are attached.
+  PROMPT="You are producing final production sprite sheets for the 2D pixel-art mobile game 这锅你来背 (an office game). Reference images are attached.
 
 ${RULES}
 

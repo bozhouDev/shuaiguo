@@ -73,7 +73,7 @@ for key in $keys; do
   refargs=()
   for r in ${=REFS[$key]}; do refargs+=(-i "$r"); done
   if [[ $key == s6_props || $key == s7_ui ]]; then extra=''; else extra="$CHAR"; fi
-  PROMPT="You are producing final production sprite sheets for the 2D pixel-art mobile game 甩锅侠 (an office game where coworkers throw cooking woks = blame at each other). Reference images are attached for style and identity.
+  PROMPT="You are producing final production sprite sheets for the 2D pixel-art mobile game 这锅你来背 (an office game where coworkers throw cooking woks = blame at each other). Reference images are attached for style and identity.
 
 ${RULES}
 

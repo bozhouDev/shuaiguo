@@ -98,7 +98,7 @@ html, body {
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
-/* ===== 甩锅侠正式原型新增样式 ===== */
+/* ===== 这锅你来背正式原型新增样式 ===== */
 button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto; color: var(--ink); }
 .hud-right { margin-left: auto; display: flex; gap: 6px; }
 /* 教学提示条 */
@@ -501,3 +501,12 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 #hud .chip.pulse { animation: chipPulse .45s ease-in-out 6 alternate; }
 @keyframes chipPulse { to { transform: scale(1.15); filter: drop-shadow(0 0 6px var(--note)); } }
 #btnSkip { font-size: 13px; }
+
+/* ===== v8：改名《这锅你来背》（标题 5 个字）+ 三页日历，窄屏（≤360 宽）收小，免得「周二」折行、标题顶到边 ===== */
+@media (max-width: 360px) {
+  .lb-title h1 { font-size: 46px; }
+  .lb-days { gap: 8px; }
+  .lb-day b { font-size: 18px; gap: 3px; white-space: nowrap; }
+  .lb-day b img { height: 20px; }
+  .lb-day span img { height: 20px; }
+}
