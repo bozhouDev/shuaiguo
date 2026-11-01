@@ -1020,6 +1020,16 @@
       <span class="h-txt">${h.sub ? `<span class="h-sub">${hintMarkup(h.sub)}</span>` : ''}<span class="h-main">${hintMarkup(h.text)}</span></span>`;
     el.classList.add('on');
     hintTimer = h.sub ? 4.6 : 3.8;
+    placeBanners();
+  }
+  // 横幅摆位：教学横幅贴在顶栏下方（窄屏顶栏会折成两行，所以按顶栏实际高度算）；
+  // 群消息在教学横幅显示时排到它下面，不显示时贴在顶栏下方，两者不叠在一起
+  function placeBanners() {
+    const hudBottom = document.getElementById('hud').getBoundingClientRect().bottom;
+    const hint = document.getElementById('hint'), msg = document.getElementById('msg');
+    const tab = hint.querySelector('.h-tab');
+    hint.style.top = `${hudBottom + (tab ? 30 : 8)}px`; // 黄色标签凸出在横幅上方，要多留出它的高度
+    msg.style.top = `${hint.classList.contains('on') ? hint.getBoundingClientRect().bottom + 10 : hudBottom + 8}px`;
   }
   // 显示一条工作群消息（事件预告）：「【群名】发言人：内容」
   function showMsg(text) {
@@ -1028,6 +1038,7 @@
     el.innerHTML = m ? `<small>${m[1]} ${m[2]}</small>${m[3]}` : text;
     el.classList.add('on');
     msgTimer = 3.4;
+    placeBanners();
     E.sfx('tick');
   }
   // 提示条和群消息的计时

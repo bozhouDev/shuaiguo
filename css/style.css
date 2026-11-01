@@ -398,3 +398,12 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 #hint .hl-y { color: var(--note); }
 #hint .hl-r { color: #FF6F61; }
 #hint .hl-g { color: #67D893; }
+
+/* ===== v6：教学横幅挪到顶栏下方，从左侧滑入，不挡人物周围视野 ===== */
+/* top 由 game.js 的 placeBanners 按顶栏实际高度设置（窄屏顶栏会折成两行），这里的值只是兜底 */
+#hint {
+  top: calc(env(safe-area-inset-top, 0px) + 112px); bottom: auto; left: max(12px, env(safe-area-inset-left, 0px)); margin-top: 0;
+  transform: translateX(calc(-100% - 40px)); opacity: 0;
+  transition: transform .34s cubic-bezier(.2, .9, .3, 1.12), opacity .2s;
+}
+#hint.on { transform: none; opacity: 1; }
