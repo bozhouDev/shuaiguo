@@ -145,6 +145,33 @@
   }
   function saveProgress(p) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(p)); } catch (_) { /* 忽略 */ } }
 
+  // 自定义称呼按 Unicode 字符计数，去掉控制字符；空白恢复默认。
+  function cleanBossName(value) {
+    return Array.from(typeof value === 'string' ? value.replace(/[\u0000-\u001f\u007f-\u009f]/g, '').trim() : '').slice(0, 6).join('');
+  }
+  function bossName() { return cleanBossName(loadProgress().bossName) || '老板'; }
+  // 大厅编辑称呼：用 value/textContent 填用户内容，避免被当作 HTML。
+  function showBossNameEditor() {
+    E.showPanel(`<div class="pop-head">老板称呼</div>
+      <label for="bossNameInput">给老板起个称呼</label>
+      <input id="bossNameInput" type="text" autocomplete="off" placeholder="老板" aria-describedby="bossNameHelp">
+      <p class="sub" id="bossNameHelp">最多 6 个字，留空恢复“老板”</p>
+      <button class="btn" data-act="save">保存称呼</button>
+      <button class="pop-link" data-act="cancel">取消</button>`, {
+      save: () => {
+        const input = document.getElementById('bossNameInput');
+        if (Array.from(input.value.trim()).length > 6) { E.toast('最多 6 个字', 1500); input.focus(); return; }
+        const progress = loadProgress(); progress.bossName = cleanBossName(input.value);
+        try { localStorage.setItem(SAVE_KEY, JSON.stringify(progress)); }
+        catch (_) { E.toast('保存失败，请重试', 1500); return; }
+        showLobby();
+      },
+      cancel: E.hidePanel,
+    });
+    const input = document.getElementById('bossNameInput');
+    input.value = bossName(); input.focus(); input.select();
+  }
+
   /* ---------------- 对局状态 ---------------- */
   // 创建一个打工人（玩家或机器人同事共用这一个结构）
   // noPots：带教时同事开局不带锅（开始上班时再发，见 startWork）
@@ -174,7 +201,7 @@
   function makeLeader(def) {
     const cfg = LEADER_TYPES[def.type], route = OFFICE.routes[def.route];
     return {
-      type: def.type, cfg, name: cfg.name, route, x: route[0].x, y: route[0].y, i: 1, wait: 1.5,
+      type: def.type, cfg, name: def.type === 'boss' ? bossName() : cfg.name, route, x: route[0].x, y: route[0].y, i: 1, wait: 1.5,
       tgo: null, faceLock: null,                              // 带教剧本：要走去的点、锁死的视野朝向
       path: [], goal: null, repathT: 0,                       // 寻路：当前路径、目标点、下次重算倒计时
       state: 'patrol', st: 0, aimT: 0, targets: [], chase: null, hitCd: {}, alertCd: 0,
@@ -1498,7 +1525,15 @@
     const spr = leaderSprite(l);
     const shake = l.state === 'aim' ? Math.sin(time * 30) * 1.2 : 0;
     E.drawStanding(ctx, spr.name, l.x + shake, foot, h, { flip: spr.flip });
-    E.label(ctx, l.name, l.x, foot + 13, 13, '#E8504A');
+    // 老板脚下的白底红字名牌，宽度随称呼变化；自定义汉字可使用系统字体回退。
+    ctx.save();
+    ctx.font = 'bold 16px "ZCOOL KuaiLe", "PingFang SC", sans-serif';
+    const nameWidth = Math.ceil(ctx.measureText(l.name).width) + 16;
+    ctx.fillStyle = '#FFFDF5'; ctx.strokeStyle = '#1F2A44'; ctx.lineWidth = 2;
+    ctx.fillRect(l.x - nameWidth / 2, foot + 5, nameWidth, 28);
+    ctx.strokeRect(l.x - nameWidth / 2, foot + 5, nameWidth, 28);
+    ctx.fillStyle = '#E8504A'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(l.name, l.x, foot + 19); ctx.restore();
     if (chase) {
       E.drawSprite(ctx, 'fx_anger', l.x + 24, foot - h + 8 + Math.sin(time * 12) * 2, 22);
       E.label(ctx, '！', l.x - 26, foot - h - 4, 26, '#E8504A');
@@ -2039,8 +2074,10 @@
         <div class="lb-days">${days}</div>
         <p class="lb-cur"><span>第 ${L.id} 关 · ${L.name}</span></p>
         <button class="lb-go" type="button" data-act="go"><img src="${E.pxUrl('ui_badge')}" alt=""><span>去上班</span><i></i></button>
+        <button class="lb-rules" type="button" data-act="boss-name">老板称呼：<span id="lobbyBossName"></span></button>
         <button class="lb-rules" type="button" data-act="rules"><img src="${E.pxUrl('ui_book')}" alt="">玩法</button>
       </div>`;
+    document.getElementById('lobbyBossName').textContent = bossName();
     lobby.heroT = 0;
     lobby.el.hidden = false;
   }
@@ -2096,6 +2133,7 @@
     else if (act === 'rules') showRules();
     else if (act === 'hero') pokeHero(b);
     else if (act === 'settings') showSettings();
+    else if (act === 'boss-name') showBossNameEditor();
   });
 
   /* ---------------- 调试：纯 AI 对局模拟（平衡数值用） ---------------- */
@@ -2148,7 +2186,7 @@
   btnSet.innerHTML = pxIcon('gear');
   btnSet.addEventListener('click', () => { if (mode === 'play') showSettings(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
-  window.addEventListener('keydown', (e) => { if (e.key === 'Escape' || e.key === 'p') pauseGame(); });
+  window.addEventListener('keydown', (e) => { if (!e.target.matches('input, textarea') && (e.key === 'Escape' || e.key === 'p')) pauseGame(); });
 
   // ?level=2：直接进入指定关卡（调试用，会顺便解锁）
   const qLevel = Number(query.get('level'));

@@ -520,3 +520,7 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 .coach-locked #hint .h-go { position: relative; z-index: 1; }
 #hint .h-go:focus-visible { outline: 2px solid var(--paper); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { #coachHand img { animation: none; } }
+
+/* 大厅老板称呼输入框：沿用奶油底和像素描边。 */
+#bossNameInput { display: block; box-sizing: border-box; width: 100%; margin: 12px 0; padding: 12px; border: 2px solid var(--ink); border-radius: 0; background: var(--paper); color: var(--ink); font: 18px var(--body); user-select: text; }
+#bossNameInput:focus-visible { outline: 3px solid var(--note); outline-offset: 2px; }

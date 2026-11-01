@@ -96,6 +96,8 @@
       fireBtn.addEventListener('contextmenu', (e) => e.preventDefault());
     }
     window.addEventListener('keydown', (e) => {
+      // 编辑大厅称呼时，让输入框正常处理空格、方向键和输入法。
+      if (e.target instanceof Element && e.target.matches('input, textarea, [contenteditable]')) return;
       const k = e.key.toLowerCase();
       // 空格 / J 甩锅（按住不连发）
       if ((k === ' ' || k === 'j') && !e.repeat) inp.fire++;
