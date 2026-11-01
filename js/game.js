@@ -98,6 +98,7 @@
   const floats = new E.Floats();
   const query = new URLSearchParams(location.search);
   let auto = query.has('auto');  // ?auto=1：玩家也交给 AI（调试 / 平衡测试用）
+  let forceTut = query.has('tut'); // ?tut=1：已经看过带教也再走一遍
   let L = LEVELS[0];             // 当前关卡
   let S = null;                  // 当前对局状态
   let mode = 'loading';          // loading | lobby | intro | play | pause | over
@@ -111,8 +112,9 @@
   // 本关锅的截止时长
   const potLife = () => L.potLife || DUE_DEFAULT;
   // 新的一口锅：label 锅上的字，due 到点时刻（对局秒数），hot 是否 P0
+  // 带教期间的锅不走时间（due = Infinity），开始上班时再统一起算
   function newPot(t, hot, label) {
-    return { label: hot ? 'P0' : label || E.pick(OFFICE.potLabels), due: t + (hot ? P0_LIFE : potLife()), hot: !!hot };
+    return { label: hot ? 'P0' : label || E.pick(OFFICE.potLabels), due: S && S.tut ? Infinity : t + (hot ? P0_LIFE : potLife()), hot: !!hot };
   }
   // 某人身上最急的一口锅的下标（没有锅返回 -1）
   function urgentIdx(a) {
@@ -126,25 +128,31 @@
   const holdsHot = (a) => a.sn.segs.some((p) => p.hot);
   // 两个打工人蛇头之间的距离
   const headDist = (a, b) => E.dist(a.sn.x, a.sn.y, b.sn.x, b.sn.y);
-  // 对局秒数 → 屏幕时钟文字（09:00 ~ 18:00）
+  // 上班时钟：开始上班后过了几秒（带教期间 t0 = Infinity，结果是 -Infinity，时钟停在 09:00）
+  // S.t 是对局物理时间（锅的截止、动画都用它），派锅节奏、散会、下班判定都用上班时钟
+  const workT = () => S.t - S.t0;
+  // 上班秒数 → 屏幕时钟文字（09:00 ~ 18:00）
   function clockAt(t) {
     const mins = (E.clamp(t, 0, L.duration) / L.duration) * 9 * 60;
     const hh = 9 + Math.floor(mins / 60), mm = Math.floor(mins % 60);
     return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
   }
-  // 读取 / 保存闯关进度（存储不可用时静默失败）
+  // 读取 / 保存闯关进度（存储不可用时静默失败）；tutDone 记录第 1 关的带教看过没有
+  // v3：关卡从两关改成三关，旧存档的关卡编号对不上，换新键名重新开始
+  const SAVE_KEY = 'shuaiguo_v3';
   function loadProgress() {
-    try { return JSON.parse(localStorage.getItem('shuaiguo_v2')) || { unlocked: 1, best: {} }; } catch (_) { return { unlocked: 1, best: {} }; }
+    try { return JSON.parse(localStorage.getItem(SAVE_KEY)) || { unlocked: 1, best: {} }; } catch (_) { return { unlocked: 1, best: {} }; }
   }
-  function saveProgress(p) { try { localStorage.setItem('shuaiguo_v2', JSON.stringify(p)); } catch (_) { /* 忽略 */ } }
+  function saveProgress(p) { try { localStorage.setItem(SAVE_KEY, JSON.stringify(p)); } catch (_) { /* 忽略 */ } }
 
   /* ---------------- 对局状态 ---------------- */
   // 创建一个打工人（玩家或机器人同事共用这一个结构）
-  function makeAgent(id, key, x, y, isPlayer) {
+  // noPots：带教时同事开局不带锅（开始上班时再发，见 startWork）
+  function makeAgent(id, key, x, y, isPlayer, noPots) {
     const p = PERSONAS[key];
     const sn = new E.Snake(x, y, { speed: BASE_SPEED * p.speed, turn: p.turn, spacing: 22 }); // 锅缩小后尾巴间距同步收紧
     sn.angle = isPlayer ? 0 : E.rand(0, Math.PI * 2);
-    if (!isPlayer) for (let i = 0; i < L.startPots; i++) { const pot = newPot(0); pot.due = E.rand(0.5, 1) * potLife(); sn.segs.push(pot); }
+    if (!isPlayer && !noPots) giveStartPots(sn, 0);
     return {
       id, key, p, name: p.name, isPlayer, sn,
       want: sn.angle, thinkT: E.rand(0, 0.3), target: null,   // AI：想去的方向、思考倒计时、想甩锅的对象
@@ -158,27 +166,36 @@
       stuckT: 0, lastX: x, lastY: y, panicT: 0,                // 卡墙检测
     };
   }
+  // 同事开局自带的锅：截止时间打散，免得同一时刻一起到点
+  function giveStartPots(sn, t) {
+    for (let i = 0; i < L.startPots; i++) { const pot = newPot(t); pot.due = t + E.rand(0.5, 1) * potLife(); sn.segs.push(pot); }
+  }
   // 创建一位领导
   function makeLeader(def) {
     const cfg = LEADER_TYPES[def.type], route = OFFICE.routes[def.route];
     return {
       type: def.type, cfg, name: cfg.name, route, x: route[0].x, y: route[0].y, i: 1, wait: 1.5,
+      tgo: null, faceLock: null,                              // 带教剧本：要走去的点、锁死的视野朝向
       path: [], goal: null, repathT: 0,                       // 寻路：当前路径、目标点、下次重算倒计时
       state: 'patrol', st: 0, aimT: 0, targets: [], chase: null, hitCd: {}, alertCd: 0,
       throwCd: E.rand(0, 1.5),
       face: Math.PI / 2, baseFace: Math.PI / 2,               // 视野朝向：走路时朝前进方向，停下时左右张望
     };
   }
-  // 生成一局的初始状态
-  function makeState() {
+  // 生成一局的初始状态；tut 为真时先走带教（同事站到带教位置、开局不带锅，上班时钟先不走）
+  function makeState(tut) {
+    const spots = tut ? L.tutorial.spots : {};
     const player = makeAgent(0, 'me', OFFICE.player.x, OFFICE.player.y, true);
-    const bots = L.bots.map((k, i) => makeAgent(i + 1, k, OFFICE.spawns[i].x, OFFICE.spawns[i].y, false));
+    const bots = L.bots.map((k, i) => { const sp = spots[k] || OFFICE.spawns[i]; return makeAgent(i + 1, k, sp.x, sp.y, false, tut); });
     return {
-      t: 0, player, bots, agents: [player, ...bots],
+      t: 0, t0: tut ? Infinity : 0, player, bots, agents: [player, ...bots],
       leaders: L.leaders.map(makeLeader),
       flying: [], throws: [], arcs: [], fx: [], tea: 0,
-      pace: null, paceIdx: -1, schedule: buildSchedule(), hintIdx: 0,
-      skyFirst: true, revived: false, rescued: false, over: null, lastTick: 0, spawned: 0, leaderHits: 0, booms: 0, skies: 0,
+      pace: null, paceIdx: -1, schedule: buildSchedule(), hintIdx: 0, tipsShown: {},
+      // 带教进度：i 当前步，timers 本步的定时器，ring 要走到的黄圈，victim 第一次甩中的同事
+      tut: tut ? { i: -1, timers: [], ring: null, step: null, def: null, done: false, victim: null, showRank: false } : null,
+      finale: false, finMsg: false, finDone: false,                  // 收尾（下午茶）：是否进行中 / 群消息发了没 / 触发过没
+      skyFirst: !tut, revived: false, rescued: false, over: null, lastTick: 0, spawned: 0, leaderHits: 0, booms: 0, skies: 0,
     };
   }
   // 排好本局的时间表：散会预告 + 散会喷锅 + 随机事件
@@ -289,6 +306,7 @@
     spawnFx('fx_impact', a.sn.x, a.sn.y - 26, 54);
     a.sn.segs.push(newPot(S.t, f.hot, f.label));   // 截止时间从落到身上开始算
     a.combo = 0;
+    if (a.isPlayer) tutEvent('potOnMe');
     if (f.hot) {
       if (a.isPlayer) { E.toast(`P0 砸到你身上！${P0_LIFE} 秒内甩出去，炸了背锅 +${P0_BLAME}`, 2200); E.sfx('boss'); E.buzz(60); shake = 8; }
       return;
@@ -387,13 +405,15 @@
     return Math.max(0, d - THROW_HIT_R) / f.speed;
   }
   // 关卡难度倍率：同事的积极度、反甩率（?auto 时 AI 玩家不吃倍率，方便对比）
-  const aiMul = (a, k) => (a.isPlayer ? 1 : (L.ai && L.ai[k]) || 1);
+  // 注意倍率可以是 0（第 1 关同事完全不反弹），不能用 || 兜底
+  const aiMul = (a, k) => (a.isPlayer || !L.ai || L.ai[k] == null ? 1 : L.ai[k]);
   const parryChance = (b) => Math.min(0.9, b.p.parry * aiMul(b, 'parry'));
   // 当前反甩窗口：每来回一次就缩小
   function parryWin(f) { return PARRY_WIN * Math.pow(PARRY_DECAY, f.bounces); }
   // 玩家按下「甩」：锅正飞向自己且在窗口内 → 反甩；否则能甩就甩；都不行算按空
   function pressFire(a) {
     if (a.crushed) return;
+    if (S.tut && a.isPlayer && !tutCanFire(a)) return;
     let best = null, bt = Infinity;
     for (const f of S.throws) {
       if (f.owner === a || f.dead) continue;
@@ -501,6 +521,7 @@
     b.angry = 2;
     if (b.key === 'intern') { b.cry = 2; if (potsOf(b) >= 3) leaderAlert(a, b); }
 
+    if (a.isPlayer) tutEvent('land', b);
     if (a.isPlayer) {
       const wasTea = b.teaT > 0;
       if (f.hot) floats.add(`P0 甩给${b.name}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
@@ -521,6 +542,7 @@
   // 给 a 记 n 次背锅，why 为飘字说明
   function addBlame(a, n, why) {
     a.blames += n;
+    tutEvent('blame', a);
     if (a.isPlayer) {
       floats.add(`背锅 +${n}：${why}`, a.sn.x, a.sn.y - 40, '#E8504A');
       shake = Math.max(shake, n > 1 ? 14 : 9);
@@ -670,9 +692,10 @@
   /* ---------------- 领导 ---------------- */
   // 实习生被欺负太狠：老板（第一位领导）看见了，就冲过来追欺负他的人
   // 老板得在附近才看得见；追完一次要冷却一会儿，否则同事们天天欺负实习生，老板会一直追人
+  // 第 1 关（basic）还没讲到这个机制，不追
   function leaderAlert(bully, intern) {
     const l = S.leaders[0];
-    if (!l || l.state === 'chase' || S.t < l.alertCd) return;
+    if (!l || L.basic || S.tut || l.state === 'chase' || S.t < l.alertCd) return;
     if (E.dist(l.x, l.y, intern.sn.x, intern.sn.y) > ALERT_SEE) return;
     l.state = 'chase'; l.st = ALERT_CHASE; l.chase = bully; l.alertCd = S.t + ALERT_CD;
     E.toast(bully.isPlayer ? `${l.name}：谁让实习生干这个的？` : `${l.name}盯上了${bully.name}`, 2000);
@@ -691,8 +714,22 @@
       .sort((x, y) => x.k - y.k);
     return cand.slice(0, l.cfg.count).map((c) => c.a);
   }
-  // 领导视野朝向：走路时转向前进方向；停下来左右张望；瞄准时盯着目标
+  // 带教时的领导：原地站着（视野照常），只按剧本走位、给人派锅；不追人，撞上也不派锅
+  function updateLeaderTut(l, dt) {
+    if (l.state === 'aim') {
+      l.aimT -= dt;
+      if (l.aimT <= 0) { for (const t of l.targets) addPots(t, 1, l.x, l.y - 20); l.state = 'patrol'; l.targets = []; l.wait = 99; }
+      return;
+    }
+    // 走到了（或寻路失败没有路径）就算到位，免得带教卡住
+    if (l.tgo && (walkTo(l, l.tgo.x, l.tgo.y, l.cfg.speed * TUT_BOSS_SPEED, dt, 0) < 4 || !l.path.length)) {
+      l.tgo = null; l.wait = 99;
+      tutEvent('arrive', l);
+    }
+  }
+  // 领导视野朝向：走路时转向前进方向；停下来左右张望；瞄准时盯着目标；带教剧本可以锁死朝向（faceLock）
   function updateFace(l, ox, oy, dt) {
+    if (l.faceLock != null) { l.face = l.baseFace = l.faceLock; return; }
     const dx = l.x - ox, dy = l.y - oy;
     if (l.state === 'aim' && l.targets.length) {
       const t = l.targets[0].sn;
@@ -711,6 +748,7 @@
   // 领导走路都走寻路路径，不会穿墙 / 穿桌子
   function updateLeader(l, dt) {
     const ox = l.x, oy = l.y;
+    if (S.tut) { updateLeaderTut(l, dt); updateFace(l, ox, oy, dt); return; }
     if (l.state === 'chase') {
       l.st -= dt;
       walkTo(l, l.chase.sn.x, l.chase.sn.y, ALERT_SPEED, dt, 0.4);
@@ -759,26 +797,62 @@
 
   /* ---------------- 时间表：节奏、散会、随机事件、教学提示 ---------------- */
   function updateSchedule() {
+    const w = workT();
     // 领导丢锅节奏
     let idx = -1;
-    L.pace.forEach((w, i) => { if (S.t >= w.t) idx = i; });
+    L.pace.forEach((p, i) => { if (w >= p.t) idx = i; });
     if (idx !== S.paceIdx) {
       S.paceIdx = idx;
       S.pace = L.pace[idx] || null;
       if (S.pace && S.pace.toast) { E.toast(S.pace.toast, 2200); E.sfx('boss'); shake = 8; }
     }
     // 散会、随机事件
-    while (S.schedule.length && S.t >= S.schedule[0].t) {
+    while (S.schedule.length && w >= S.schedule[0].t) {
       const it = S.schedule.shift();
       if (it.act === 'msg') showMsg(it.text);
       else if (it.act === 'burst') burst(it.src, it.n);
       else if (it.act === 'event') startEvent(it.kind);
     }
     // 开局第一口锅：天降锅砸给主角
-    if (S.skyFirst && S.t >= SKY_FIRST) { S.skyFirst = false; launchSky(S.player, S.leaders[0]); }
-    // 教学提示
+    if (S.skyFirst && w >= SKY_FIRST) { S.skyFirst = false; launchSky(S.player, S.leaders[0]); }
+    // 教学提示：按时间弹的
     const h = L.hints[S.hintIdx];
-    if (h && S.t >= h.t) { showHint(h); S.hintIdx++; }
+    if (h && w >= h.t) { showHint(h); S.hintIdx++; }
+    // 看情况弹的提示：当前没有横幅时才弹，每条每局一次
+    if (L.tips && hintTimer <= 0) {
+      for (const tip of L.tips) {
+        if (S.tipsShown[tip.on] || !TIP_CHECKS[tip.on]()) continue;
+        S.tipsShown[tip.on] = true;
+        showHint(tip);
+        break;
+      }
+    }
+    // 收尾：先发群消息，2 秒后开下午茶、给主角塞锅
+    const fin = L.finale;
+    if (fin && !S.finDone) {
+      if (!S.finMsg && w >= fin.t - 2) { S.finMsg = true; showMsg(fin.msg); }
+      if (w >= fin.t) { S.finDone = true; startFinale(fin); }
+    }
+  }
+  // 看情况弹的提示：触发条件（都只看主角）
+  const TIP_CHECKS = {
+    potWarn: () => urgentLeft(S.player) < DUE_WARN,                                   // 身上有锅快到点
+    seen: () => potsOf(S.player) > 0 && !!seenBy(S.player),                          // 带着锅站进领导视野
+    rankOut: () => workT() > 15 && ranking().indexOf(S.player) + 1 > PASS_RANK,     // 掉出前三（开局 15 秒内大家都没背锅，不算）
+  };
+  // 收尾（第 1 关）：同事都去茶水间挤着，老板给主角塞几口锅，期限卡在 18:00，正好冲过去一口气连甩
+  function startFinale(fin) {
+    const P = S.player, l = S.leaders[0];
+    S.finale = true;
+    S.finBlame0 = P.blames; // 调试统计用：收尾期间主角背了几次锅
+    S.tea = L.duration - fin.t + 1;
+    addPots(P, fin.pots, l ? l.x : P.sn.x, l ? l.y : P.sn.y - 200);
+    const end = S.t0 + L.duration - 0.6; // 赶在下班判定之前到点
+    for (const pot of P.sn.segs.slice(-fin.pots)) pot.due = end;
+    floats.add(fin.say, P.sn.x, P.sn.y - 60, '#E8504A');
+    E.toast('同事都挤在茶水间，过去一口气甩掉！', 2400);
+    E.sfx('boss');
+    shake = 8;
   }
   // 某个地点一口气喷出 n 口锅，依次瞄准离那里最近的几个人
   function burst(srcKey, n) {
@@ -800,6 +874,149 @@
       const target = pickTargets(l)[0] || nearestAgent(l.x, l.y);
       if (target) launchPot(l.x, l.y - 20, target, 0.9, true);
     }
+  }
+
+  /* ---------------- 带教（第 1 关开头）：时钟停在 09:00，每一步做到了才往下走 ----------------
+   * 步骤和文案在 levels.js 的 tutorial 里，这里只写每种步骤「怎么布置、怎么算完成」
+   * 带教里的保护：锅不走时间；扇形里没人、站在领导视野里时按「甩」都只提醒不扔；同事站着不动，老板只按剧本丢锅
+   * --------------------------------------------------------------------------------------- */
+  const TUT_BOSS_SPEED = 2;  // 带教时老板走路的倍速，别让人干等
+  const TUT_RING_R = 34;     // 走进黄圈多近算到
+  // 按人设名找场上的同事
+  const agentByKey = (k) => S.agents.find((a) => a.key === k);
+  // 带教里的延时（跟着对局时间走，暂停时也停）
+  function tutLater(sec, fn) { S.tut.timers.push({ t: sec, fn }); }
+  // 老周说话：沿用教学横幅的样式，一直显示到下一句；btn 为按钮文字（点了开始上班）
+  function showCoach(text, btn) {
+    const who = (S.tut && S.tut.victim && S.tut.victim.name) || '实习生';
+    showHint({ title: '带教', icon: ['veteran_tea'], sub: '老周', text: text.replace('{who}', who) });
+    hintTimer = 0; // 0 = 不自动收起
+    if (btn) {
+      const el = document.getElementById('hint');
+      el.querySelector('.h-txt').insertAdjacentHTML('beforeend', `<button class="h-go" type="button">${btn}</button>`);
+      el.querySelector('.h-go').addEventListener('click', () => { E.sfx('throw'); startWork(); });
+    }
+  }
+  // 每种带教步骤：enter 布置场面；check 每帧检查是否完成；其余是事件回调（见 tutEvent）
+  // fire：这一步允许按「甩」；btn：这一步靠点按钮完成
+  const TUT_STEPS = {
+    // 按住摇杆走进黄圈
+    walk: {
+      enter() { S.tut.ring = L.tutorial.spots.ring; },
+      check: () => E.dist(S.player.sn.x, S.player.sn.y, S.tut.ring.x, S.tut.ring.y) < TUT_RING_R,
+    },
+    // 老板丢一口天降锅；砸到身上后说下一句
+    sky: {
+      enter() { tutLater(0.4, () => launchSky(S.player, S.leaders[0])); },
+      potOnMe() { showCoach(S.tut.step.say2); tutLater(3.6, tutNext); },
+    },
+    // 甩给同事（谁都行，记下是谁，下一步让他的锅到点）
+    throw: {
+      fire: true,
+      land(b) { S.tut.victim = b; showCoach(S.tut.step.say2); tutLater(1.4, tutNext); },
+    },
+    // 刚被甩中的同事身上的锅快进到点，看他背锅
+    expire: {
+      enter() {
+        const v = S.tut.victim || agentByKey('intern');
+        if (!potsOf(v)) v.sn.segs.push(newPot(S.t));
+        for (const pot of v.sn.segs) pot.due = S.t + 3.5;
+      },
+      blame() { showCoach(S.tut.step.say2); tutLater(2.8, tutNext); },
+    },
+    // 老板出来巡视：给实习生一口锅，实习生想当面甩给主角，被抓现行
+    sight: {
+      enter() { const l = S.leaders[0]; l.tgo = L.tutorial.spots.boss; l.wait = 0; },
+      arrive(l) {
+        const it = agentByKey('intern'), P = S.player;
+        // 视野朝实习生和主角的中间看，尽量同时罩住两个人
+        l.faceLock = Math.atan2((it.sn.y + P.sn.y) / 2 - l.y, (it.sn.x + P.sn.x) / 2 - l.x);
+        l.state = 'aim'; l.targets = [it]; l.aimT = AIM_TIME;
+        tutLater(AIM_TIME + 1, () => floats.add('嘿嘿……这个给新人', it.sn.x, it.sn.y - 50, '#1F2A44'));
+        tutLater(AIM_TIME + 2.2, () => {
+          caught(it, l);
+          shake = 6;
+          E.sfx('boss');
+          showCoach(S.tut.step.say2);
+          tutLater(3.4, tutNext);
+        });
+      },
+    },
+    // 老板再丢主角一口：走出视野，甩给同事
+    dodge: {
+      fire: true,
+      enter(step) {
+        if (!seenBy(S.player)) showCoach(step.alt || step.say); // 主角本来就不在视野里，换个说法
+        tutLater(0.6, () => launchSky(S.player, S.leaders[0]));
+      },
+      land() { tutLater(1.2, tutNext); },
+    },
+    // 亮出右上角名次，点「开始上班」
+    rank: {
+      btn: '开始上班',
+      enter() {
+        S.tut.showRank = true;
+        const chip = document.getElementById('hRank').parentElement;
+        chip.classList.remove('pulse'); void chip.offsetWidth; chip.classList.add('pulse');
+      },
+    },
+  };
+  // 进下一步；没有下一步就开始上班
+  function tutNext() {
+    const T = S.tut;
+    if (!T) return;
+    T.i++; T.timers = []; T.ring = null; T.done = false;
+    const step = L.tutorial.steps[T.i];
+    if (!step) { startWork(); return; }
+    T.step = step; T.def = TUT_STEPS[step.do];
+    showCoach(step.say, T.def.btn);
+    if (T.def.enter) T.def.enter(step);
+  }
+  // 带教里发生的事（砸中主角、甩中同事、有人背锅、老板走到位）转给当前步骤处理
+  function tutEvent(name, arg) {
+    const T = S && S.tut;
+    if (T && T.def && T.def[name] && !T.done) T.def[name](arg);
+  }
+  // 带教每帧：推进定时器，检查当前步骤是否完成
+  function updateTutorial(dt) {
+    const T = S.tut, i = T.i;
+    for (const x of T.timers) x.t -= dt;
+    const due = T.timers.filter((x) => x.t <= 0);
+    T.timers = T.timers.filter((x) => x.t > 0);
+    for (const x of due) { if (S.tut !== T || T.i !== i) break; x.fn(); }
+    if (S.tut === T && T.i === i && T.def && T.def.check && T.def.check()) { T.done = true; tutNext(); }
+  }
+  // 带教里按「甩」：还没讲到甩锅、站在领导视野里、扇形里没人，都只提醒不扔
+  function tutCanFire(a) {
+    const def = S.tut.def;
+    if (!def || !def.fire) return false;
+    if (!canFire(a)) return true; // 冷却、没锅等交给正常流程处理
+    const eye = seenBy(a);
+    if (eye) { E.toast(`${eye.name}在看！先走出红扇形`, 1400); E.sfx('miss'); return false; }
+    if (!pickAim(a)) { E.toast('扇形里没人，走近点、对准了再甩', 1400); return false; }
+    return true;
+  }
+  // 带教结束（做完或跳过）：上班时钟从现在起算，带教里的锅开始走时间，大家回到正常状态
+  function startWork() {
+    if (!S || !S.tut) return;
+    S.tut = null;
+    S.t0 = S.t;
+    for (const a of S.agents) for (const pot of a.sn.segs) if (pot.due === Infinity) pot.due = S.t + potLife();
+    for (const f of S.throws) if (f.pot.due === Infinity) f.pot.due = S.t + potLife();
+    for (const a of S.agents) {
+      a.blames = 0; a.caught = 0; // 带教里的背锅不算数，免得重玩跳过带教时难度不一样
+      if (!a.isPlayer) giveStartPots(a.sn, S.t);
+    }
+    for (const l of S.leaders) {
+      l.tgo = null; l.faceLock = null; l.state = 'patrol'; l.targets = [];
+      l.i = nearestRoute(l); l.path = []; l.goal = null; l.wait = 0.5; l.throwCd = E.rand(0.5, 1.5);
+    }
+    const prog = loadProgress();
+    if (!prog.tutDone) { prog.tutDone = true; saveProgress(prog); }
+    forceTut = false;
+    clearBanners();
+    E.toast('09:00 正式上班！', 1600);
+    E.sfx('boss');
   }
 
   /* ---------------- 机器人大脑 ---------------- */
@@ -893,10 +1110,10 @@
       const d = headDist(a, b);
       if (d > 150) continue;
       const scared = pots === 0 || (a.lock[b.id] || 0) > S.t ? 1.4 : 0.5;
-      flee(b.sn.x, b.sn.y, p.caution * scared * (1 - d / 150));
+      flee(b.sn.x, b.sn.y, p.caution * scared * (1 - d / 150) * (S.finale && S.tea > 0 ? 0.25 : 1)); // 收尾下午茶：忙着抢吃的，懒得躲
     }
     // 6. 下午茶 / 老油条泡茶：往茶水间走
-    if (S.tea > 0 || a.teaT > 0) seek(OFFICE.tea.x, OFFICE.tea.y, a.teaT > 0 ? 1.5 : 1.1);
+    if (S.tea > 0 || a.teaT > 0) seek(OFFICE.tea.x, OFFICE.tea.y, S.finale && S.tea > 0 ? 2.2 : a.teaT > 0 ? 1.5 : 1.1);
     // 7. 没事干：保持方向慢慢晃，靠近边缘时往中间拐
     if (Math.hypot(vx, vy) < 0.15) {
       vx += Math.cos(me.angle) * 0.4 + E.rand(-0.2, 0.2);
@@ -921,8 +1138,8 @@
     a.comboT -= dt;
     if (a.comboT <= 0) a.combo = 0;
 
-    // 老油条定期去泡茶：泡茶时走得很慢，是甩锅的好时机
-    if (a.p.tea) {
+    // 老油条定期去泡茶：泡茶时走得很慢，是甩锅的好时机（带教时不去）
+    if (a.p.tea && !S.tut) {
       if (a.teaT > 0) a.teaT -= dt;
       else { a.teaCd -= dt; if (a.teaCd <= 0) { a.teaT = 3.5; a.teaCd = E.rand(9, 13); } }
     }
@@ -930,10 +1147,12 @@
     // 速度：只看人设和是否在泡茶，背锅不减速
     a.sn.speed = BASE_SPEED * a.p.speed * (a.teaT > 0 && E.dist(a.sn.x, a.sn.y, OFFICE.tea.x, OFFICE.tea.y) < 120 ? 0.4 : 1);
 
-    // 方向：玩家用手指，机器人用 AI
+    // 方向：玩家用手指，机器人用 AI；带教时同事都站在原地当靶子
     const ai = !a.isPlayer || auto;
     let steer = null;     // 本帧想转向的角度（null = 不转）
-    if (ai) {
+    if (S.tut && !a.isPlayer) {
+      a.sn.speed = 0;
+    } else if (ai) {
       a.thinkT -= dt;
       if (a.thinkT <= 0) { a.thinkT = a.p.react * E.rand(0.8, 1.2); think(a); }
       steer = a.want;
@@ -953,7 +1172,7 @@
     }
 
     // 卡墙检测：1.2 秒内几乎没动，就随机换个方向冲一会儿
-    if (ai) {
+    if (ai && !S.tut) {
       a.stuckT += dt;
       if (a.stuckT >= 1.2) {
         if (E.dist(a.sn.x, a.sn.y, a.lastX, a.lastY) < 30) { a.panicT = 0.7; a.want = E.rand(0, Math.PI * 2); }
@@ -977,7 +1196,8 @@
   function update(dt) {
     S.t += dt;
     if (S.tea > 0) S.tea -= dt;
-    updateSchedule();
+    if (S.tut) updateTutorial(dt);
+    else updateSchedule();
     for (const a of S.agents) updateAgent(a, dt);
     for (const l of S.leaders) updateLeader(l, dt);
     updateFlying(dt);
@@ -1002,7 +1222,7 @@
       a.crushed = true; a.crushedAt = S.t; a.target = null;
       E.toast(`${a.name}被锅压垮了！`, 1800);
     }
-    if (S.t >= L.duration) S.over = 'time';
+    if (workT() >= L.duration) S.over = 'time';
   }
 
   /* ---------------- 提示条 / 群消息 ---------------- */
@@ -1326,6 +1546,14 @@
       E.drawSprite(ctx, p.sprite, p.x + p.w / 2, p.y + (p.w * s.h / s.w) / 2, p.w);
     }
 
+    // 带教黄圈：画在脚下，一胀一缩
+    if (S.tut && S.tut.ring) {
+      const r = S.tut.ring, k = Math.sin(time * 5) * 4, fy = r.y + FOOT_DY;
+      ctx.lineWidth = 7; ctx.strokeStyle = '#1F2A44';
+      ctx.beginPath(); ctx.ellipse(r.x, fy, 34 + k, 14 + k * 0.4, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.lineWidth = 4; ctx.strokeStyle = '#FFD84D'; ctx.stroke();
+      E.label(ctx, '走到这', r.x, fy - 34 - k, 13, '#1F2A44', '#FFD84D');
+    }
     // 预警中的锅（散会 / 打印机门口的红圈）
     for (const f of S.flying) {
       if (f.phase !== 'warn') continue;
@@ -1455,7 +1683,7 @@
     if (btnThrow.hidden) return;
     let parryNow = false;
     if (P.parryLock <= 0) for (const f of S.throws) if (f.owner !== P && incomingTTI(f, P) <= parryWin(f)) parryNow = true;
-    const has = potsOf(P) > 0;
+    const has = potsOf(P) > 0 && !(S.tut && !(S.tut.def && S.tut.def.fire)); // 带教还没讲到甩锅时变灰
     btnThrow.classList.toggle('parry', parryNow);
     btnThrow.classList.toggle('empty', !parryNow && !has);
     btnThrow.style.setProperty('--cd', parryNow ? 0 : Math.max(0, P.cool, P.stun) / THROW_CD);
@@ -1465,8 +1693,8 @@
     const P = S.player, n = potsOf(P);
     const rank = ranking();
     const myRank = rank.indexOf(P) + 1;
-    const rush = mode === 'play' && S.t >= L.duration - FINAL_RUSH;
-    E.setText('hClock', clockAt(S.t));
+    const w = workT(), rush = mode === 'play' && w >= L.duration - FINAL_RUSH;
+    E.setText('hClock', clockAt(w));
     E.setText('hPotsN', `${n}/${MAX_POTS}`);
     E.setText('hRank', `第 ${myRank}/${rank.length} 名`);
     E.setText('hBlame', `背锅 ${P.blames}`);
@@ -1474,11 +1702,16 @@
     document.getElementById('hCombo').hidden = P.combo < 2;
     document.getElementById('hPotsBar').style.width = Math.min(100, (n / MAX_POTS) * 100) + '%';
     document.getElementById('hPots').classList.toggle('hot', n >= POT_ALARM);
-    document.getElementById('hClock').parentElement.classList.toggle('hot', S.t >= L.duration - 13);
+    document.getElementById('hClock').parentElement.classList.toggle('hot', w >= L.duration - 13);
+    // 带教时先藏起名次和背锅数，讲到名次那一步再亮出来；右上角显示「跳过带教」
+    const hideRank = !!S.tut && !S.tut.showRank;
+    document.getElementById('hRank').parentElement.hidden = hideRank;
+    document.getElementById('hBlameChip').hidden = hideRank;
+    document.getElementById('btnSkip').hidden = !S.tut || mode !== 'play';
     updateThrowBtn();
     document.getElementById('hRank').parentElement.classList.toggle('hot', myRank > PASS_RANK);
     // 最后 10 秒：每秒滴答一声
-    if (rush && Math.floor(S.t) !== S.lastTick) { S.lastTick = Math.floor(S.t); E.sfx('tick'); }
+    if (rush && Math.floor(w) !== S.lastTick) { S.lastTick = Math.floor(w); E.sfx('tick'); }
   }
 
   /* ---------------- 像素图标（弹窗、设置用） ---------------- */
@@ -1569,7 +1802,7 @@
         S.flying = S.flying.filter((f) => f.target !== P);
         S.throws = S.throws.filter((f) => f.target !== P);
         S.over = null;
-        if (S.t > L.duration - 15) S.t = L.duration - 15;
+        if (workT() > L.duration - 15) S.t0 = S.t - (L.duration - 15); // 上班时钟拨回到下班前 15 秒
         E.hidePanel(); mode = 'play'; E.bgm(true);
         E.toast('甩掉 6 口锅，继续熬到下班');
       }),
@@ -1589,9 +1822,11 @@
     hintTimer = msgTimer = 0;
   }
   // 开新局
+  // 第 1 关第一次玩（或要求重看）时先走带教；?auto 自动玩时不走
   function startGame() {
     E.unlockAudio();
-    S = makeState();
+    const tut = !!L.tutorial && !auto && (forceTut || !loadProgress().tutDone);
+    S = makeState(tut);
     floats.list = [];
     shake = 0;
     E.hidePanel();
@@ -1600,6 +1835,7 @@
     document.getElementById('hud').hidden = false;
     mode = 'play';
     E.bgm(true);
+    if (tut) tutNext();
   }
   // 暂停：休息一下（锅插图 + 继续 / 重新开始 / 返回首页）
   function pauseGame() {
@@ -1651,13 +1887,16 @@
   }
 
   // 玩法规则列表（关卡介绍和大厅「玩法」共用），领导名字按当前关卡填
+  // basic 关卡（第 1 关）只列基本规则，反弹、P0、压垮到第 2 关再讲
   function rulesHtml() {
     const leaders = L.leaders.map((d) => LEADER_TYPES[d.type].name).join('、');
-    return `
-      <ul class="rules">
+    const basic = `
         <li><span>⏰</span>每口锅都有截止时间（${potLife()} 秒），甩来甩去不重置；到点在谁身上，谁背锅</li>
         <li><span>🕹️</span>左下角摇杆控制方向，右下角「甩」把最急的那口锅扔出去</li>
-        <li><span>👀</span>${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅</li>
+        <li><span>👀</span>${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅</li>`;
+    if (L.basic) return `<ul class="rules">${basic}</ul>`;
+    return `
+      <ul class="rules">${basic}
         <li><span>☄️</span>天降锅只砸你，躲不掉；${leaders}的普通锅看到红线就躲</li>
         <li><span>🛡️</span>锅朝你飞来时按「甩」能弹回去；P0 只有 ${P0_LIFE} 秒，炸了背锅 +${P0_BLAME}</li>
         <li><span>💥</span>身上堆满 ${MAX_POTS} 口锅当场压垮，直接失败</li>
@@ -1687,9 +1926,11 @@
         ${best ? `<br><b>最好成绩</b> ${'★'.repeat(best.stars)}${best.blames != null ? ` · 背锅 ${best.blames} 次` : ''}` : ''}
       </div>
       <button class="btn" data-act="start">开始上班</button>
-      <button class="btn ghost" data-act="lobby">回大厅</button>`, {
+      <button class="btn ghost" data-act="lobby">回大厅</button>
+      ${L.tutorial && prog.tutDone ? '<button class="pop-link" data-act="tut">重看带教</button>' : ''}`, {
       start: startGame,
       lobby: showLobby,
+      tut: () => { forceTut = true; startGame(); },
       pick: (btn) => { L = LEVELS.find((lv) => lv.id === Number(btn.dataset.id)); showIntro(); },
     });
   }
@@ -1817,7 +2058,7 @@
       L = LEVELS[levelIdx || 0]; auto = true;
       const out = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, avgBlame: {}, avgCaught: {}, avgBooms: 0, avgSkies: 0, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLaunched: 0, avgMiss: 0, avgParry: 0, avgLeaderHits: 0, avgCrushT: 0 };
       for (let r = 0; r < out.runs; r++) {
-        S = makeState(); mode = 'play';
+        S = makeState(false); mode = 'play';
         while (!S.over) update(1 / 30);
         if (S.over === 'crushed') out.crushedPlayer++;
         const rank = ranking();
@@ -1830,6 +2071,7 @@
           if (a.crushed) { out.crushedBots++; out.avgCrushT += a.crushedAt; }
         }
         out.avgSpawned += S.spawned / out.runs;
+        if (S.finBlame0 != null) out.avgFinBlame = (out.avgFinBlame || 0) + (S.player.blames - S.finBlame0) / out.runs;
         out.avgBooms += S.booms / out.runs; out.avgSkies += S.skies / out.runs;
         out.avgLeaderHits += S.leaderHits / out.runs;
         out.avgThrown += S.agents.reduce((s, a) => s + a.thrown, 0) / out.runs;
@@ -1851,6 +2093,8 @@
 
   /* ---------------- 启动 ---------------- */
   document.getElementById('btnPause').addEventListener('click', pauseGame);
+  // HUD「跳过带教」：直接开始上班
+  document.getElementById('btnSkip').addEventListener('click', () => { if (mode === 'play') startWork(); });
   // HUD 右上角齿轮：打开设置（对局中会先暂停）
   const btnSet = document.getElementById('btnSet');
   btnSet.innerHTML = pxIcon('gear');

@@ -490,3 +490,14 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
   transition: transform .34s cubic-bezier(.2, .9, .3, 1.12), opacity .2s;
 }
 #hint.on { transform: none; opacity: 1; }
+
+/* ===== v7：第 1 关带教（老周的话沿用教学横幅，多一个「开始上班」按钮；HUD 名次闪一下、跳过带教） ===== */
+#hint .h-go {
+  pointer-events: auto; display: block; margin-top: 6px; padding: 0 16px; line-height: 30px; cursor: pointer;
+  font-family: var(--pop-font); font-size: 17px; font-weight: 900; color: var(--ink); background: none;
+  border: 6px solid transparent; border-image: var(--frame-yellow) 4 fill / 6px stretch; box-shadow: inset 0 -3px 0 var(--pop-gold);
+}
+#hint .h-go:active { translate: 0 2px; }
+#hud .chip.pulse { animation: chipPulse .45s ease-in-out 6 alternate; }
+@keyframes chipPulse { to { transform: scale(1.15); filter: drop-shadow(0 0 6px var(--note)); } }
+#btnSkip { font-size: 13px; }
