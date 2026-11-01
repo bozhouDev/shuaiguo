@@ -67,15 +67,16 @@
     return { x: E.clamp(w * E.STICK_POS.rx, m, w / 2), y: E.clamp(h * E.STICK_POS.ry, h / 2, h - m) };
   };
 
-  // 摇杆固定在左下角：手指按在画面任意位置，方向 = 手指相对摇杆中心的方向；松手后保持当前方向继续走
+  // 摇杆固定在左下角：手指按在画面任意位置，方向 = 手指相对摇杆中心的方向；是否移动由游戏决定
   // fireBtn：甩锅按钮（DOM 元素），按下时 inp.fire 计数 +1，由游戏每帧消费
   E.createInput = function (el, fireBtn) {
-    const inp = { down: false, id: null, x: 0, y: 0, angle: null, keys: {}, fire: 0 };
+    const inp = { down: false, id: null, x: 0, y: 0, angle: null, mag: 0, keys: {}, fire: 0 }; // mag：摇杆推了多远（0~1）
     // 根据手指位置更新方向和摇杆头位置
     const aim = (e) => {
       const c = E.stickCenter();
       const dx = e.clientX - c.x, dy = e.clientY - c.y, d = Math.hypot(dx, dy);
       if (d > 6) inp.angle = Math.atan2(dy, dx);
+      inp.mag = Math.min(1, d / E.STICK_R);
       const k = d > E.STICK_R ? E.STICK_R / d : 1;   // 摇杆头不超出底座
       inp.x = c.x + dx * k; inp.y = c.y + dy * k;
     };
@@ -105,7 +106,7 @@
     return inp;
   };
 
-  // 读取键盘方向键/WASD，有按键时覆盖摇杆方向（方便电脑上试玩）
+  // 读取键盘方向键/WASD，有按键时覆盖摇杆方向（方便电脑上试玩）；返回是否按着方向键
   E.pollKeys = function (inp) {
     const k = inp.keys;
     let x = 0, y = 0;
@@ -114,6 +115,7 @@
     if (k['arrowup'] || k['w']) y -= 1;
     if (k['arrowdown'] || k['s']) y += 1;
     if (x || y) inp.angle = Math.atan2(y, x);
+    return !!(x || y);
   };
 
   // 绘制固定摇杆：没按时淡淡显示位置，按住时摇杆头跟着手指

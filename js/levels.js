@@ -85,6 +85,7 @@
    * pace：领导丢锅节奏——从第 t 秒起，每位领导约每 every 秒丢一次
    * bursts：会议室定期「散会」喷锅，at 前 2.5 秒先发群消息；{time} 会替换成屏幕时钟
    * events：随机事件——从 pool 里抽 n 个不重复的，在 window 时间段内均匀错开触发
+   * ai：同事难度倍率——aggr 甩锅积极度、parry 反甩成功率（乘在人设上）
    * --------------------------------------------------------- */
   window.LEVELS = [
     {
@@ -92,18 +93,19 @@
       name: '周一 · 早会之后',
       desc: '早会刚开完，老板已经在找人干活了。18:00 下班时，比同事身上的锅少就行。',
       duration: 120,        // 实际秒数，对应 09:00 ~ 18:00
-      startPots: 2,         // 每人开局自带的锅
+      startPots: 1,         // 每人开局自带的锅
       bots: ['pm', 'intern', 'veteran'],
       leaders: [{ type: 'boss', route: 'boss' }],
+      ai: { aggr: 0.7, parry: 0.45 },   // 第 1 关是适应关：同事不太主动，也不太会反甩
       pace: [
-        { t: 4, every: 6.5 },
-        { t: 40, every: 5.2 },
-        { t: 80, every: 4.2 },
-        { t: 107, every: 2.2, toast: '17:00 下班前突击派活！' },
+        { t: 6, every: 8 },
+        { t: 40, every: 6.5 },
+        { t: 80, every: 5.2 },
+        { t: 107, every: 3, toast: '17:00 下班前突击派活！' },
       ],
       bursts: [
-        { t: 30, src: 'meeting', n: 4, msg: '【全员群】行政：{time} 周会结束，散会！' },
-        { t: 78, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 需求会结束，大家辛苦' },
+        { t: 30, src: 'meeting', n: 3, msg: '【全员群】行政：{time} 周会结束，散会！' },
+        { t: 78, src: 'meeting', n: 4, msg: '【全员群】行政：{time} 需求会结束，大家辛苦' },
       ],
       events: { n: 1, window: [45, 100], pool: ['printer', 'tea', 'p0'] },
       hints: [
@@ -125,18 +127,19 @@
       startPots: 2,
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer'],
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }],
+      ai: { aggr: 1.15, parry: 1.1 },  // 第 2 关同事更狠：追着甩、更会反甩
       pace: [
-        { t: 3, every: 6.5 },
-        { t: 35, every: 5.2 },
-        { t: 75, every: 4.2 },
-        { t: 105, every: 2.4, toast: '17:00 下班前突击派活！' },
+        { t: 3, every: 5.5 },
+        { t: 30, every: 4.5 },
+        { t: 70, every: 3.6 },
+        { t: 105, every: 2, toast: '17:00 下班前突击派活！' },
       ],
       bursts: [
         { t: 25, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 需求评审结束，散会！' },
-        { t: 60, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 评审第二场结束' },
+        { t: 60, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 评审第二场结束' },
         { t: 95, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 复盘会结束，记得写纪要' },
       ],
-      events: { n: 2, window: [35, 105], pool: ['printer', 'tea', 'p0'] },
+      events: { n: 3, window: [30, 108], pool: ['printer', 'tea', 'p0'] },
       hints: [
         { t: 1, text: '新领导：总监一次丢两口，瞄准锅最少的两个人' },
         { t: 30, text: '场上 6 个人，进前三才能过关' },

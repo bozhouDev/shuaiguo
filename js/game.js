@@ -25,12 +25,14 @@
 
   /* ---------------- 手感参数（调数值主要改这里） ---------------- */
   const BASE_SPEED = 145;      // 移动速度（手机屏幕小，不能太快；背多少锅都不减速）
+  const TURN_ONLY_MAG = 0.35;  // 摇杆只轻推（小于底座半径的这个比例）时原地转向不走，方便站着瞄准
   const HEAD_R = 18;           // 蛇头碰撞半径
   const THROW_SPEED = 620;     // 甩出去的锅飞多快（要快，慢了没意义）
-  const THROW_TURN = 2.5;      // 甩出去的锅轻微追踪目标的转向速度
-  const THROW_RANGE = 340;     // 甩出去的锅最远飞多远，飞满还没砸中人就算甩空
-  const AIM_RANGE = 280;       // 自动瞄准：前方多远内找人
-  const AIM_CONE = 0.7;        // 自动瞄准：前进方向左右各多少弧度（约 40°）
+  const THROW_TURN = 6;        // 甩出去的锅追踪目标的转向速度（擦边也能拐进去）
+  const THROW_RANGE = 360;     // 甩出去的锅最远飞多远，飞满还没砸中人就算甩空
+  const THROW_HIT_R = HEAD_R + 22; // 甩出去的锅砸中判定半径（比领导的锅宽松）
+  const AIM_RANGE = 300;       // 自动瞄准：扇形半径
+  const AIM_CONE = 0.95;       // 自动瞄准：扇形半角，前进方向左右各约 55°
   const THROW_CD = 0.6;        // 甩一次后多久才能再甩
   const PARRY_WIN = 0.22;      // 反甩判定窗口：锅离砸中你还剩几秒内按「甩」才算
   const PARRY_DECAY = 0.75;    // 每反甩一次，下一次判定窗口缩小到几倍（来回几次必有人接住）
@@ -125,6 +127,7 @@
       score: 0, thrown: 0, combo: 0, comboT: 0, maxCombo: 0, victims: {},
       cool: 0, stun: 0, shield: 0, lock: {},                  // lock[对方 id] = 到这个时间前同事不会主动瞄准他
       parryLock: 0, launched: 0, misses: 0, parries: 0,        // 按空惩罚、出手次数、甩空次数、反甩次数
+      aimTgt: null,                                            // 当前锁定的瞄准目标
       digestT: DIGEST_TIME, cry: 0, teaCd: E.rand(8, 12), teaT: 0, angry: 0,
       crushed: false, crushedAt: 0,
       stuckT: 0, lastX: x, lastY: y, panicT: 0,                // 卡墙检测
@@ -256,8 +259,16 @@
   // a 手里有没有能甩的东西：没在飞的 P0，或者尾巴上的锅
   function holdsHot(a) { return !!(S.hot && S.hot.holder === a && !S.hot.inFlight); }
   function canFire(a) { return !a.crushed && a.cool <= 0 && a.stun <= 0 && (holdsHot(a) || potsOf(a) > 0); }
-  // 自动瞄准：前进方向左右 AIM_CONE、AIM_RANGE 以内，挑「近 + 正前方」的人；没人就返回 null（直线扔出去）
+  // b 在不在 a 的瞄准扇形里（k 放大扇形，用于锁定目标后不轻易丢）
+  function inAimFan(a, b, k) {
+    if (b === a || b.crushed || b.shield > 0) return false;
+    if (headDist(a, b) > AIM_RANGE * k) return false;
+    return Math.abs(E.angDiff(a.sn.angle, Math.atan2(b.sn.y - a.sn.y, b.sn.x - a.sn.x))) <= AIM_CONE * k;
+  }
+  // 自动瞄准：扇形内挑「近 + 正前方」的人；上一次锁定的人只要还在稍大一点的扇形里就继续锁着，避免目标来回跳
+  // 扇形里没人返回 null（直线扔出去）
   function pickAim(a) {
+    if (a.aimTgt && inAimFan(a, a.aimTgt, 1.25)) return a.aimTgt;
     let best = null, bs = Infinity;
     for (const b of S.agents) {
       if (b === a || b.crushed || b.shield > 0) continue;
@@ -268,6 +279,7 @@
       const score = d * (1 + off * 1.5);
       if (score < bs) { bs = score; best = b; }
     }
+    a.aimTgt = best;
     return best;
   }
   // 从 a 朝 b 扔锅的角度：按锅的飞行时间预判 b 的走位
@@ -299,8 +311,11 @@
     if (d < 1) return 0;
     const dot = (dx * Math.cos(f.a) + dy * Math.sin(f.a)) / d;
     if (dot < 0.6 && f.target !== b) return Infinity;
-    return Math.max(0, d - HEAD_R - 16) / f.speed;
+    return Math.max(0, d - THROW_HIT_R) / f.speed;
   }
+  // 关卡难度倍率：同事的积极度、反甩率（?auto 时 AI 玩家不吃倍率，方便对比）
+  const aiMul = (a, k) => (a.isPlayer ? 1 : (L.ai && L.ai[k]) || 1);
+  const parryChance = (b) => Math.min(0.9, b.p.parry * aiMul(b, 'parry'));
   // 当前反甩窗口：每来回一次就缩小
   function parryWin(f) { return PARRY_WIN * Math.pow(PARRY_DECAY, f.bounces); }
   // 玩家按下「甩」：锅正飞向自己且在窗口内 → 反甩；否则能甩就甩；都不行算按空
@@ -381,13 +396,13 @@
         if (b === f.owner || b.crushed || (b.isPlayer && !auto) || f.rolled.has(b.id)) continue;
         if (incomingTTI(f, b) > parryWin(f)) continue;
         f.rolled.add(b.id);
-        if (b.parryLock <= 0 && Math.random() < b.p.parry * Math.pow(0.8, f.bounces)) { parry(b, f); break; }
+        if (b.parryLock <= 0 && Math.random() < parryChance(b) * Math.pow(0.8, f.bounces)) { parry(b, f); break; }
       }
 
       let victim = null;
       for (const b of S.agents) {
         if (b === f.owner || b.crushed) continue;
-        if (E.dist(f.x, f.y, b.sn.x, b.sn.y) < HEAD_R + 16) { victim = b; break; }
+        if (E.dist(f.x, f.y, b.sn.x, b.sn.y) < THROW_HIT_R) { victim = b; break; }
       }
       if (victim) {
         if (victim.shield > 0) missThrow(f, 'shield');
@@ -782,7 +797,7 @@
         a.target = b;
         const lead = 0.3;
         seek(b.sn.x + Math.cos(b.sn.angle) * b.sn.speed * lead, b.sn.y + Math.sin(b.sn.angle) * b.sn.speed * lead,
-          p.aggr * (0.7 + Math.min(pots, 8) * 0.1));
+          p.aggr * aiMul(a, 'aggr') * (0.7 + Math.min(pots, 8) * 0.1));
       }
     }
     // 5. 躲开想把锅甩给自己的人（自己没锅、或正被锁住不能还手时更想躲）
@@ -807,7 +822,7 @@
     if (canFire(a)) {
       const hot = holdsHot(a), b = pickAim(a);
       if (b && headDist(a, b) < p.throwR && (hot || (pots >= p.seekMin && (a.lock[b.id] || 0) <= S.t)) &&
-        Math.random() < 0.45 + 0.55 * p.aggr) fireThrow(a);
+        Math.random() < 0.45 + 0.55 * p.aggr * aiMul(a, 'aggr')) fireThrow(a);
     }
   }
 
@@ -839,15 +854,21 @@
 
     // 方向：玩家用手指，机器人用 AI
     const ai = !a.isPlayer || auto;
+    let steer = null;     // 本帧想转向的角度（null = 不转）
     if (ai) {
       a.thinkT -= dt;
       if (a.thinkT <= 0) { a.thinkT = a.p.react * E.rand(0.8, 1.2); think(a); }
+      steer = a.want;
     } else {
-      E.pollKeys(inp);
+      // 主角不会自己走：按住摇杆 / 方向键才动；摇杆轻推只原地转向
+      const keyHeld = E.pollKeys(inp);
+      const walk = keyHeld || (inp.down && inp.mag >= TURN_ONLY_MAG);
+      if (!walk) a.sn.speed = 0;
+      steer = keyHeld || inp.down ? inp.angle : null;
       // 玩家按了「甩」：本帧处理掉所有按键（一般就一次）
       while (inp.fire > 0) { inp.fire--; pressFire(a); }
     }
-    a.sn.update(dt, ai ? a.want : inp.angle);
+    a.sn.update(dt, steer);
     if (E.collide(a.sn, HEAD_R, obstacles)) a.sn.trail[0] = { x: a.sn.x, y: a.sn.y };
     if (a.sn.bounce(HEAD_R, HEAD_R, OFFICE.world.w - HEAD_R, OFFICE.world.h - HEAD_R)) {
       if (ai) a.want = a.sn.angle; else inp.angle = a.sn.angle;
@@ -1121,22 +1142,22 @@
       E.label(ctx, '!', f.x, f.y, 24, '#E8504A');
     }
 
-    // 瞄准提示：身上有锅（或拿着 P0）时，绿圈标出按「甩」会砸向谁；前方没人就画一小段虚线表示直线扔出去
+    // 瞄准扇形：身上有锅（或拿着 P0）时，在前方画出自动瞄准的扇形；扇形里有人就变绿并套住他
     const P = S.player;
     if (!P.crushed && (potsOf(P) || holdsHot(P))) {
       const b = pickAim(P), ready = canFire(P);
-      ctx.strokeStyle = ready ? 'rgba(47,158,107,.85)' : 'rgba(94,106,132,.5)'; ctx.lineWidth = 3; ctx.setLineDash([6, 6]);
+      // 有目标且能甩：绿色；扇形里没人：白色；冷却中：灰色（像素地板很花，透明度要够）
+      const col = !ready ? '94,106,132' : b ? '47,158,107' : '255,253,245';
+      ctx.fillStyle = `rgba(${col},${b && ready ? 0.3 : 0.24})`;
+      ctx.strokeStyle = `rgba(${col},.9)`; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(me.x, me.y);
+      ctx.arc(me.x, me.y, AIM_RANGE, me.angle - AIM_CONE, me.angle + AIM_CONE);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
       if (b) {
-        ctx.beginPath(); ctx.moveTo(me.x, me.y); ctx.lineTo(b.sn.x, b.sn.y); ctx.stroke();
-        ctx.setLineDash([]);
-        ctx.beginPath(); ctx.arc(b.sn.x, b.sn.y, 30 + Math.sin(time * 10) * 2, 0, Math.PI * 2); ctx.stroke();
-      } else {
-        ctx.globalAlpha = 0.5;
-        ctx.beginPath(); ctx.moveTo(me.x + Math.cos(me.angle) * 30, me.y + Math.sin(me.angle) * 30);
-        ctx.lineTo(me.x + Math.cos(me.angle) * 110, me.y + Math.sin(me.angle) * 110); ctx.stroke();
-        ctx.globalAlpha = 1;
+        ctx.strokeStyle = ready ? 'rgba(47,158,107,.95)' : 'rgba(94,106,132,.7)'; ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.arc(b.sn.x, b.sn.y, 30 + Math.sin(time * 10) * 3, 0, Math.PI * 2); ctx.stroke();
+        if (ready) E.label(ctx, '甩他!', b.sn.x, b.sn.y - 58, 13, '#FFFDF5', '#2F9E6B');
       }
-      ctx.setLineDash([]);
     }
     // 来锅预警：有人甩的锅正朝你飞来，红圈收紧；进入反甩窗口时变实心提示「按甩！」
     let incoming = Infinity, inWin = false;
