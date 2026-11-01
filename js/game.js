@@ -12,7 +12,7 @@
   const OFFICE = window.OFFICE, LEVELS = window.LEVELS;
   const st = E.createStage(), ctx = st.ctx, inp = E.createInput(st.c, document.getElementById('btnThrow'));
 
-  // 像素素材（assets/px/*.png）。角色图按「基础名_状态」命名，见 personSprite / leaderSprite
+  // 像素素材（assets/px/*.png，网页上从 assets/atlas/ 图集加载）。角色图按「基础名_状态」命名，见 personSprite / leaderSprite
   const SPRITES = [
     'player_normal', 'player_panic', 'player_crushed', 'player_win',
     'pm_normal', 'pm_hit', 'pm_angry', 'pm_flat', 'tester_normal', 'tester_hit', 'tester_angry', 'tester_flat',
@@ -1015,7 +1015,7 @@
   // 显示教学横幅：h = { title 标签, icon [主图, 角标图], sub 小字, text 大字 }（只有 text 时就是一行字）
   function showHint(h) {
     const el = document.getElementById('hint');
-    const icon = (h.icon || []).map((n) => `<img src="assets/px/${n}.png" alt="">`).join('');
+    const icon = (h.icon || []).map((n) => `<img src="${E.pxUrl(n)}" alt="">`).join('');
     el.innerHTML = `${h.title ? `<span class="h-tab">${h.title}</span>` : ''}${icon ? `<span class="h-ico">${icon}</span>` : ''}
       <span class="h-txt">${h.sub ? `<span class="h-sub">${hintMarkup(h.sub)}</span>` : ''}<span class="h-main">${hintMarkup(h.text)}</span></span>`;
     el.classList.add('on');
@@ -1527,12 +1527,12 @@
     const title = crushed ? '锅太多，走不动了' : !stars ? '被留下加班' : ['', '甩锅宗师', '职场老油条', '勉强下班'][myRank];
     // 最终排名表：名次 / 名字 / 锅图标 + 背锅次数，被压垮的写「压垮」
     const table = rank.map((a, i) => `<li class="${a.isPlayer ? 'me' : ''}${i === PASS_RANK - 1 && rank.length > PASS_RANK ? ' cut' : ''}">
-      <b>${i + 1}</b><span>${a.isPlayer ? '你' : a.name}</span>${a.crushed || (a.isPlayer && crushed) ? '<span class="crush">被压垮</span>' : `<img src="assets/px/ui_wok.png" alt="背锅"><em>${a.blames}</em>`}</li>`).join('');
+      <b>${i + 1}</b><span>${a.isPlayer ? '你' : a.name}</span>${a.crushed || (a.isPlayer && crushed) ? '<span class="crush">被压垮</span>' : `<img src="${E.pxUrl('ui_wok')}" alt="背锅"><em>${a.blames}</em>`}</li>`).join('');
     const next = LEVELS[LEVELS.indexOf(L) + 1];
     // 大字：过关「第 N 名」带放射光；没过关「第 N 名」不带光；被压垮直接写「被压垮」
     const big = crushed ? '<div class="rays res-rank bad">被压垮</div>'
       : `<div class="rays res-rank${stars ? '' : ' bad'}">${stars ? '<i></i><i></i><i></i><i></i><i></i><i></i>' : ''}第<em>${myRank}</em>名</div>`;
-    const starHtml = `<span class="stars">${[1, 2, 3].map((i) => `<img src="assets/px/ui_${i <= stars ? 'star' : 'star_empty'}.png" alt="${i <= stars ? '★' : '☆'}">`).join('')}</span>`;
+    const starHtml = `<span class="stars">${[1, 2, 3].map((i) => `<img src="${E.pxUrl(`ui_${i <= stars ? 'star' : 'star_empty'}`)}" alt="${i <= stars ? '★' : '☆'}">`).join('')}</span>`;
     // 按钮：过关且有下一关 → 下一关为主按钮；否则「再来一局」为主按钮。广告按钮只在对应失败情况出现
     const hasNext = stars && next;
     E.showPanel(`
@@ -1594,7 +1594,7 @@
     E.showPanel(`
       <div class="pop-head">${pxIcon('pause')}休息一下</div>
       <p class="pop-sub">本局已暂停</p>
-      <div class="rays pause-wok"><i></i><i></i><i></i><img src="assets/px/wok.png" alt=""><b>甩锅</b></div>
+      <div class="rays pause-wok"><i></i><i></i><i></i><img src="${E.pxUrl('wok')}" alt=""><b>甩锅</b></div>
       <button class="btn" data-act="resume">继续游戏</button>
       <button class="btn ghost" data-act="retry">重新开始</button>
       <button class="pop-link" data-act="menu">返回首页</button>`, {
@@ -1659,7 +1659,7 @@
       const locked = lv.id > prog.unlocked;
       const b = prog.best[lv.id];
       return `<button class="lv${lv === L ? ' on' : ''}" data-act="pick" data-id="${lv.id}" ${locked ? 'disabled' : ''}>
-        ${locked ? '<img class="ico" src="assets/px/ui_lock.png" alt="">' : ''}第 ${lv.id} 关<small>${b ? '★'.repeat(b.stars) : locked ? '前一关进前三解锁' : '未通关'}</small></button>`;
+        ${locked ? `<img class="ico" src="${E.pxUrl('ui_lock')}" alt="">` : ''}第 ${lv.id} 关<small>${b ? '★'.repeat(b.stars) : locked ? '前一关进前三解锁' : '未通关'}</small></button>`;
     }).join('');
     E.showPanel(`
       <div class="lvtabs">${tabs}</div>
@@ -1691,8 +1691,8 @@
     el.className = 'lb-walker';
     el.style.top = `${y * 100}%`;
     // 身后的锅先放进去，人最后放，保证人盖在锅上面
-    el.innerHTML = Array.from({ length: woks }, (_, i) => `<img class="lb-wok" src="assets/px/wok.png" alt="" style="--i:${i + 1}">`).join('') +
-      `<img class="lb-body" src="assets/px/${who}_walk_s0.png" alt="">`;
+    el.innerHTML = Array.from({ length: woks }, (_, i) => `<img class="lb-wok" src="${E.pxUrl('wok')}" alt="" style="--i:${i + 1}">`).join('') +
+      `<img class="lb-body" src="${E.pxUrl(`${who}_walk_s0`)}" alt="">`;
     return { el, body: el.querySelector('.lb-body'), who, x, dir, speed, woks, dist: 0, frame: 0 };
   }
 
@@ -1711,27 +1711,27 @@
       const locked = lv.id > prog.unlocked;
       const b = prog.best[lv.id];
       const got = b ? b.stars : 0;
-      const starImgs = [1, 2, 3].map((i) => `<img src="assets/px/ui_${i <= got ? 'star' : 'star_empty'}.png" alt="">`).join('');
+      const starImgs = [1, 2, 3].map((i) => `<img src="${E.pxUrl(`ui_${i <= got ? 'star' : 'star_empty'}`)}" alt="">`).join('');
       return `<button class="lb-day${lv === L ? ' on' : ''}" data-act="pick" data-id="${lv.id}" ${locked ? 'disabled' : ''} aria-label="第 ${lv.id} 关 ${lv.name}">
-        <b><img class="ico" src="assets/px/ui_calendar.png" alt="">${lv.name.split('·')[0].trim()}</b>
-        <span>${locked ? '<img class="lb-lock" src="assets/px/ui_lock.png" alt="未解锁">' : starImgs}</span></button>`;
+        <b><img class="ico" src="${E.pxUrl('ui_calendar')}" alt="">${lv.name.split('·')[0].trim()}</b>
+        <span>${locked ? `<img class="lb-lock" src="${E.pxUrl('ui_lock')}" alt="未解锁">` : starImgs}</span></button>`;
     }).join('');
     lobby.el.innerHTML = `
       <div class="lb-top">
-        <span class="chip"><img class="ico" src="assets/px/ui_badge.png" alt="">工牌 <b>${stars}</b>/${LEVELS.length * 3}<img class="ico lb-star" src="assets/px/ui_star.png" alt="星"></span>
+        <span class="chip"><img class="ico" src="${E.pxUrl('ui_badge')}" alt="">工牌 <b>${stars}</b>/${LEVELS.length * 3}<img class="ico lb-star" src="${E.pxUrl('ui_star')}" alt="星"></span>
         <button class="chip" type="button" data-act="settings" aria-label="设置">${pxIcon('gear')}</button>
       </div>
       <div class="lb-title"><h1>甩锅侠</h1><p>今天这锅，反正不是我的</p></div>
       <div class="lb-floor">
         <button class="lb-hero" type="button" data-act="hero" aria-label="主角">
           <span class="lb-say" hidden></span>
-          <img src="assets/px/player_normal.png" alt="">
+          <img src="${E.pxUrl('player_normal')}" alt="">
         </button>
       </div>
       <div class="lb-menu">
         <div class="lb-days">${days}</div>
         <button class="btn" data-act="go">去上班<small>第 ${L.id} 关 · ${L.name}</small></button>
-        <button class="btn ghost" data-act="rules"><img class="ico" src="assets/px/ui_book.png" alt="">玩法</button>
+        <button class="btn ghost" data-act="rules"><img class="ico" src="${E.pxUrl('ui_book')}" alt="">玩法</button>
       </div>`;
     // 两个路过的同事：实习生身后拖着三口锅，老油条空手溜达（幸灾乐祸的对照）
     const floor = lobby.el.querySelector('.lb-floor');
@@ -1759,7 +1759,7 @@
       if (w.x > 1 - m) { w.x = 1 - m; w.dir = -1; }
       if (w.x < m) { w.x = m; w.dir = 1; }
       const f = Math.floor(w.dist / 13) % 4;
-      if (f !== w.frame) { w.frame = f; w.body.src = `assets/px/${w.who}_walk_s${f}.png`; }
+      if (f !== w.frame) { w.frame = f; w.body.src = E.pxUrl(`${w.who}_walk_s${f}`); }
       w.el.style.left = `${w.x * 100}%`;
       w.el.style.setProperty('--dir', w.dir); // 往左走用侧面帧镜像
     }
@@ -1767,7 +1767,7 @@
       lobby.heroT -= dt;
       if (lobby.heroT <= 0) {
         const hero = lobby.el.querySelector('.lb-hero');
-        if (hero) { hero.querySelector('img').src = 'assets/px/player_normal.png'; hero.querySelector('.lb-say').hidden = true; }
+        if (hero) { hero.querySelector('img').src = E.pxUrl('player_normal'); hero.querySelector('.lb-say').hidden = true; }
       }
     }
   }
@@ -1780,7 +1780,7 @@
     const say = btn.querySelector('.lb-say');
     say.textContent = LOBBY_LINES[i];
     say.hidden = false;
-    btn.querySelector('img').src = 'assets/px/player_win.png';
+    btn.querySelector('img').src = E.pxUrl('player_win');
     lobby.heroT = 1.6;
     E.sfx('throw');
   }
@@ -1871,7 +1871,10 @@
 
   E.showPanel('<h1>加载中…</h1><p class="sub">正在把锅摆好</p>', {});
   // 素材加载完先进大厅；带 ?level= 调试参数时直接进关卡介绍
-  E.loadSprites(SPRITES, 'assets/px/', 'png').then(() => (qLevel ? showIntro() : showLobby()));
+  // 先加载图集（十来个请求），图集里没有的再按单张补；然后把 HUD 里写死的图标换成图集里的图
+  E.loadAtlas(window.ATLAS, 'assets/atlas/')
+    .then(() => E.loadSprites(SPRITES.filter((n) => !E.spr[n]), 'assets/px/', 'png'))
+    .then(() => { E.fillPxImages(); qLevel ? showIntro() : showLobby(); });
 
   E.loop((dt, time) => {
     if (mode !== 'play') inp.fire = 0;

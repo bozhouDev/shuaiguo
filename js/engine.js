@@ -389,6 +389,42 @@
     })));
   };
 
+  // 加载图集（window.ATLAS，由 assets_pixel/pack_atlas.py 生成）：每张图集下载一次，再切成单张缓存到 E.spr
+  // 网页上请求数从一百多个降到十来个；某张图集加载失败时，里面的图之后会按单张文件补加载
+  E.loadAtlas = function (atlas, base) {
+    const sheets = (atlas && atlas.sheets) || [];
+    return Promise.all(sheets.map((sh) => new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        for (const name in sh.frames) {
+          const [x, y, w, h] = sh.frames[name];
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, x, y, w, h, 0, 0, w, h);
+          E.spr[name] = { canvas: c, w, h };
+        }
+        resolve();
+      };
+      img.onerror = () => { console.warn('图集加载失败：', sh.file); resolve(); };
+      img.src = `${base}${sh.file}`;
+    })));
+  };
+
+  // 界面里 <img> 用的像素图地址：已从图集切好的直接转成 data URL（不再发请求），否则退回单张文件
+  const urlCache = {};
+  E.pxUrl = function (name) {
+    if (urlCache[name]) return urlCache[name];
+    const s = E.spr[name];
+    if (!s) return `assets/px/${name}.png`;
+    urlCache[name] = s.canvas.toDataURL('image/png');
+    return urlCache[name];
+  };
+
+  // 把页面里写死的 <img data-px="名字"> 换成图集里的图（HUD 图标等静态元素用）
+  E.fillPxImages = function (root) {
+    for (const img of (root || document).querySelectorAll('img[data-px]')) img.src = E.pxUrl(img.dataset.px);
+  };
+
   // 以 (cx, cy) 为中心画精灵，宽度 w，高度按比例；可选旋转、翻转、透明度
   // opt.h：改为按高度 h 定尺寸（全身角色用，宽度按比例），此时 w 参数被忽略
   E.drawSprite = function (ctx, name, cx, cy, w, opt) {

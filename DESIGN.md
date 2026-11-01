@@ -192,6 +192,7 @@
 2. **切图：** `python3 assets_pixel/cut_sheets.py [表名]`。先抠掉洋红，再按投影切行切列，输出到 `assets_pixel/sprites/`（这个目录不进仓库）。
 3. **缩放并压缩：** `python3 assets_pixel/build_px.py`。用 BOX 缩到游戏绘制尺寸的约 3 倍，再转成 128 色调色板 PNG，输出到 `assets/px/`。
 4. **接入：** 在 `js/game.js` 的 `SPRITES` 里登记名字；缺图时代码会退回旧的单张姿势，不会崩。
+5. **打图集：** `python3 assets_pixel/pack_atlas.py`，把 `assets/px/` 合并成 `assets/atlas/` 里的图集并更新 `js/atlas.js`。网页从图集加载，不跑这一步新图不会出现在游戏里。界面里的 `<img>` 用 `E.pxUrl('名字')` 取地址。
 
 **出图提示词里必须带的硬规则（英文原样复用）：**
 

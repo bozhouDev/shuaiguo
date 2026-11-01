@@ -19,7 +19,9 @@
 | `js/levels.js` | 关卡数据：办公室地图 `OFFICE` + 关卡列表 `LEVELS`。加关卡只往 `LEVELS` 里加一项 |
 | `js/game.js` | 主逻辑：对局、AI、绘制、HUD、大厅、关卡介绍、结算 |
 | `css/style.css` | 样式，按版本分段追加（v2 / v3 像素风 / v4 大厅） |
-| `assets/px/` | 游戏实际加载的像素素材（PNG） |
+| `assets/px/` | 单张像素素材（PNG），图集的来源，也是图集缺图时的后备 |
+| `assets/atlas/` + `js/atlas.js` | 由 `pack_atlas.py` 生成的图集和位置表，网页实际从这里加载像素图 |
+| `assets/fonts/` + `css/fonts.css` | 由 `build_fonts.py` 生成的自托管子集字体（站酷快乐体、思源黑体粗） |
 | `assets/*.svg` | 早期矢量素材，游戏已不加载，只有 `assets.html` 还在用 |
 | `assets_pixel/` | 出图脚本、原始素材表 `sheets/`、切图和缩放脚本；`sprites/` 是中间产物，不进仓库 |
 | `assets.html` | 早期矢量素材的预览页 |
@@ -41,7 +43,9 @@ python3 -m http.server 8765 --bind 127.0.0.1
 
 - 以 `DESIGN.md` 为准。要点：16-bit 像素风，纯 2D、经典 RPG 的 3/4 俯视，不做 3D / 等距 / 透视；人物必须全身 Q 版；素材里不放文字；新界面不用 emoji，用 `assets/px/ui_*.png`。
 - 新素材用 Codex 内置 `image_gen` 出图，洋红底、附参考图，脚本见 `assets_pixel/gen_assets.sh`、`gen_walk.sh`、`gen_lobby.sh`。
-- 出图后：`python3 assets_pixel/cut_sheets.py <表名>` 切图 → `python3 assets_pixel/build_px.py` 缩放并转调色板 PNG → 在 `js/game.js` 的 `SPRITES` 里登记（大厅这类 DOM 里用的图直接引用路径即可）。
+- 出图后：`python3 assets_pixel/cut_sheets.py <表名>` 切图 → `python3 assets_pixel/build_px.py` 缩放并转调色板 PNG → `python3 assets_pixel/pack_atlas.py` 重打图集 → 在 `js/game.js` 的 `SPRITES` 里登记。界面里的 `<img>` 地址用 `E.pxUrl('名字')`，HTML 里写死的图标用 `data-px="名字"`，不要直接写 `assets/px/` 路径（会多发请求）。
+- **改了界面文案、加了新字以后**，跑 `python3 assets_pixel/build_fonts.py` 重新裁字体，否则新字会退回系统字体。字体源文件放 `assets_pixel/fonts_src/`（不进仓库，下载地址写在脚本开头）。
+- 不要再引用 Google Fonts 等外部资源：服务器在美国，国内访问外部 CDN 很慢。
 - `assets/px/` 总体积目标不超过 2 MB。
 
 ## 写代码的约定
@@ -53,8 +57,8 @@ python3 -m http.server 8765 --bind 127.0.0.1
 
 ## 部署
 
-- `Dockerfile` 用 nginx 托管静态文件，只拷贝 `index.html`、`assets.html`、`css/`、`js/`、`assets/`；`*.md` 不会进镜像。
-- 部署到泊舟自建的 Dokploy，以 GitHub 仓库为来源。
+- `Dockerfile` 用 nginx 托管静态文件，只拷贝 `index.html`、`assets.html`、`css/`、`js/`、`assets/`；`*.md` 不会进镜像。`nginx.conf` 开 gzip，图集和字体缓存一年（地址带哈希），页面和脚本每次确认更新。
+- 部署到泊舟自建的 Dokploy（服务器在美国波士顿），以 GitHub 仓库为来源，推送 `main` 自动部署。线上地址目前是 http 的 sslip.io 地址，还没配域名和 https。
 
 ## Git
 

@@ -4,21 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>甩锅侠</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@700;900&family=ZCOOL+KuaiLe&display=swap">
+<!-- 自托管的子集字体（assets_pixel/build_fonts.py 生成），不再走 Google Fonts -->
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <canvas id="stage"></canvas>
 <!-- 顶部 HUD：时钟、身上锅数（满 12 压垮）、当前名次、背锅次数、连甩、设置/暂停 -->
 <div id="hud">
-  <span class="chip"><img class="ico" src="assets/px/ui_clock.png" alt=""><span id="hClock">09:00</span></span>
-  <span class="chip" id="hPots"><img class="ico" src="assets/px/ui_wok.png" alt=""><span id="hPotsN">0/12</span><span class="bar red"><i id="hPotsBar"></i></span></span>
-  <span class="chip"><img class="ico" src="assets/px/ui_crown.png" alt=""><span id="hRank">第 1/4 名</span></span>
-  <span class="chip" id="hBlameChip"><img class="ico" src="assets/px/ui_warning.png" alt=""><span id="hBlame">背锅 0</span></span>
+  <span class="chip"><img class="ico" data-px="ui_clock" alt=""><span id="hClock">09:00</span></span>
+  <span class="chip" id="hPots"><img class="ico" data-px="ui_wok" alt=""><span id="hPotsN">0/12</span><span class="bar red"><i id="hPotsBar"></i></span></span>
+  <span class="chip"><img class="ico" data-px="ui_crown" alt=""><span id="hRank">第 1/4 名</span></span>
+  <span class="chip" id="hBlameChip"><img class="ico" data-px="ui_warning" alt=""><span id="hBlame">背锅 0</span></span>
   <span class="chip hot" id="hCombo" hidden>连甩 ×2</span>
   <span class="hud-right">
     <button class="chip" id="btnSet" type="button" aria-label="设置"></button>
-    <button class="chip" id="btnPause" type="button" aria-label="暂停"><img class="ico" src="assets/px/ui_pause.png" alt=""></button>
+    <button class="chip" id="btnPause" type="button" aria-label="暂停"><img class="ico" data-px="ui_pause" alt=""></button>
   </span>
 </div>
 <!-- 工作群消息：散会、随机事件的预告 -->
@@ -31,6 +32,7 @@
 <div id="ui" class="overlay" hidden></div>
 <div id="toast"></div>
 <script src="js/engine.js"></script>
+<script src="js/atlas.js"></script>
 <script src="js/levels.js"></script>
 <script src="js/game.js"></script>
 </body>
