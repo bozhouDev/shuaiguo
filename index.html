@@ -9,19 +9,18 @@
 </head>
 <body>
 <canvas id="stage"></canvas>
-<!-- 顶部 HUD：时钟、背锅进度、当前名次、连甩、暂停/静音 -->
+<!-- 顶部 HUD：时钟、身上锅数（满 12 压垮）、当前名次、背锅次数、连甩、暂停/静音 -->
 <div id="hud">
   <span class="chip"><img class="ico" src="assets/px/ui_clock.png" alt=""><span id="hClock">09:00</span></span>
-  <span class="chip" id="hPots"><img class="ico" src="assets/px/ui_wok.png" alt=""><span id="hPotsN">0/20</span><span class="bar red"><i id="hPotsBar"></i></span></span>
+  <span class="chip" id="hPots"><img class="ico" src="assets/px/ui_wok.png" alt=""><span id="hPotsN">0/12</span><span class="bar red"><i id="hPotsBar"></i></span></span>
   <span class="chip"><img class="ico" src="assets/px/ui_crown.png" alt=""><span id="hRank">第 1/4 名</span></span>
+  <span class="chip" id="hBlameChip"><img class="ico" src="assets/px/ui_warning.png" alt=""><span id="hBlame">背锅 0</span></span>
   <span class="chip hot" id="hCombo" hidden>连甩 ×2</span>
   <span class="hud-right">
     <button class="chip" id="btnMute" type="button" aria-label="静音"><img class="ico" id="icoSound" src="assets/px/ui_sound_on.png" alt=""></button>
     <button class="chip" id="btnPause" type="button" aria-label="暂停"><img class="ico" src="assets/px/ui_pause.png" alt=""></button>
   </span>
 </div>
-<!-- 实时排名（左上角）：前三名下方是加班线 -->
-<ol id="rank" hidden></ol>
 <!-- 工作群消息：散会、随机事件的预告 -->
 <div id="msg"></div>
 <div id="hint"></div>

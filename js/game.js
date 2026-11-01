@@ -1,8 +1,9 @@
 /* =========================================================
- * 甩锅侠 · 主逻辑（v2：所有人都在甩锅）
- * 核心循环：领导远程丢锅 / 会议室散会喷锅 / 随机事件 → 被砸中就粘在身后（锅多不减速）
- *          → 按「甩」把尾巴上的锅扔出去：砸中谁就是谁的，甩空立刻弹回自己身上；锅飞来时按「甩」能反甩
- *          → 18:00 按身上剩余锅数排名，进前三过关
+ * 甩锅侠 · 主逻辑（v3：出事追责）
+ * 核心循环：领导远程丢锅 / 天降锅（只砸主角）/ 会议室散会喷锅 / 随机事件 → 被砸中就粘在身后
+ *          → 每口锅都有截止时间，甩来甩去不重置；到点时锅在谁身上，谁「背锅 +1」（P0 +3）
+ *          → 按「甩」把最急的那口扔出去：砸中谁就是谁的，甩空立刻弹回；在领导视野里甩会被抓现行
+ *          → 18:00 按背锅次数排名，进前三过关；身上堆满 12 口当场压垮
  * 玩家和机器人同事是同一种「打工人」，唯一区别是方向由手指给还是由 AI 给
  * ========================================================= */
 (function () {
@@ -39,14 +40,20 @@
   const PARRY_WIN = 0.22;      // 反甩判定窗口：锅离砸中你还剩几秒内按「甩」才算
   const PARRY_DECAY = 0.75;    // 每反甩一次，下一次判定窗口缩小到几倍（来回几次必有人接住）
   const PARRY_SPEEDUP = 1.12;  // 每反甩一次锅加速
-  const PARRY_PTS = 15;        // 反甩成功得分
   const WHIFF_LOCK = 0.4;      // 按空（没锅可甩也没东西可弹）后多久不能反甩，防止狂按
   const COMBO_WINDOW = 2.5;    // 连甩判定窗口（秒）
   const RECV_SHIELD = 0.8;     // 刚接锅的人多久内甩不中（锅会弹开，算甩空）
   const RECV_STUN = 0.4;       // 接锅后愣多久才能甩出去
   const NO_RETURN = 1.5;       // 同事接锅后多久内不会主动瞄准刚甩给他的人（玩家不受限）
-  const DIGEST_TIME = 15;      // 每人每隔几秒自己消化掉一口锅（所有人相同）
-  const MAX_POTS = 20;         // 背满即被压垮
+  const MAX_POTS = 12;         // 身上堆满即被压垮（玩家直接失败，同事出局）
+  const POT_ALARM = 9;         // 堆到这么多开始报警（锅数条变红、冒汗）
+  const DUE_DEFAULT = 30;      // 锅的截止时间（关卡没配 potLife 时用）：落到人身上开始倒计时，甩来甩去不重置
+  const DUE_WARN = 10;         // 剩几秒变黄
+  const DUE_DANGER = 5;        // 剩几秒变红冒烟
+  const VISION_RANGE = 220;    // 领导视野：扇形长度（比玩家甩锅扇形 150 稍长）
+  const VISION_CONE = 0.52;    // 领导视野：扇形半角，左右各约 30°（总开角约 60°）
+  const SKY_TIME = 1;          // 天降锅：阴影出现到砸下来的时间（躲不掉，只是给个准备）
+  const SKY_FIRST = 3;         // 开局第几秒落下第一口天降锅
   const POT_SPEED = 105;       // 领导 / 散会飞出来的锅速度（按移动速度同比例放慢，保证横移躲得开）
   const POT_TURN = 1.5;        // 飞行锅转向速度（越小越好躲）
   const POT_LIFE = 7;          // 飞行锅存活时间
@@ -56,21 +63,21 @@
   const ALERT_CD = 15;         // 老板追完一次后多久内不再追
   const ALERT_CHASE = 4;       // 老板追人时长
   const ALERT_SPEED = 120;     // 老板追人速度（略慢于人，绕障碍追）
-  const HOT_TIME = 10;         // P0 烫手山芋倒计时
-  const HOT_POTS = 4;          // P0 炸在谁手里，谁 +几口
+  const P0_LIFE = 10;          // P0 的截止时间（比普通锅短得多）
+  const P0_BLAME = 3;          // P0 到点算背几次锅
   const FINAL_RUSH = 10;       // 最后几秒进入排名冲刺
   const PASS_RANK = 3;         // 进前几名过关
 
   // 同事人格：speed 速度倍率；turn 转向；react 思考间隔；aggr 甩锅积极度；seekR 找人半径；
-  // seekMin 身上几口锅才开始找人甩；dodge 躲锅能力；caution 躲人/躲领导；mult 甩中他的得分倍率；
-  // parry 锅飞来时反甩成功的概率；throwR 目标进入多近才出手
+  // seekMin 身上几口锅才开始找人甩（有锅快到点时不管这个）；dodge 躲锅能力；caution 躲人/躲领导；
+  // parry 锅飞来时反甩成功的概率；throwR 目标进入多近才出手；sneak 在领导视野里时忍住不甩的概率
   const PERSONAS = {
-    me:       { name: '你', sprite: 'player', speed: 1, turn: 5.2, react: 0.2, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.9, caution: 0.7, mult: 1, parry: 0.5, throwR: 130 },
-    pm:       { name: '产品经理', sprite: 'pm', speed: 0.93, turn: 4.6, react: 0.22, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.8, caution: 0.6, mult: 1, parry: 0.35, throwR: 120 },
-    tester:   { name: '测试小王', sprite: 'tester', speed: 0.88, turn: 4.4, react: 0.24, aggr: 0.85, seekR: 440, seekMin: 1, dodge: 1, caution: 0.8, mult: 1, parry: 0.4, throwR: 110 },
-    intern:   { name: '实习生', sprite: 'intern', speed: 0.85, turn: 4, react: 0.36, aggr: 0.4, seekR: 260, seekMin: 3, dodge: 0.45, caution: 1, mult: 1, parry: 0.1, throwR: 90 },
-    veteran:  { name: '老油条', sprite: 'veteran', speed: 0.95, turn: 4.8, react: 0.2, aggr: 0.65, seekR: 320, seekMin: 2, dodge: 1.3, caution: 1.3, mult: 3, parry: 0.65, throwR: 110, tea: true },
-    designer: { name: '设计师', sprite: 'designer', speed: 0.9, turn: 4.5, react: 0.26, aggr: 0.75, seekR: 400, seekMin: 1, dodge: 0.9, caution: 0.9, mult: 1, parry: 0.3, throwR: 115 },
+    me:       { name: '你', sprite: 'player', speed: 1, turn: 5.2, react: 0.2, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.9, caution: 0.7, parry: 0.5, throwR: 130, sneak: 0.9 },
+    pm:       { name: '产品经理', sprite: 'pm', speed: 0.93, turn: 4.6, react: 0.22, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.8, caution: 0.6, parry: 0.35, throwR: 120, sneak: 0.85 },
+    tester:   { name: '测试小王', sprite: 'tester', speed: 0.88, turn: 4.4, react: 0.24, aggr: 0.85, seekR: 440, seekMin: 1, dodge: 1, caution: 0.8, parry: 0.4, throwR: 110, sneak: 0.7 },
+    intern:   { name: '实习生', sprite: 'intern', speed: 0.85, turn: 4, react: 0.36, aggr: 0.4, seekR: 260, seekMin: 3, dodge: 0.45, caution: 1, parry: 0.1, throwR: 90, sneak: 0.2 },
+    veteran:  { name: '老油条', sprite: 'veteran', speed: 0.95, turn: 4.8, react: 0.2, aggr: 0.65, seekR: 320, seekMin: 2, dodge: 1.3, caution: 1.3, parry: 0.65, throwR: 110, sneak: 1, tea: true },
+    designer: { name: '设计师', sprite: 'designer', speed: 0.9, turn: 4.5, react: 0.26, aggr: 0.75, seekR: 400, seekMin: 1, dodge: 0.9, caution: 0.9, parry: 0.3, throwR: 115, sneak: 0.6 },
   };
 
   // 领导类型：count 一次丢几口（分别瞄准锅最少的几个人）；range 视野；everyMul 丢锅间隔倍率
@@ -97,11 +104,26 @@
   let shake = 0;                 // 屏幕震动
   let hintTimer = 0;             // 当前提示剩余显示时间
   let msgTimer = 0;              // 群消息剩余显示时间
-  let rankSig = '';              // 排名面板内容签名（不变就不刷新 DOM）
 
   /* ---------------- 工具 ---------------- */
   // 当前身上锅数
   const potsOf = (a) => a.sn.segs.length;
+  // 本关锅的截止时长
+  const potLife = () => L.potLife || DUE_DEFAULT;
+  // 新的一口锅：label 锅上的字，due 到点时刻（对局秒数），hot 是否 P0
+  function newPot(t, hot, label) {
+    return { label: hot ? 'P0' : label || E.pick(OFFICE.potLabels), due: t + (hot ? P0_LIFE : potLife()), hot: !!hot };
+  }
+  // 某人身上最急的一口锅的下标（没有锅返回 -1）
+  function urgentIdx(a) {
+    let bi = -1;
+    a.sn.segs.forEach((p, i) => { if (bi < 0 || p.due < a.sn.segs[bi].due) bi = i; });
+    return bi;
+  }
+  // 某人身上最急的一口锅还剩几秒（没有锅返回 Infinity）
+  const urgentLeft = (a) => { const i = urgentIdx(a); return i < 0 ? Infinity : a.sn.segs[i].due - S.t; };
+  // 某人身上有没有 P0
+  const holdsHot = (a) => a.sn.segs.some((p) => p.hot);
   // 两个打工人蛇头之间的距离
   const headDist = (a, b) => E.dist(a.sn.x, a.sn.y, b.sn.x, b.sn.y);
   // 对局秒数 → 屏幕时钟文字（09:00 ~ 18:00）
@@ -122,15 +144,16 @@
     const p = PERSONAS[key];
     const sn = new E.Snake(x, y, { speed: BASE_SPEED * p.speed, turn: p.turn, spacing: 22 }); // 锅缩小后尾巴间距同步收紧
     sn.angle = isPlayer ? 0 : E.rand(0, Math.PI * 2);
-    for (let i = 0; i < L.startPots; i++) sn.segs.push(E.pick(OFFICE.potLabels));
+    if (!isPlayer) for (let i = 0; i < L.startPots; i++) { const pot = newPot(0); pot.due = E.rand(0.5, 1) * potLife(); sn.segs.push(pot); }
     return {
       id, key, p, name: p.name, isPlayer, sn,
       want: sn.angle, thinkT: E.rand(0, 0.3), target: null,   // AI：想去的方向、思考倒计时、想甩锅的对象
-      score: 0, thrown: 0, combo: 0, comboT: 0, maxCombo: 0, victims: {},
+      blames: 0, caught: 0, alarmed: false,                    // 背锅次数、被领导抓现行次数、是否已提示快压垮
+      thrown: 0, combo: 0, comboT: 0, maxCombo: 0, victims: {},
       cool: 0, stun: 0, shield: 0, lock: {},                  // lock[对方 id] = 到这个时间前同事不会主动瞄准他
       parryLock: 0, launched: 0, misses: 0, parries: 0,        // 按空惩罚、出手次数、甩空次数、反甩次数
       aimTgt: null,                                            // 当前锁定的瞄准目标
-      digestT: DIGEST_TIME, cry: 0, teaCd: E.rand(8, 12), teaT: 0, angry: 0,
+      cry: 0, teaCd: E.rand(8, 12), teaT: 0, angry: 0,
       crushed: false, crushedAt: 0,
       stuckT: 0, lastX: x, lastY: y, panicT: 0,                // 卡墙检测
     };
@@ -143,6 +166,7 @@
       path: [], goal: null, repathT: 0,                       // 寻路：当前路径、目标点、下次重算倒计时
       state: 'patrol', st: 0, aimT: 0, targets: [], chase: null, hitCd: {}, alertCd: 0,
       throwCd: E.rand(0, 1.5),
+      face: Math.PI / 2, baseFace: Math.PI / 2,               // 视野朝向：走路时朝前进方向，停下时左右张望
     };
   }
   // 生成一局的初始状态
@@ -152,9 +176,9 @@
     return {
       t: 0, player, bots, agents: [player, ...bots],
       leaders: L.leaders.map(makeLeader),
-      flying: [], throws: [], arcs: [], fx: [], hot: null, tea: 0,
+      flying: [], throws: [], arcs: [], fx: [], tea: 0,
       pace: null, paceIdx: -1, schedule: buildSchedule(), hintIdx: 0,
-      firstThrow: true, revived: false, rescued: false, over: null, lastTick: 0, spawned: 0, leaderHits: 0, hotBooms: 0,
+      skyFirst: true, revived: false, rescued: false, over: null, lastTick: 0, spawned: 0, leaderHits: 0, booms: 0, skies: 0,
     };
   }
   // 排好本局的时间表：散会预告 + 散会喷锅 + 随机事件
@@ -187,9 +211,9 @@
   // 给某人加 n 口锅（从 (fx, fy) 飞到尾巴的动画只是视觉），连甩清零
   function addPots(a, n, fx, fy) {
     for (let i = 0; i < n; i++) {
-      const label = E.pick(OFFICE.potLabels);
-      a.sn.segs.push(label);
-      S.arcs.push({ x0: fx, y0: fy, to: () => tailPos(a), t: -i * 0.08, dur: 0.4, label });
+      const pot = newPot(S.t);
+      a.sn.segs.push(pot);
+      S.arcs.push({ x0: fx, y0: fy, to: () => tailPos(a), t: -i * 0.08, dur: 0.4, label: pot.label });
     }
     a.combo = 0;
   }
@@ -203,6 +227,16 @@
       label: hot ? 'P0' : E.pick(OFFICE.potLabels),
     });
     S.spawned++;
+  }
+  // 天降锅：只砸主角，脚下先出现阴影，SKY_TIME 秒后砸下来，躲不掉
+  function launchSky(target, from) {
+    if (target.crushed) return;
+    S.flying.push({ phase: 'sky', t: SKY_TIME, warn0: SKY_TIME, x: target.sn.x, y: target.sn.y, target, hot: false, a: 0, spin: 0, life: POT_LIFE, label: E.pick(OFFICE.potLabels) });
+    S.spawned++; S.skies++;
+    if (target.isPlayer) {
+      floats.add(`${from ? from.name : '老板'}：这个你来`, target.sn.x, target.sn.y - 60, '#E8504A');
+      E.sfx('warn');
+    }
   }
   // 离 (x, y) 最近的还没被压垮的打工人
   function nearestAgent(x, y, except) {
@@ -223,6 +257,13 @@
         continue;
       }
       if (f.phase === 'drop') { f.t -= dt; if (f.t <= 0) f.dead = true; continue; }
+      // 天降锅：阴影跟着目标走，到点直接砸中
+      if (f.phase === 'sky') {
+        f.t -= dt; f.x = f.target.sn.x; f.y = f.target.sn.y;
+        if (f.target.crushed) f.dead = true;
+        else if (f.t <= 0) { f.dead = true; potHit(f.target, f); }
+        continue;
+      }
       if (f.target.crushed) f.target = nearestAgent(f.x, f.y) || f.target;
       const tg = f.target.sn;
       const want = Math.atan2(tg.y - f.y, tg.x - f.x);
@@ -246,9 +287,12 @@
   }
   function potHit(a, f) {
     spawnFx('fx_impact', a.sn.x, a.sn.y - 26, 54);
-    if (f.hot) { grabHot(a, null); return; }
-    a.sn.segs.push(f.label);
+    a.sn.segs.push(newPot(S.t, f.hot, f.label));   // 截止时间从落到身上开始算
     a.combo = 0;
+    if (f.hot) {
+      if (a.isPlayer) { E.toast(`P0 砸到你身上！${P0_LIFE} 秒内甩出去，炸了背锅 +${P0_BLAME}`, 2200); E.sfx('boss'); shake = 8; }
+      return;
+    }
     if (a.isPlayer) {
       floats.add('+1 ' + f.label, a.sn.x, a.sn.y - 34, '#E8504A');
       shake = 6;
@@ -263,9 +307,8 @@
   function canThrowTo(a, b) {
     return a !== b && !b.crushed && b.shield <= 0 && !((a.lock[b.id] || 0) > S.t);
   }
-  // a 手里有没有能甩的东西：没在飞的 P0，或者尾巴上的锅
-  function holdsHot(a) { return !!(S.hot && S.hot.holder === a && !S.hot.inFlight); }
-  function canFire(a) { return !a.crushed && a.cool <= 0 && a.stun <= 0 && (holdsHot(a) || potsOf(a) > 0); }
+  // a 现在能不能甩：身上有锅、没在冷却、没愣住
+  function canFire(a) { return !a.crushed && a.cool <= 0 && a.stun <= 0 && potsOf(a) > 0; }
   // b 在不在 a 的瞄准扇形里（k 放大扇形，用于锁定目标后不轻易丢）
   function inAimFan(a, b, k) {
     if (b === a || b.crushed || b.shield > 0) return false;
@@ -295,17 +338,40 @@
     const x = b.sn.x + Math.cos(b.sn.angle) * b.sn.speed * tt, y = b.sn.y + Math.sin(b.sn.angle) * b.sn.speed * tt;
     return Math.atan2(y - a.sn.y, x - a.sn.x);
   }
-  // 甩出去：P0 优先，否则扔尾巴最后一口锅
+  // 两点之间有没有墙挡着视线（桌子不挡，每 12px 采样一次）
+  function sightClear(ax, ay, bx, by) {
+    const n = Math.ceil(E.dist(ax, ay, bx, by) / 12);
+    for (let k = 1; k < n; k++) if (inWall(ax + (bx - ax) * k / n, ay + (by - ay) * k / n)) return false;
+    return true;
+  }
+  // a 在不在某位领导的视野扇形里（隔墙看不见）；在就返回那位领导
+  function seenBy(a) {
+    for (const l of S.leaders) {
+      if (E.dist(l.x, l.y, a.sn.x, a.sn.y) > VISION_RANGE) continue;
+      if (Math.abs(E.angDiff(l.face, Math.atan2(a.sn.y - l.y, a.sn.x - l.x))) > VISION_CONE) continue;
+      if (sightClear(l.x, l.y, a.sn.x, a.sn.y)) return l;
+    }
+    return null;
+  }
+  // 当着领导的面甩锅：锅不走，还要背锅 +1
+  function caught(a, l) {
+    a.cool = THROW_CD;
+    a.caught++;
+    floats.add(`${l.name}：当着我的面甩锅？`, a.sn.x, a.sn.y - 60, '#E8504A');
+    addBlame(a, 1, '被抓现行');
+    if (a.isPlayer) E.sfx('boss');
+  }
+  // 甩出去：扔身上最急的那口（P0 截止时间短，自然最先扔）；在领导视野里甩会被抓现行
   function fireThrow(a) {
-    const hot = holdsHot(a);
-    if (!hot && !potsOf(a)) return false;
+    if (!potsOf(a)) return false;
+    const eye = seenBy(a);
+    if (eye) { caught(a, eye); return true; }
     const b = pickAim(a);
     const ang = b ? leadAngle(a, b) : a.sn.angle;
-    const label = hot ? 'P0' : a.sn.segs.pop();
-    if (hot) S.hot.inFlight = true;
+    const pot = a.sn.segs.splice(urgentIdx(a), 1)[0];
     S.throws.push({
       owner: a, target: b, x: a.sn.x + Math.cos(ang) * 12, y: a.sn.y + Math.sin(ang) * 12, a: ang,
-      speed: THROW_SPEED, label, hot, dist: 0, range: THROW_RANGE, bounces: 0, spin: 0, rolled: new Set(),
+      speed: THROW_SPEED, pot, label: pot.label, hot: pot.hot, dist: 0, range: THROW_RANGE, bounces: 0, spin: 0, rolled: new Set(),
     });
     a.cool = THROW_CD;
     a.launched++;
@@ -349,11 +415,10 @@
     f.range = f.target ? Math.max(THROW_RANGE, headDist(b, back) + 80) : THROW_RANGE;
     f.a = f.target ? Math.atan2(back.sn.y - f.y, back.sn.x - f.x) : f.a + Math.PI;
     f.rolled = new Set();
-    b.score += PARRY_PTS;
     b.parries++;
     spawnFx('fx_impact', f.x, f.y, 40, 0.25); // 反甩：在锅的位置闪一下
     if (b.isPlayer) {
-      floats.add(f.bounces >= 2 ? `再弹回去！+${PARRY_PTS}` : `反甩！+${PARRY_PTS}`, b.sn.x, b.sn.y - 46, '#2F9E6B');
+      floats.add(f.bounces >= 2 ? '再弹回去！' : '反甩！', b.sn.x, b.sn.y - 46, '#2F9E6B');
       E.sfx('parry');
       shake = 4;
     } else if (back.isPlayer) {
@@ -361,18 +426,14 @@
       E.sfx('parry');
     } else floats.add('弹!', b.sn.x, b.sn.y - 40, '#5E6A84');
   }
-  // 甩空：锅立刻弹回扔锅的人身上（P0 回到他手里）
+  // 甩空：锅立刻弹回扔锅的人身上（截止时间照旧）
   function missThrow(f, why) {
     f.dead = true;
     const a = f.owner;
     a.combo = 0;
-    if (f.hot) {
-      if (S.hot) { S.hot.holder = a; S.hot.inFlight = false; }
-    } else {
-      if (a.crushed) return;
-      a.sn.segs.push(f.label);
-      S.arcs.push({ x0: f.x, y0: f.y, to: () => tailPos(a), t: 0, dur: 0.25, label: f.label });
-    }
+    if (a.crushed) return;
+    a.sn.segs.push(f.pot);
+    S.arcs.push({ x0: f.x, y0: f.y, to: () => tailPos(a), t: 0, dur: 0.25, label: f.label });
     a.misses++;
     if (a.isPlayer) {
       floats.add(why === 'shield' ? '他刚接锅，弹开了' : '甩空了！锅弹回来', a.sn.x, a.sn.y - 40, '#E8504A');
@@ -419,25 +480,16 @@
     }
     S.throws = S.throws.filter((f) => !f.dead);
   }
-  // 锅 f 砸中 b：归 b；扔锅的人得分、连甩
+  // 锅 f 砸中 b：归 b（截止时间照旧，越传越烫）；记连甩
   function landThrow(f, b) {
     const a = f.owner;
     spawnFx('fx_impact', b.sn.x, b.sn.y - 26, f.hot ? 70 : 56); // 砸中瞬间的撞击星
-    if (f.hot) {
-      a.score += 20;
-      if (a.isPlayer) { floats.add(`P0 甩给${b.name} +20`, b.sn.x, b.sn.y - 44, '#2F9E6B'); E.sfx('combo'); }
-      grabHot(b, a);
-      b.shield = RECV_SHIELD; b.stun = RECV_STUN;
-      return;
-    }
-    b.sn.segs.push(f.label);
+    b.sn.segs.push(f.pot);
 
-    // 连甩：窗口内连续甩中，倍率递增（最高 ×3）
+    // 连甩：窗口内连续甩中（只做统计和飘字）
     a.combo = a.comboT > 0 ? a.combo + 1 : 1;
     a.comboT = COMBO_WINDOW;
     a.maxCombo = Math.max(a.maxCombo, a.combo);
-    const pts = Math.round(10 * Math.min(3, 1 + 0.5 * (a.combo - 1)) * b.p.mult);
-    a.score += pts;
     a.thrown++;
     a.victims[b.name] = (a.victims[b.name] || 0) + 1;
 
@@ -451,8 +503,9 @@
 
     if (a.isPlayer) {
       const wasTea = b.teaT > 0;
-      if (b.key === 'veteran') floats.add(`${wasTea ? '老油条也有今天！' : '甩中老油条！'} +${pts}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
-      else floats.add(`甩给${b.name} +${pts}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
+      if (f.hot) floats.add(`P0 甩给${b.name}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
+      else if (b.key === 'veteran') floats.add(wasTea ? '老油条也有今天！' : '甩中老油条！', b.sn.x, b.sn.y - 44, '#2F9E6B');
+      else floats.add(`甩给${b.name}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
       if (a.combo >= 2) { floats.add(`连甩 ×${a.combo}`, a.sn.x, a.sn.y - 54, '#E8504A'); E.sfx('combo'); }
       else E.sfx('throw');
     } else if (b.isPlayer) {
@@ -464,34 +517,34 @@
     }
   }
 
-  /* ---------------- P0 烫手山芋 ---------------- */
-  // 某人拿到 P0（from 为扔给他的人，被领导砸中时为 null）
-  function grabHot(a, from) {
-    S.hot = { holder: a, t: S.hot ? S.hot.t : HOT_TIME, from, inFlight: false };
-    if (a.isPlayer) { E.toast('P0 在你手里！按「甩」扔给别人', 1800); E.sfx('boss'); shake = 6; }
+  /* ---------------- 截止时间：到点在谁身上谁背锅 ---------------- */
+  // 给 a 记 n 次背锅，why 为飘字说明
+  function addBlame(a, n, why) {
+    a.blames += n;
+    if (a.isPlayer) {
+      floats.add(`背锅 +${n}：${why}`, a.sn.x, a.sn.y - 40, '#E8504A');
+      shake = Math.max(shake, n > 1 ? 14 : 9);
+      E.sfx('back');
+    } else floats.add(`${a.name} 背锅 +${n}`, a.sn.x, a.sn.y - 40, '#5E6A84');
   }
-  // 每帧：倒计时；扔出去还在飞时到点，炸在扔的人手里；炸在谁手里谁 +4
-  function updateHot(dt) {
-    const h = S.hot;
-    if (!h) return;
-    h.t -= dt;
-    if (h.inFlight) {
-      if (h.t > 0) return;
-      const f = S.throws.find((x) => x.hot && !x.dead);
-      if (f) { f.dead = true; h.holder = f.owner; }
-      h.inFlight = false;
+  // 一口锅到点出事：算在 a 头上，锅消失
+  function explode(a, pot) {
+    S.booms++;
+    spawnFx('fx_impact', a.sn.x, a.sn.y - 26, pot.hot ? 84 : 62, 0.45);
+    addBlame(a, pot.hot ? P0_BLAME : 1, pot.hot ? 'P0 炸了' : `${pot.label}出事了`);
+    if (pot.hot) E.toast(a.isPlayer ? `P0 炸在你手里，背锅 +${P0_BLAME}` : `P0 炸在${a.name}手里，背锅 +${P0_BLAME}`, 2000);
+  }
+  // 每帧：身上到点的锅出事；还在飞的锅到点，算甩它的人
+  function updateDue() {
+    for (const a of S.agents) {
+      if (a.crushed) continue;
+      for (let i = a.sn.segs.length - 1; i >= 0; i--) {
+        if (a.sn.segs[i].due > S.t) continue;
+        const pot = a.sn.segs.splice(i, 1)[0];
+        explode(a, pot);
+      }
     }
-    const a = h.holder;
-    if (a.crushed) h.t = 0;
-    if (h.t <= 0) {
-      S.hot = null;
-      if (a.crushed) return;
-      addPots(a, HOT_POTS, a.sn.x, a.sn.y - 40);
-      S.hotBooms++;
-      shake = a.isPlayer ? 14 : 6;
-      E.toast(a.isPlayer ? `P0 炸在你手里，+${HOT_POTS} 口锅` : `P0 炸在${a.name}手里，+${HOT_POTS} 口锅`, 2000);
-      E.sfx(a.isPlayer ? 'back' : 'win');
-    }
+    for (const f of S.throws) if (!f.dead && f.pot.due <= S.t) { f.dead = true; if (!f.owner.crushed) explode(f.owner, f.pot); }
   }
 
   /* ---------------- 领导寻路：网格 A*，领导不再穿墙 / 穿桌子 ---------------- */
@@ -633,15 +686,31 @@
   }
   // 「谁闲着丢给谁」：视野里身上锅最少的几个人（锅数相同随机）
   function pickTargets(l) {
-    if (S.firstThrow && L.id === 1) { S.firstThrow = false; return [S.player]; } // 第一关第一口锅固定丢给玩家，配合教学
     const cand = S.agents.filter((a) => !a.crushed && E.dist(a.sn.x, a.sn.y, l.x, l.y) < l.cfg.range)
       .map((a) => ({ a, k: potsOf(a) + Math.random() * 0.9 }))
       .sort((x, y) => x.k - y.k);
     return cand.slice(0, l.cfg.count).map((c) => c.a);
   }
+  // 领导视野朝向：走路时转向前进方向；停下来左右张望；瞄准时盯着目标
+  function updateFace(l, ox, oy, dt) {
+    const dx = l.x - ox, dy = l.y - oy;
+    if (l.state === 'aim' && l.targets.length) {
+      const t = l.targets[0].sn;
+      l.baseFace = Math.atan2(t.y - l.y, t.x - l.x);
+      l.face = l.baseFace;
+    } else if (dx * dx + dy * dy > 0.04) {
+      const want = Math.atan2(dy, dx);
+      l.baseFace = want;
+      l.face += E.clamp(E.angDiff(l.face, want), -5 * dt, 5 * dt);
+    } else {
+      l.face = l.baseFace + Math.sin(S.t * 1.4 + l.cfg.count) * 0.8;
+    }
+  }
   // 领导每帧：巡逻 → 瞄准（预警）→ 丢锅；或追欺负实习生的人；撞上谁就给谁派 3 口
+  // 老板丢锅时有 L.skyChance 的概率改成天降锅，只砸主角
   // 领导走路都走寻路路径，不会穿墙 / 穿桌子
   function updateLeader(l, dt) {
+    const ox = l.x, oy = l.y;
     if (l.state === 'chase') {
       l.st -= dt;
       walkTo(l, l.chase.sn.x, l.chase.sn.y, ALERT_SPEED, dt, 0.4);
@@ -662,7 +731,9 @@
         l.throwCd -= dt;
         if (l.throwCd <= 0) {
           l.throwCd = S.pace.every * l.cfg.everyMul * E.rand(0.85, 1.15);
-          l.targets = pickTargets(l);
+          l.targets = [];
+          if (l.type === 'boss' && Math.random() < (L.skyChance || 0)) launchSky(S.player, l);
+          else l.targets = pickTargets(l);
           if (l.targets.length) {
             l.state = 'aim'; l.aimT = AIM_TIME;
             if (l.targets.includes(S.player)) E.sfx('warn');
@@ -670,6 +741,7 @@
         }
       }
     }
+    updateFace(l, ox, oy, dt);
     // 撞上领导：+3 口
     for (const a of S.agents) {
       if (a.crushed || (l.hitCd[a.id] || 0) > S.t) continue;
@@ -702,6 +774,8 @@
       else if (it.act === 'burst') burst(it.src, it.n);
       else if (it.act === 'event') startEvent(it.kind);
     }
+    // 开局第一口锅：天降锅砸给主角
+    if (S.skyFirst && S.t >= SKY_FIRST) { S.skyFirst = false; launchSky(S.player, S.leaders[0]); }
     // 教学提示
     const h = L.hints[S.hintIdx];
     if (h && S.t >= h.t) { showHint(h.text); S.hintIdx++; }
@@ -790,24 +864,27 @@
       if (l.chase === a) flee(l.x, l.y, 4);
       else if (d < 230) flee(l.x, l.y, (1.5 + p.caution * 2.5) * (1 - d / 230));
     }
-    // 3. P0：拿着就找人传，没拿就躲着拿的人
-    const h = S.hot;
-    if (h && h.holder === a) {
+    // 3. P0：拿着就找最近的人传，没拿就躲着拿 P0 的人
+    const hotMine = holdsHot(a), urgent = urgentLeft(a), rush = hotMine || urgent < DUE_WARN; // rush：有锅快到点了
+    if (hotMine) {
       const b = nearestAgent(me.x, me.y, a);
       if (b) seek(b.sn.x, b.sn.y, 3.5);
-    } else if (h) {
-      const d = E.dist(me.x, me.y, h.holder.sn.x, h.holder.sn.y);
-      if (d < 260) flee(h.holder.sn.x, h.holder.sn.y, 2 * p.caution * (1 - d / 260));
+    } else {
+      for (const b of S.agents) {
+        if (b === a || b.crushed || !holdsHot(b)) continue;
+        const d = headDist(a, b);
+        if (d < 260) flee(b.sn.x, b.sn.y, 2 * p.caution * (1 - d / 260));
+      }
     }
-    // 4. 找人甩锅：锅越多越积极；预判对方走位
+    // 4. 找人甩锅：锅越多、越快到点越积极；预判对方走位
     a.target = null;
-    if (pots >= p.seekMin && !(h && h.holder === a)) {
+    if ((pots >= p.seekMin || rush) && !hotMine) {
       const b = pickDumpTarget(a);
       if (b) {
         a.target = b;
         const lead = 0.3;
         seek(b.sn.x + Math.cos(b.sn.angle) * b.sn.speed * lead, b.sn.y + Math.sin(b.sn.angle) * b.sn.speed * lead,
-          p.aggr * aiMul(a, 'aggr') * (0.7 + Math.min(pots, 8) * 0.1));
+          p.aggr * aiMul(a, 'aggr') * (0.7 + Math.min(pots, 8) * 0.1) + (rush ? 1 : 0));
       }
     }
     // 5. 躲开想把锅甩给自己的人（自己没锅、或正被锁住不能还手时更想躲）
@@ -828,11 +905,12 @@
     }
     a.want = steerFree(a, Math.atan2(vy, vx) + E.rand(-0.08, 0.08));
 
-    // 8. 出手：前方瞄得到人、够近就甩（P0 优先、不挑人；平时不主动瞄刚甩给自己的人）
+    // 8. 出手：前方瞄得到人、够近就甩（有锅快到点时不挑人；平时不主动瞄刚甩给自己的人）
+    //    领导在看时，按性格忍住不甩（老油条从不当面甩，实习生经常被抓）
     if (canFire(a)) {
-      const hot = holdsHot(a), b = pickAim(a);
-      if (b && headDist(a, b) < p.throwR && (hot || (pots >= p.seekMin && (a.lock[b.id] || 0) <= S.t)) &&
-        Math.random() < 0.45 + 0.55 * p.aggr * aiMul(a, 'aggr')) fireThrow(a);
+      const b = pickAim(a);
+      if (b && headDist(a, b) < p.throwR && (rush || (pots >= p.seekMin && (a.lock[b.id] || 0) <= S.t)) &&
+        Math.random() < 0.45 + 0.55 * p.aggr * aiMul(a, 'aggr') && !(seenBy(a) && Math.random() < p.sneak)) fireThrow(a);
     }
   }
 
@@ -842,16 +920,6 @@
     a.cool -= dt; a.stun -= dt; a.shield -= dt; a.cry -= dt; a.angry -= dt; a.panicT -= dt; a.parryLock -= dt;
     a.comboT -= dt;
     if (a.comboT <= 0) a.combo = 0;
-
-    // 慢慢消化身上的锅（所有人相同）
-    if (potsOf(a)) {
-      a.digestT -= dt;
-      if (a.digestT <= 0) {
-        a.digestT = DIGEST_TIME;
-        a.sn.segs.shift();
-        if (a.isPlayer) floats.add('搞定一口', a.sn.x, a.sn.y - 34, '#2F9E6B');
-      }
-    } else a.digestT = DIGEST_TIME;
 
     // 老油条定期去泡茶：泡茶时走得很慢，是甩锅的好时机
     if (a.p.tea) {
@@ -895,12 +963,12 @@
   }
 
   /* ---------------- 排名 ---------------- */
-  // 排名：没被压垮的在前；锅少的在前；锅数相同比甩锅得分；被压垮的人越晚压垮排越前
+  // 排名：没被压垮的在前；背锅次数少的在前；再比身上锅少、甩出去的多；被压垮的人越晚压垮排越前
   function ranking() {
     return S.agents.slice().sort((a, b) =>
       (a.crushed - b.crushed) ||
-      (a.crushed ? b.crushedAt - a.crushedAt : potsOf(a) - potsOf(b)) ||
-      (b.score - a.score));
+      (a.crushed ? b.crushedAt - a.crushedAt : (a.blames - b.blames) || (potsOf(a) - potsOf(b))) ||
+      (b.thrown - a.thrown));
   }
   // 名次 → 星级：第 1 名 3 星，第 2 名 2 星，第 3 名 1 星，其余 0
   const starsOfRank = (r) => (r <= PASS_RANK ? PASS_RANK + 1 - r : 0);
@@ -914,7 +982,7 @@
     for (const l of S.leaders) updateLeader(l, dt);
     updateFlying(dt);
     updateThrows(dt);
-    updateHot(dt);
+    updateDue();
 
     // 甩锅动画推进
     for (const a of S.arcs) a.t += dt;
@@ -923,6 +991,10 @@
     for (const e of S.fx) e.t += dt;
     S.fx = S.fx.filter((e) => e.t < e.dur);
 
+    // 快压垮提醒：玩家堆到 POT_ALARM 口提示一次，降下去后可以再提示
+    const P = S.player, n = potsOf(P);
+    if (n >= POT_ALARM && !P.alarmed) { P.alarmed = true; E.toast(`身上 ${n} 口锅了，堆满 ${MAX_POTS} 口会被压垮！`, 1800); E.sfx('warn'); }
+    else if (n < POT_ALARM - 2) P.alarmed = false;
     // 压垮：机器人出局（排最后），玩家当场失败
     for (const a of S.agents) {
       if (a.crushed || potsOf(a) < MAX_POTS) continue;
@@ -998,7 +1070,7 @@
     ctx.fillText(label.length > 4 ? label.slice(0, 4) : label, 0, 1);
     ctx.restore();
   }
-  // 画 P0 烫手山芋（红光 + 倒计时）
+  // 画飞行中的 P0 烫手山芋（红光）；left 不为空时标倒计时
   function drawHotPot(x, y, time, left) {
     const r = 26 + Math.sin(time * 14) * 3;
     ctx.fillStyle = 'rgba(232,80,74,.35)';
@@ -1006,12 +1078,36 @@
     drawWok(x, y, 'P0', 42, Math.sin(time * 10) * 0.2);
     if (left != null) E.label(ctx, String(Math.ceil(left)), x + 22, y - 18, 18, '#E8504A');
   }
-  // 画某人背着的锅（从尾到头）
+  // 主角头顶右侧：最急那口锅快到点时，标一个闹钟倒计时（黄 → 红）
+  function drawDueTag(a) {
+    if (a.crushed || !potsOf(a)) return;
+    const left = urgentLeft(a);
+    if (left >= DUE_WARN) return;
+    E.label(ctx, `⏰${Math.max(0, Math.ceil(left))}`, a.sn.x + 30, a.sn.y - 46, 13, '#FFFDF5', left < DUE_DANGER ? '#E8504A' : '#C98A00');
+  }
+  // 画某人背着的锅（从尾到头）：快到点的锅底下发黄光 / 红光，红了还冒烟；玩家自己的锅标剩余秒数
   function drawTail(a, time) {
     const pos = a.sn.positions();
     const size = a.isPlayer ? 38 : 32;
     for (let i = pos.length - 1; i >= 0; i--) {
-      drawWok(pos[i].x, pos[i].y, a.isPlayer ? a.sn.segs[i] : '', size, a.crushed ? 0.3 : Math.sin(time * 6 + i + a.id) * 0.12, a.crushed ? 0.6 : null);
+      const pot = a.sn.segs[i], q = pos[i];
+      if (!pot || !q) continue;
+      const left = pot.due - S.t, danger = pot.hot || left < DUE_DANGER;
+      if (!a.crushed && (danger || left < DUE_WARN)) {
+        const r = (pot.hot ? 26 : 20) + Math.sin(time * (danger ? 16 : 7) + i) * 3;
+        ctx.fillStyle = danger ? 'rgba(232,80,74,.45)' : 'rgba(255,200,40,.45)';
+        ctx.beginPath(); ctx.arc(q.x, q.y, r, 0, Math.PI * 2); ctx.fill();
+        if (danger) { // 冒烟：两团灰烟往上飘
+          for (let k = 0; k < 2; k++) {
+            const ph = (time * 1.6 + k * 0.5 + i * 0.3) % 1;
+            ctx.fillStyle = `rgba(94,106,132,${0.5 * (1 - ph)})`;
+            ctx.beginPath(); ctx.arc(q.x + (k ? 6 : -5), q.y - 14 - ph * 26, 4 + ph * 6, 0, Math.PI * 2); ctx.fill();
+          }
+        }
+      }
+      drawWok(q.x, q.y, a.isPlayer || pot.hot ? pot.label : '', pot.hot ? size * 1.15 : size, a.crushed ? 0.3 : Math.sin(time * 6 + i + a.id) * 0.12, a.crushed ? 0.6 : null);
+      // 锅压在人身下时不标（会被头挡住），改由 drawDueTag 在头顶标最急的那口
+      if (a.isPlayer && !a.crushed && left < DUE_WARN && E.dist(q.x, q.y, a.sn.x, a.sn.y) > 24) E.label(ctx, String(Math.max(0, Math.ceil(left))), q.x + 15, q.y - 15, 13, '#FFFDF5', danger ? '#E8504A' : '#C98A00');
     }
   }
   // 走路动画：每帧按位移更新朝向（d 朝下 / u 朝上 / s 侧面，往左走时镜像）和步伐
@@ -1045,7 +1141,7 @@
     else if (a.teaT > 0) st = 'tea';
     if (!st && walk) return walk;
     // 没有走路帧时退回旧的单张姿势
-    if (!st) st = a.isPlayer ? (pots >= 10 ? 'panic' : 'normal') : a.cry > 0 ? 'cry' : (huntingMe || a.angry > 0) ? 'angry' : 'normal';
+    if (!st) st = a.isPlayer ? (pots >= POT_ALARM ? 'panic' : 'normal') : a.cry > 0 ? 'cry' : (huntingMe || a.angry > 0) ? 'angry' : 'normal';
     const name = `${base}_${st}`;
     return { name: E.spr[name] ? name : `${base}_normal`, flip: false, dir: 'd', walking: false };
   }
@@ -1058,7 +1154,7 @@
   function drawStatusFx(a, spr, x, top, h, time, angry) {
     if (a.stun > 0) E.drawSprite(ctx, 'fx_dizzy', x, top - 12, 30, { rot: time * 5 });
     if (angry) E.drawSprite(ctx, 'fx_anger', x + 20, top + 6 + Math.sin(time * 12) * 2, 18);
-    if (potsOf(a) >= (a.isPlayer ? 10 : 12)) E.drawSprite(ctx, 'fx_sweat', x - 22, top + 10 + (time * 24) % 6, 16);
+    if (potsOf(a) >= POT_ALARM - 1) E.drawSprite(ctx, 'fx_sweat', x - 22, top + 10 + (time * 24) % 6, 16);
     // 泪：正面画两股，侧面缩小挪到脸朝的那一侧；背面看不到脸不画
     if (a.cry > 0 && spr.dir === 'd') E.drawSprite(ctx, 'fx_tears', x, top + h * 0.4, h * 0.42);
     else if (a.cry > 0 && spr.dir === 's') E.drawSprite(ctx, 'fx_tears', x + (spr.flip ? -1 : 1) * h * 0.1, top + h * 0.38, h * 0.26);
@@ -1066,7 +1162,7 @@
   // 头顶锅数徽标：像素小锅 + 数字
   function drawPotBadge(x, y, pots) {
     E.drawSprite(ctx, 'ui_wok', x - 8, y, 16);
-    E.label(ctx, String(pots), x + 6, y, 12, pots >= 12 ? '#E8504A' : '#1F2A44');
+    E.label(ctx, String(pots), x + 6, y, 12, pots >= POT_ALARM ? '#E8504A' : '#1F2A44');
   }
   // 画某人（全身像素小人，含状态特效）；(sn.x, sn.y) 是身体中心，脚底在 FOOT_DY 之下
   function drawHead(a, time) {
@@ -1216,12 +1312,21 @@
       E.label(ctx, '!', f.x, f.y, 24, '#E8504A');
     }
 
-    // 瞄准扇形：身上有锅（或拿着 P0）时，在前方画出自动瞄准的扇形；扇形里有人就变绿并套住他
-    const P = S.player;
-    if (!P.crushed && (potsOf(P) || holdsHot(P))) {
+    // 领导视野：面前一块淡红扇形；主角在里面时加深
+    const P = S.player, eye = P.crushed ? null : seenBy(P);
+    for (const l of S.leaders) {
+      const on = eye === l;
+      ctx.fillStyle = `rgba(232,80,74,${on ? 0.24 : 0.12})`;
+      ctx.strokeStyle = `rgba(232,80,74,${on ? 0.8 : 0.35})`; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(l.x, l.y);
+      ctx.arc(l.x, l.y, VISION_RANGE, l.face - VISION_CONE, l.face + VISION_CONE);
+      ctx.closePath(); ctx.fill(); ctx.stroke();
+    }
+    // 瞄准扇形：身上有锅时，在前方画出自动瞄准的扇形；扇形里有人就变绿并套住他；在领导视野里变红
+    if (!P.crushed && potsOf(P)) {
       const b = pickAim(P), ready = canFire(P);
-      // 有目标且能甩：绿色；扇形里没人：白色；冷却中：灰色（像素地板很花，透明度要够）
-      const col = !ready ? '94,106,132' : b ? '47,158,107' : '255,253,245';
+      // 领导在看：红色；有目标且能甩：绿色；扇形里没人：白色；冷却中：灰色（像素地板很花，透明度要够）
+      const col = eye ? '232,80,74' : !ready ? '94,106,132' : b ? '47,158,107' : '255,253,245';
       ctx.fillStyle = `rgba(${col},${b && ready ? 0.3 : 0.24})`;
       ctx.strokeStyle = `rgba(${col},.9)`; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(me.x, me.y);
@@ -1230,7 +1335,7 @@
       if (b) {
         ctx.strokeStyle = ready ? 'rgba(47,158,107,.95)' : 'rgba(94,106,132,.7)'; ctx.lineWidth = 4;
         ctx.beginPath(); ctx.arc(b.sn.x, b.sn.y, 30 + Math.sin(time * 10) * 3, 0, Math.PI * 2); ctx.stroke();
-        if (ready) E.label(ctx, '甩他!', b.sn.x, b.sn.y - 58, 13, '#FFFDF5', '#2F9E6B');
+        if (ready && !eye) E.label(ctx, '甩他!', b.sn.x, b.sn.y - 58, 13, '#FFFDF5', '#2F9E6B');
       }
     }
     // 来锅预警：有人甩的锅正朝你飞来，红圈收紧；进入反甩窗口时变实心提示「按甩！」
@@ -1251,6 +1356,9 @@
     const people = S.agents.map((a) => ({ y: a.sn.y, f: () => drawHead(a, time) }));
     for (const l of S.leaders) people.push({ y: l.y, f: () => drawLeader(l, time) });
     people.sort((a, c) => a.y - c.y).forEach((p) => p.f());
+    drawDueTag(P);
+    // 「X在看！」画在人物之后、扇形中段，免得被领导挡住
+    if (eye && potsOf(P)) E.label(ctx, `${eye.name}在看！`, me.x + Math.cos(me.angle) * AIM_RANGE * 0.6, me.y + Math.sin(me.angle) * AIM_RANGE * 0.6, 14, '#FFFDF5', '#E8504A');
     drawAims(time);
 
     // 飞行中的锅
@@ -1262,6 +1370,14 @@
         else drawFlyingWok(f.x, f.y, f.label, 44, f.a);
       } else if (f.phase === 'drop') {
         drawWok(f.x, f.y, f.label, 44, f.spin, Math.max(0, f.t / 0.5));
+      } else if (f.phase === 'sky') {
+        const k = 1 - f.t / f.warn0;
+        ctx.fillStyle = `rgba(31,42,68,${0.15 + 0.3 * k})`;
+        ctx.beginPath(); ctx.ellipse(f.x, f.y + 18, 10 + 18 * k, 4 + 6 * k, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#E8504A'; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
+        ctx.beginPath(); ctx.arc(f.x, f.y, 40 - 14 * k, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+        drawWok(f.x, f.y - 280 * (1 - k) * (1 - k), f.label, 44, k * 6);
+        if (k < 0.7) E.label(ctx, '天降锅！', f.x, f.y - 70, 15, '#FFFDF5', '#E8504A');
       } else if (f.hot) drawHotPot(f.x, f.y, time, null);
     }
     // 甩出去的锅：带一道拖影，越快越明显
@@ -1273,8 +1389,6 @@
       if (f.hot) drawHotPot(f.x, f.y, time, null);
       else drawFlyingWok(f.x, f.y, f.label, 40, f.a);
     }
-    // 拿在手里的 P0
-    if (S.hot && !S.hot.inFlight) drawHotPot(S.hot.holder.sn.x, S.hot.holder.sn.y - 52, time, S.hot.t);
 
     // 甩锅飞行动画（抛物线）
     for (const a of S.arcs) {
@@ -1305,7 +1419,7 @@
       const color = hunting ? '#E8504A' : canThrowTo(P, b) ? '#2F9E6B' : '#9AA6C4';
       E.edgeHint(ctx, st, b.sn.x - camX, b.sn.y - camY, { sprite: `${b.p.sprite}_normal` }, color, hunting ? 'fx_anger' : null);
     }
-    if (S.hot && !S.hot.holder.isPlayer) E.edgeHint(ctx, st, S.hot.holder.sn.x - camX, S.hot.holder.sn.y - camY, '🔥', '#E8504A');
+    for (const b of S.bots) if (!b.crushed && holdsHot(b)) E.edgeHint(ctx, st, b.sn.x - camX, b.sn.y - camY, '🔥', '#E8504A');
     E.drawStick(ctx, inp);
   }
 
@@ -1318,7 +1432,7 @@
     if (btnThrow.hidden) return;
     let parryNow = false;
     if (P.parryLock <= 0) for (const f of S.throws) if (f.owner !== P && incomingTTI(f, P) <= parryWin(f)) parryNow = true;
-    const has = potsOf(P) > 0 || holdsHot(P);
+    const has = potsOf(P) > 0;
     btnThrow.classList.toggle('parry', parryNow);
     btnThrow.classList.toggle('empty', !parryNow && !has);
     btnThrow.style.setProperty('--cd', parryNow ? 0 : Math.max(0, P.cool, P.stun) / THROW_CD);
@@ -1332,23 +1446,14 @@
     E.setText('hClock', clockAt(S.t));
     E.setText('hPotsN', `${n}/${MAX_POTS}`);
     E.setText('hRank', `第 ${myRank}/${rank.length} 名`);
+    E.setText('hBlame', `背锅 ${P.blames}`);
     E.setText('hCombo', `连甩 ×${P.combo}`);
     document.getElementById('hCombo').hidden = P.combo < 2;
     document.getElementById('hPotsBar').style.width = Math.min(100, (n / MAX_POTS) * 100) + '%';
-    document.getElementById('hPots').classList.toggle('hot', n >= MAX_POTS * 0.6);
+    document.getElementById('hPots').classList.toggle('hot', n >= POT_ALARM);
     document.getElementById('hClock').parentElement.classList.toggle('hot', S.t >= L.duration - 13);
     updateThrowBtn();
     document.getElementById('hRank').parentElement.classList.toggle('hot', myRank > PASS_RANK);
-
-    // 排名面板：内容变了才刷新 DOM；前三名下面画一条「加班线」
-    const sig = rank.map((a) => `${a.id}:${potsOf(a)}:${a.crushed ? 1 : 0}`).join('|') + (rush ? 'R' : '');
-    if (sig !== rankSig) {
-      rankSig = sig;
-      const el = document.getElementById('rank');
-      el.innerHTML = rank.map((a, i) => `<li class="${a.isPlayer ? 'me' : ''}${i === PASS_RANK - 1 && rank.length > PASS_RANK ? ' cut' : ''}${a.crushed ? ' out' : ''}">
-        <b>${i + 1}</b><span>${a.name}</span><em>${a.crushed ? '压垮' : `<img class="ico" src="assets/px/ui_wok.png" alt="锅">${potsOf(a)}`}</em></li>`).join('');
-      el.classList.toggle('rush', rush);
-    }
     // 最后 10 秒：每秒滴答一声
     if (rush && Math.floor(S.t) !== S.lastTick) { S.lastTick = Math.floor(S.t); E.sfx('tick'); }
   }
@@ -1361,7 +1466,6 @@
     const rank = ranking();
     const myRank = crushed ? rank.length : rank.indexOf(P) + 1;
     const stars = crushed ? 0 : starsOfRank(myRank);
-    const final = Math.max(0, P.score + stars * 100 - left * 10);
     const vs = Object.entries(P.victims).sort((a, c) => c[1] - a[1]);
     const victim = vs.length ? `${vs[0][0]}（${vs[0][1]} 口）` : '没有人';
     const last = rank[rank.length - 1];
@@ -1369,8 +1473,9 @@
     // 进度：过关解锁下一关、记录本关最好成绩
     const prog = loadProgress();
     const old = prog.best[L.id];
-    const isBest = stars > 0 && (!old || final > old.score);
-    if (isBest) prog.best[L.id] = { score: final, stars };
+    // 最好成绩：星多的好；星一样比背锅少（旧存档没有 blames，当作最差）
+    const isBest = stars > 0 && (!old || stars > old.stars || (stars === old.stars && P.blames < (old.blames == null ? Infinity : old.blames)));
+    if (isBest) prog.best[L.id] = { blames: P.blames, stars };
     if (stars > 0) prog.unlocked = Math.max(prog.unlocked, L.id + 1);
     saveProgress(prog);
     E.sfx(stars > 0 ? 'win' : 'lose');
@@ -1378,18 +1483,18 @@
     let badge, title, share;
     if (crushed) {
       badge = '被锅压垮'; title = '锅太多，走不动了';
-      share = `今天背了 ${MAX_POTS} 口锅，当场被压垮。甩出去 ${P.thrown} 口，最大受害者：${victim}。`;
+      share = `身上堆了 ${MAX_POTS} 口锅，当场被压垮。之前已经背锅 ${P.blames} 次。`;
     } else if (!stars) {
       badge = `18:00 · 第 ${myRank} 名`; title = '被留下加班';
-      share = `下班时排第 ${myRank} 名，身上还有 ${left} 口锅，被留下加班了。`;
+      share = `今天背锅 ${P.blames} 次，排第 ${myRank} 名，被留下加班了。`;
     } else {
       badge = `18:00 · 第 ${myRank} 名`; title = ['', '甩锅宗师', '职场老油条', '勉强下班'][myRank];
-      share = `今天第 ${myRank} 名下班，甩锅 ${P.thrown} 口，最大受害者：${victim}。${last !== P ? `${last.name}${last.crushed ? '被锅压垮了' : '被留下加班了'}。` : ''}`;
+      share = `今天只背锅 ${P.blames} 次，第 ${myRank} 名下班。甩出去 ${P.thrown} 口，最大受害者：${victim}。${last !== P ? `${last.name}${last.crushed ? '被锅压垮了' : `背锅 ${last.blames} 次，被留下加班了`}。` : ''}`;
     }
 
     // 最终排名表
     const table = rank.map((a, i) => `<li class="${a.isPlayer ? 'me' : ''}${i === PASS_RANK - 1 && rank.length > PASS_RANK ? ' cut' : ''}">
-      <b>${i + 1}</b><span>${a.name}</span><em>${a.crushed ? '压垮' : potsOf(a) + ' 口'}</em><i>${a.score} 分</i></li>`).join('');
+      <b>${i + 1}</b><span>${a.name}</span><em>${a.crushed ? '压垮' : `背锅 ${a.blames} 次`}</em><i>${a.crushed ? '' : potsOf(a) + ' 口'}</i></li>`).join('');
     const next = LEVELS[LEVELS.indexOf(L) + 1];
     // 星级用像素星星图标；顶部配一张主角：压垮 → 埋在锅堆里，过关 → 庆祝下班，没过关 → 慌张
     const starHtml = `<div class="stars">${[1, 2, 3].map((i) => `<img src="assets/px/ui_${i <= stars ? 'star' : 'star_empty'}.png" alt="${i <= stars ? '★' : '☆'}">`).join('')}</div>`;
@@ -1402,14 +1507,13 @@
       <ol class="ranklist">${table}</ol>
       <div class="stat">
         <div><b>${P.thrown}</b><span>甩出的锅</span></div>
-        <div><b>${P.maxCombo}</b><span>最高连甩</span></div>
+        <div><b>${P.caught}</b><span>被抓现行</span></div>
         <div><b>${left}</b><span>身上剩余</span></div>
       </div>
-      <p class="final">总分 <b id="finalNum">${final}</b>${isBest ? ' <em>新纪录</em>' : ''}</p>
+      <p class="final">背锅 <b>${P.blames}</b> 次${isBest ? ' <em>新纪录</em>' : ''}</p>
       <div class="share">${share}<small>↑ 分享卡片文案</small></div>
-      ${crushed && !S.revived ? '<button class="btn ad" data-act="revive">甩掉 8 口锅，接着熬</button>' : ''}
-      ${!crushed && !stars && !S.rescued ? '<button class="btn ad" data-act="rescue">找人代班：甩掉 4 口重新排名</button>' : ''}
-      ${stars ? '<button class="btn ad" data-act="double">总分翻倍</button>' : ''}
+      ${crushed && !S.revived ? '<button class="btn ad" data-act="revive">甩掉 6 口锅，接着熬</button>' : ''}
+      ${!crushed && !stars && !S.rescued ? '<button class="btn ad" data-act="rescue">找人顶锅：背锅 -3 重新排名</button>' : ''}
       ${stars && next ? `<button class="btn" data-act="next">下一关：${next.name}</button>` : ''}
       ${stars && !next ? '<button class="btn ghost" data-act="soon">更多关卡开发中</button>' : ''}
       <button class="btn ${stars && next ? 'ghost' : ''}" data-act="retry">再来一局</button>
@@ -1422,23 +1526,18 @@
       next: () => { L = next; showIntro(); },
       revive: () => E.fakeAd(() => {
         S.revived = true;
-        P.sn.segs.splice(Math.max(0, P.sn.segs.length - 8));
+        P.sn.segs.splice(Math.max(0, P.sn.segs.length - 6));
         S.flying = S.flying.filter((f) => f.target !== P);
         S.throws = S.throws.filter((f) => f.target !== P);
         S.over = null;
         if (S.t > L.duration - 15) S.t = L.duration - 15;
         E.hidePanel(); mode = 'play';
-        E.toast('甩掉 8 口锅，继续熬到下班');
+        E.toast('甩掉 6 口锅，继续熬到下班');
       }),
       rescue: () => E.fakeAd(() => {
         S.rescued = true;
-        P.sn.segs.splice(Math.max(0, P.sn.segs.length - 4));
+        P.blames = Math.max(0, P.blames - 3);
         finish('time');
-      }),
-      double: (btn) => E.fakeAd(() => {
-        document.getElementById('finalNum').textContent = final * 2;
-        btn.remove();
-        E.toast('总分已翻倍');
       }),
     });
   }
@@ -1456,12 +1555,10 @@
     S = makeState();
     floats.list = [];
     shake = 0;
-    rankSig = '';
     E.hidePanel();
     clearBanners();
     inp.fire = 0;
     document.getElementById('hud').hidden = false;
-    document.getElementById('rank').hidden = false;
     mode = 'play';
   }
   // 暂停
@@ -1500,15 +1597,16 @@
       <h1>${L.name}</h1>
       <p class="sub">${L.desc}</p>
       <ul class="rules">
-        <li><span>🕹️</span>左下角摇杆控制方向，右下角「甩」把尾巴上的锅扔出去</li>
-        <li><span>🤵</span>${leaders}会朝闲着的人丢锅，红色瞄准线出现就躲开；撞上领导一次 +3 口</li>
-        <li><span>🎯</span>砸中谁就是谁的；甩空了锅立刻弹回你身上</li>
-        <li><span>🛡️</span>锅朝你飞来时按「甩」，能弹回去；同事也会这样弹你</li>
-        <li><span>📢</span>留意群消息：散会、卡纸、P0 事故，锅会从那里飞出来</li>
+        <li><span>⏰</span>每口锅都有截止时间（${potLife()} 秒），甩来甩去不重置；到点在谁身上，谁背锅</li>
+        <li><span>🕹️</span>左下角摇杆控制方向，右下角「甩」把最急的那口锅扔出去</li>
+        <li><span>👀</span>${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅</li>
+        <li><span>☄️</span>天降锅只砸你，躲不掉；${leaders}的普通锅看到红线就躲</li>
+        <li><span>🛡️</span>锅朝你飞来时按「甩」能弹回去；P0 只有 ${P0_LIFE} 秒，炸了背锅 +${P0_BLAME}</li>
+        <li><span>💥</span>身上堆满 ${MAX_POTS} 口锅当场压垮，直接失败</li>
       </ul>
       <div class="goal">
-        <b>目标</b> 18:00 按身上剩余锅数排名：第 1 名 ★★★ · 第 2 名 ★★ · 第 3 名 ★，进前三过关
-        ${best ? `<br><b>最好成绩</b> ${best.score} 分 · ${'★'.repeat(best.stars)}` : ''}
+        <b>目标</b> 18:00 按背锅次数排名（少的在前）：第 1 名 ★★★ · 第 2 名 ★★ · 第 3 名 ★，进前三过关
+        ${best ? `<br><b>最好成绩</b> ${'★'.repeat(best.stars)}${best.blames != null ? ` · 背锅 ${best.blames} 次` : ''}` : ''}
       </div>
       <button class="btn" data-act="start">开始上班</button>`, {
       start: startGame,
@@ -1522,7 +1620,7 @@
     simulate(levelIdx, runs) {
       const keepL = L, keepAuto = auto, keepS = S, keepMode = mode;
       L = LEVELS[levelIdx || 0]; auto = true;
-      const out = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLaunched: 0, avgMiss: 0, avgParry: 0, avgLeaderHits: 0, avgCrushT: 0 };
+      const out = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, avgBlame: {}, avgCaught: {}, avgBooms: 0, avgSkies: 0, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLaunched: 0, avgMiss: 0, avgParry: 0, avgLeaderHits: 0, avgCrushT: 0 };
       for (let r = 0; r < out.runs; r++) {
         S = makeState(); mode = 'play';
         while (!S.over) update(1 / 30);
@@ -1532,16 +1630,20 @@
         out.rankHist[pr] = (out.rankHist[pr] || 0) + 1;
         for (const a of S.agents) {
           out.avgLeft[a.name] = (out.avgLeft[a.name] || 0) + potsOf(a) / out.runs;
+          out.avgBlame[a.name] = (out.avgBlame[a.name] || 0) + a.blames / out.runs;
+          out.avgCaught[a.name] = (out.avgCaught[a.name] || 0) + a.caught / out.runs;
           if (a.crushed) { out.crushedBots++; out.avgCrushT += a.crushedAt; }
         }
         out.avgSpawned += S.spawned / out.runs;
+        out.avgBooms += S.booms / out.runs; out.avgSkies += S.skies / out.runs;
         out.avgLeaderHits += S.leaderHits / out.runs;
         out.avgThrown += S.agents.reduce((s, a) => s + a.thrown, 0) / out.runs;
         out.avgLaunched += S.agents.reduce((s, a) => s + a.launched, 0) / out.runs;
         out.avgMiss += S.agents.reduce((s, a) => s + a.misses, 0) / out.runs;
         out.avgParry += S.agents.reduce((s, a) => s + a.parries, 0) / out.runs;
       }
-      for (const k in out.avgLeft) out.avgLeft[k] = +out.avgLeft[k].toFixed(1);
+      for (const m of [out.avgLeft, out.avgBlame, out.avgCaught]) for (const k in m) m[k] = +m[k].toFixed(1);
+      out.avgBooms = +out.avgBooms.toFixed(1); out.avgSkies = +out.avgSkies.toFixed(1);
       out.avgSpawned = +out.avgSpawned.toFixed(1); out.avgLeaderHits = +out.avgLeaderHits.toFixed(1);
       out.avgCrushT = out.crushedBots ? Math.round(out.avgCrushT / out.crushedBots) : 0; out.avgThrown = +out.avgThrown.toFixed(1);
       for (const k of ['avgLaunched', 'avgMiss', 'avgParry']) out[k] = +out[k].toFixed(1);
