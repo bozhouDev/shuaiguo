@@ -268,3 +268,133 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 .lb-day:disabled { cursor: not-allowed; background: #D5DAE3; border-top-color: #9AA6C4; color: var(--muted); box-shadow: 2px 2px 0 var(--ink); }
 .lb-day:focus-visible, .lb-hero:focus-visible { outline: 3px solid var(--alarm); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .lb-hero img { animation: none; } }
+
+/* ===== v5：像素弹窗（暂停 / 设置 / 结算等所有 #ui 卡片） ===== */
+/* 阶梯切角描边用 9 宫格 SVG：外圈墨水蓝 2 格、四角各缺一级台阶，中间填底色，1 格 = 2px */
+:root {
+  --pop-cream: #FFF8E6; --pop-head: #C9D5E8; --pop-head-lo: #AEBBD2; --pop-line: #D3DBE8; --pop-gold: #E0A800;
+  --pop-font: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --frame-cream: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' width='9' height='9' shape-rendering='crispEdges'%3E%3Cpath fill='%231F2A44' d='M2 0h5v1h1v1h1v5h-1v1h-1v1H2v-1H1v-1H0V2h1V1h1z'/%3E%3Cpath fill='%23FFF8E6' d='M3 2h3v1h1v3h-1v1H3v-1H2V3h1z'/%3E%3C/svg%3E");
+  --frame-yellow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 9' width='9' height='9' shape-rendering='crispEdges'%3E%3Cpath fill='%231F2A44' d='M2 0h5v1h1v1h1v5h-1v1h-1v1H2v-1H1v-1H0V2h1V1h1z'/%3E%3Cpath fill='%23FFD84D' d='M3 2h3v1h1v3h-1v1H3v-1H2V3h1z'/%3E%3C/svg%3E");
+}
+#ui { background: rgba(15, 22, 40, .5); }
+#ui .card {
+  max-width: 340px; padding: 4px 12px 14px; background: none; box-shadow: none;
+  border: 8px solid transparent; border-image: var(--frame-cream) 4 fill / 8px stretch;
+  filter: drop-shadow(4px 5px 0 #0F1628); font-family: var(--pop-font); color: var(--ink);
+}
+/* 弹窗标题条：浅蓝灰底、底边加深一档；图标 + 粗黑体标题，右侧可放关闭键 */
+.pop-head {
+  position: relative; display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: 0 -4px 12px; padding: 9px 40px; background: var(--pop-head); box-shadow: inset 0 -3px 0 var(--pop-head-lo);
+  font-size: 22px; font-weight: 900; letter-spacing: .04em;
+}
+.pop-head .px { width: 30px; height: 30px; flex: none; }
+.pop-x {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 34px; height: 34px; padding: 3px;
+  background: none; border: 0; color: var(--ink); cursor: pointer;
+}
+.pop-x .px { width: 28px; height: 28px; }
+.pop-sub { text-align: center; color: var(--muted); font-size: 15px; font-weight: 700; margin: 0 0 6px; }
+/* 像素图标（SVG 点阵，颜色跟随 currentColor） */
+.px { display: inline-block; vertical-align: middle; image-rendering: pixelated; }
+/* 弹窗按钮：主按钮便利贴黄、次按钮奶油色，都用阶梯切角描边 + 底部内阴影 */
+#ui .btn {
+  margin-top: 10px; padding: 9px 8px 11px; border-radius: 0; font-family: var(--pop-font); font-weight: 900; font-size: 22px; letter-spacing: .06em;
+  background: none; border: 8px solid transparent; border-image: var(--frame-yellow) 4 fill / 8px stretch;
+  box-shadow: inset 0 -4px 0 var(--pop-gold); filter: drop-shadow(0 3px 0 #0F1628);
+}
+#ui .btn.ghost, #ui .btn.ad { border-image-source: var(--frame-cream); box-shadow: inset 0 -4px 0 var(--pop-line); font-size: 18px; padding: 6px 8px 8px; }
+#ui .btn:active { transform: translateY(2px); filter: drop-shadow(0 1px 0 #0F1628); }
+#ui .btn.ad::before { font-family: var(--pop-font); }
+/* 文字链接（返回首页） */
+.pop-link {
+  display: block; margin: 12px auto 0; padding: 4px 12px; background: none; border: 0; cursor: pointer;
+  font-family: var(--pop-font); font-size: 16px; font-weight: 700; color: var(--muted);
+}
+.pop-link:active { color: var(--ink); }
+/* 放射光：主体两侧各三道黄色短线（暂停的锅、结算的名次共用） */
+.rays { position: relative; display: block; width: max-content; margin: 0 auto; }
+.rays > i { position: absolute; width: 14px; height: 6px; background: var(--note); box-shadow: 0 0 0 2px #C98A00; }
+.rays > i:nth-of-type(1) { left: -30px; top: 18%; transform: rotate(35deg); }
+.rays > i:nth-of-type(2) { left: -38px; top: 46%; }
+.rays > i:nth-of-type(3) { left: -30px; top: 74%; transform: rotate(-35deg); }
+.rays > i:nth-of-type(4) { right: -30px; top: 18%; transform: rotate(-35deg); }
+.rays > i:nth-of-type(5) { right: -38px; top: 46%; }
+.rays > i:nth-of-type(6) { right: -30px; top: 74%; transform: rotate(35deg); }
+/* 暂停：中间一口贴着「甩锅」便利贴的锅 */
+.pause-wok { margin: 8px auto 6px; }
+.pause-wok img { display: block; height: 108px; image-rendering: pixelated; }
+.pause-wok b {
+  position: absolute; left: 57%; top: 56%; transform: translate(-50%, -50%) rotate(-10deg);
+  font-size: 15px; font-weight: 900; color: var(--ink); letter-spacing: .02em;
+}
+.pause-wok .rays > i:nth-of-type(n+4) { display: none; }
+/* 设置：每行 图标 + 名称 + 开关 */
+.set-row { display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 10px; padding: 9px 8px; font-size: 20px; font-weight: 700; }
+.set-row .px { width: 32px; height: 32px; }
+.set-line { height: 3px; background: var(--pop-line); margin: 8px 0 4px; }
+/* 开关：胶囊形，开 = 黄底白圆钮在右，关 = 灰蓝底圆钮在左 */
+.tg {
+  position: relative; width: 108px; height: 44px; padding: 0 14px; border-radius: 999px; cursor: pointer;
+  border: 3px solid var(--ink); background: var(--note); box-shadow: inset 0 -4px 0 var(--pop-gold);
+  font-family: var(--pop-font); font-size: 20px; font-weight: 900; color: var(--ink); text-align: left;
+}
+.tg::after {
+  content: ""; position: absolute; top: 4px; right: 5px; width: 30px; height: 30px; border-radius: 50%;
+  background: #fff; border: 3px solid var(--ink); box-sizing: border-box;
+}
+.tg[aria-checked="false"] { background: #C3CEE0; box-shadow: inset 0 -4px 0 #A6B4CB; text-align: right; }
+.tg[aria-checked="false"]::after { right: auto; left: 5px; }
+.tg:focus-visible, .pop-x:focus-visible, .pop-link:focus-visible { outline: 3px solid var(--alarm); outline-offset: 2px; }
+/* 结算：大号「第 N 名」，数字黄底墨水蓝粗描边 */
+.res-rank { margin: 8px auto 0; font-size: 52px; font-weight: 900; line-height: 1.05; letter-spacing: .02em; }
+.res-rank em {
+  font-style: normal; font-size: 70px; color: var(--note); margin: 0 2px;
+  text-shadow: 3px 0 var(--ink), -3px 0 var(--ink), 0 3px var(--ink), 0 -3px var(--ink), 3px 3px var(--ink), -3px 3px var(--ink), 3px -3px var(--ink), -3px -3px var(--ink), 3px 6px var(--ink);
+}
+.res-rank.bad { font-size: 44px; color: var(--alarm); }
+.res-of { text-align: center; color: var(--muted); font-size: 18px; font-weight: 700; margin: 2px 0 6px; }
+.res-of .stars { display: inline-flex; gap: 3px; margin: 0 0 0 8px; vertical-align: -3px; }
+.res-of .stars img { height: 20px; }
+.res-of em { font-style: normal; background: var(--alarm); color: #fff; padding: 1px 6px; font-size: 12px; margin-left: 6px; vertical-align: 2px; }
+/* 结算排名表：浅描边方框，每行 名次 / 名字 / 锅图标 + 背锅次数，自己那行黄底 */
+#ui .ranklist { margin: 6px 0 4px; border: 3px solid var(--pop-line); background: #FFFDF6; font-size: 19px; font-weight: 700; }
+#ui .ranklist li {
+  grid-template-columns: 28px 1fr 30px 34px; gap: 8px; padding: 8px 12px; border-radius: 0;
+  border-top: 2px solid var(--pop-line);
+}
+#ui .ranklist li:first-child { border-top: 0; }
+#ui .ranklist li b { font-family: var(--pop-font); font-size: 19px; font-weight: 700; }
+#ui .ranklist li img { height: 22px; justify-self: center; }
+#ui .ranklist li em { text-align: center; font-size: 19px; }
+#ui .ranklist li.me { background: var(--note); }
+#ui .ranklist li.cut { border-bottom: 3px dashed var(--alarm); border-radius: 0; }
+#ui .ranklist li .crush { color: var(--alarm); font-size: 14px; grid-column: 3 / 5; text-align: right; }
+/* 设置入口（HUD、大厅里的齿轮）：图标随字号缩放 */
+.chip .px { width: 1.15em; height: 1.15em; }
+
+/* ===== v5：教学提示横幅（深蓝像素框 + 黄色标签 + 左侧图标 + 两行字，关键词高亮） ===== */
+:root { --frame-navy: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 11' width='11' height='11' shape-rendering='crispEdges'%3E%3Cpath fill='%230F1628' d='M2 0H9v1h1v1h1V9h-1v1h-1v1H2v-1h-1v-1h-1V2h1v-1h1v-1z'/%3E%3Cpath fill='%233D63B0' d='M3 1H8v1h1v1h1V8h-1v1h-1v1H3v-1h-1v-1h-1V3h1v-1h1v-1z'/%3E%3Cpath fill='%231E2C52' d='M5 4H6v1h1V6h-1v1H5v-1h-1V5h1v-1z'/%3E%3Crect x='2' y='2' width='2' height='2' fill='%23FFD84D'/%3E%3Crect x='7' y='2' width='2' height='2' fill='%23FFD84D'/%3E%3Crect x='2' y='7' width='2' height='2' fill='%23FFD84D'/%3E%3Crect x='7' y='7' width='2' height='2' fill='%23FFD84D'/%3E%3C/svg%3E"); }
+#hint {
+  width: min(calc(100vw - 24px), 420px); box-sizing: border-box; padding: 6px 10px 6px 6px; margin-top: 14px;
+  display: flex; align-items: center; gap: 10px; text-align: left; background: none; box-shadow: none;
+  border: 15px solid transparent; border-image: var(--frame-navy) 5 fill / 15px stretch;
+  filter: drop-shadow(0 4px 0 rgba(15, 22, 40, .55)); font-family: var(--pop-font); color: #fff;
+}
+#hint .h-tab {
+  position: absolute; left: 22px; top: -38px; padding: 0 12px; line-height: 28px; font-size: 17px; font-weight: 900; color: var(--ink); letter-spacing: .06em;
+  border: 6px solid transparent; border-image: var(--frame-yellow) 4 fill / 6px stretch; box-shadow: inset 0 -3px 0 var(--pop-gold);
+}
+#hint .h-ico {
+  position: relative; flex: none; width: 58px; height: 58px; margin: -4px 0 -4px -4px; box-sizing: border-box;
+  border: 6px solid transparent; border-image: var(--frame-yellow) 4 fill / 6px stretch;
+}
+#hint .h-ico img { position: absolute; left: 50%; top: 50%; max-width: 46px; max-height: 46px; transform: translate(-50%, -50%); image-rendering: pixelated; }
+#hint .h-ico img + img { left: auto; top: -10px; right: -12px; max-width: 26px; max-height: 26px; transform: none; }
+#hint .h-txt { flex: 1; min-width: 0; }
+#hint .h-sub { display: block; font-size: 13px; font-weight: 900; color: #C4D6F2; line-height: 1.35; }
+#hint .h-main { display: block; font-size: 17px; font-weight: 900; line-height: 1.3; }
+#hint .hl-y { color: var(--note); }
+#hint .hl-r { color: #FF6F61; }
+#hint .hl-g { color: #67D893; }

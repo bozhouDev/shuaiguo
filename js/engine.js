@@ -446,7 +446,7 @@
 
   /* ---------------- 音效（WebAudio 合成，免素材） ---------------- */
   let actx = null;
-  E.muted = false;
+  E.muted = false; // 由下方「设置」按存档覆盖
   // 首次用户交互时初始化音频（浏览器要求）
   E.unlockAudio = function () {
     if (actx) return;
@@ -483,6 +483,56 @@
       default: break;
     }
   };
+
+  /* ---------------- 设置：音乐 / 音效 / 震动（存本地） ---------------- */
+  const SET_KEY = 'shuaiguo_settings';
+  E.settings = { music: true, sfx: true, vibrate: true };
+  try { Object.assign(E.settings, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch (_) { /* 存储不可用就用默认值 */ }
+  E.muted = !E.settings.sfx;
+  // 改一项设置并保存；音效开关同步到 E.muted（所有 sfx 都看它）
+  E.setSetting = function (key, on) {
+    E.settings[key] = !!on;
+    if (key === 'sfx') E.muted = !on;
+    try { localStorage.setItem(SET_KEY, JSON.stringify(E.settings)); } catch (_) { /* 忽略 */ }
+  };
+  // 震动反馈（只有安卓等支持 navigator.vibrate 的浏览器有效；iOS 网页不支持，静默忽略）
+  E.buzz = function (ms) {
+    // 没开、浏览器不支持、或用户还没碰过页面（如调试模拟对局）时不震，免得控制台报错
+    if (!E.settings.vibrate || !navigator.vibrate || (navigator.userActivation && !navigator.userActivation.hasBeenActive)) return;
+    try { navigator.vibrate(ms || 30); } catch (_) { /* 忽略 */ }
+  };
+
+  /* ---------------- 背景音乐：WebAudio 合成的 8-bit 循环小调 ---------------- */
+  // 32 步一循环（八分音符），0 = 休止；旋律用方波、低音用三角波，音量压得很低，不盖过音效
+  const BPM = 138, STEP = 60 / BPM / 2;
+  const MEL = [76, 79, 84, 79, 81, 79, 76, 74, 76, 79, 84, 86, 84, 81, 79, 0,
+               77, 81, 84, 81, 79, 76, 74, 72, 74, 76, 79, 76, 74, 72, 71, 0];
+  const BASS = [48, 0, 55, 0, 48, 0, 55, 0, 45, 0, 52, 0, 45, 0, 52, 0,
+                41, 0, 48, 0, 41, 0, 48, 0, 43, 0, 50, 0, 43, 0, 47, 0];
+  const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
+  let bgmWant = false, bgmStep = 0, bgmNext = 0;
+  // 排一个音：t 开始时间，len 时长
+  function bgmNote(n, t, len, type, vol) {
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type; o.frequency.setValueAtTime(midi(n), t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + len + 0.02);
+  }
+  // 调度器：每 100ms 往前排 0.3 秒的音；不想播 / 关了音乐 / 页面在后台时什么都不排
+  setInterval(() => {
+    if (!actx || !bgmWant || !E.settings.music || document.hidden) { bgmNext = 0; return; }
+    if (bgmNext < actx.currentTime) bgmNext = actx.currentTime + 0.05;
+    while (bgmNext < actx.currentTime + 0.3) {
+      const i = bgmStep % MEL.length;
+      if (MEL[i]) bgmNote(MEL[i], bgmNext, STEP * 0.9, 'square', 0.022);
+      if (BASS[i]) bgmNote(BASS[i], bgmNext, STEP * 1.8, 'triangle', 0.05);
+      bgmStep++; bgmNext += STEP;
+    }
+  }, 100);
+  // 游戏告诉音乐该不该响（大厅、对局中响；暂停、结算不响）
+  E.bgm = function (on) { bgmWant = !!on; };
 
   window.E = E;
 })();

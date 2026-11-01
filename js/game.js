@@ -290,13 +290,13 @@
     a.sn.segs.push(newPot(S.t, f.hot, f.label));   // 截止时间从落到身上开始算
     a.combo = 0;
     if (f.hot) {
-      if (a.isPlayer) { E.toast(`P0 砸到你身上！${P0_LIFE} 秒内甩出去，炸了背锅 +${P0_BLAME}`, 2200); E.sfx('boss'); shake = 8; }
+      if (a.isPlayer) { E.toast(`P0 砸到你身上！${P0_LIFE} 秒内甩出去，炸了背锅 +${P0_BLAME}`, 2200); E.sfx('boss'); E.buzz(60); shake = 8; }
       return;
     }
     if (a.isPlayer) {
       floats.add('+1 ' + f.label, a.sn.x, a.sn.y - 34, '#E8504A');
       shake = 6;
-      E.sfx('hit');
+      E.sfx('hit'); E.buzz(35); // 被锅砸中：短震
     } else {
       floats.add('+1', a.sn.x, a.sn.y - 40, '#9AA6C4');
     }
@@ -751,7 +751,7 @@
         S.leaderHits++;
         l.hitCd[a.id] = S.t + 3;
         if (l.chase === a) { l.state = 'patrol'; l.chase = null; l.i = nearestRoute(l); }
-        if (a.isPlayer) { floats.add(`${l.name}：这几个你跟一下`, a.sn.x, a.sn.y - 44, '#E8504A'); shake = 13; E.sfx('boss'); }
+        if (a.isPlayer) { floats.add(`${l.name}：这几个你跟一下`, a.sn.x, a.sn.y - 44, '#E8504A'); shake = 13; E.sfx('boss'); E.buzz(80); }
         else floats.add(`+${LEADER_HIT_POTS}`, a.sn.x, a.sn.y - 40, '#E8504A');
       }
     }
@@ -778,7 +778,7 @@
     if (S.skyFirst && S.t >= SKY_FIRST) { S.skyFirst = false; launchSky(S.player, S.leaders[0]); }
     // 教学提示
     const h = L.hints[S.hintIdx];
-    if (h && S.t >= h.t) { showHint(h.text); S.hintIdx++; }
+    if (h && S.t >= h.t) { showHint(h); S.hintIdx++; }
   }
   // 某个地点一口气喷出 n 口锅，依次瞄准离那里最近的几个人
   function burst(srcKey, n) {
@@ -1007,11 +1007,19 @@
 
   /* ---------------- 提示条 / 群消息 ---------------- */
   // 显示一条教学提示
-  function showHint(text) {
+  // 关键词高亮：*黄* !红! ~绿~，其余文字转义后原样输出
+  function hintMarkup(t) {
+    const esc = (x) => x.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+    return esc(t || '').replace(/\*([^*]+)\*/g, '<b class="hl-y">$1</b>').replace(/!([^!]+)!/g, '<b class="hl-r">$1</b>').replace(/~([^~]+)~/g, '<b class="hl-g">$1</b>');
+  }
+  // 显示教学横幅：h = { title 标签, icon [主图, 角标图], sub 小字, text 大字 }（只有 text 时就是一行字）
+  function showHint(h) {
     const el = document.getElementById('hint');
-    el.textContent = text;
+    const icon = (h.icon || []).map((n) => `<img src="assets/px/${n}.png" alt="">`).join('');
+    el.innerHTML = `${h.title ? `<span class="h-tab">${h.title}</span>` : ''}${icon ? `<span class="h-ico">${icon}</span>` : ''}
+      <span class="h-txt">${h.sub ? `<span class="h-sub">${hintMarkup(h.sub)}</span>` : ''}<span class="h-main">${hintMarkup(h.text)}</span></span>`;
     el.classList.add('on');
-    hintTimer = 3.8;
+    hintTimer = h.sub ? 4.6 : 3.8;
   }
   // 显示一条工作群消息（事件预告）：「【群名】发言人：内容」
   function showMsg(text) {
@@ -1458,17 +1466,49 @@
     if (rush && Math.floor(S.t) !== S.lastTick) { S.lastTick = Math.floor(S.t); E.sfx('tick'); }
   }
 
+  /* ---------------- 像素图标（弹窗、设置用） ---------------- */
+  // 16×16 点阵：# = 当前文字色，w = 白，y = 金，o = 暗金；转成 SVG，缩放时保持像素硬边
+  const PX_ICONS = {
+    pause: ['', '.######..######.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.',
+      '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.#wwww#..#wwww#.', '.######..######.'],
+    gear: ['.......##.......', '......####......', '...##.####.##...', '..############..', '..############..', '...##########...', '.#####....#####.', '######....######',
+      '######....######', '.#####....#####.', '...##########...', '..############..', '..############..', '...##.####.##...', '......####......', '.......##.......'],
+    music: ['', '......########..', '......########..', '......##....##..', '......##....##..', '......##....##..', '......##....##..', '......##....##..',
+      '......##....##..', '......##..####..', '...#####.#####..', '..######.#####..', '..######..###...', '..#####.........', '...###..........'],
+    sound: ['', '', '......#.........', '.....##....#....', '....###.....#...', '.######..#...#..', '.######...#..#..', '.######...#..#..',
+      '.######...#..#..', '.######...#..#..', '.######..#...#..', '....###.....#...', '.....##....#....', '......#.........'],
+    vibrate: ['', '.....######.....', '....#......#....', '....#.####.#....', '.#..#.#..#.#..#.', '#...#.#..#.#...#', '.#..#.#..#.#..#.', '#...#.#..#.#...#',
+      '.#..#.#..#.#..#.', '#...#.#..#.#...#', '.#..#.####.#..#.', '....#......#....', '....#..##..#....', '.....######.....'],
+    trophy: ['..############..', '###yyyyyyyyyo###', '#y#yyyyyyyyyo#y#', '#y#yyyyyyyyyo#y#', '#y#yyyyyyyyyo#y#', '.###yyyyyyyyo###', '..##yyyyyyyyo#..', '...##yyyyyyo##..',
+      '....##yyyyo##...', '.....##yyo##....', '......#yo#......', '......#yo#......', '.....##yo##.....', '....#yyyyyo#....', '....#oooooo#....', '....########....'],
+    close: ['', '', '..##........##..', '..###......###..', '...###....###...', '....###..###....', '.....######.....', '......####......',
+      '......####......', '.....######.....', '....###..###....', '...###....###...', '..###......###..', '..##........##..'],
+  };
+  const PX_COLORS = { '#': 'currentColor', w: '#FFFFFF', y: '#FFD84D', o: '#C98A00' };
+  // 把点阵按颜色合并成 SVG 路径（每行连续同色的格子合成一段），返回 <svg> 字符串
+  function pxIcon(name) {
+    const paths = {};
+    PX_ICONS[name].forEach((row, y) => {
+      for (let x = 0; x < row.length;) {
+        const c = row[x];
+        let n = 1;
+        while (row[x + n] === c) n++;
+        if (PX_COLORS[c]) paths[c] = (paths[c] || '') + `M${x} ${y}h${n}v1h-${n}z`;
+        x += n;
+      }
+    });
+    return `<svg class="px" viewBox="0 0 16 16" shape-rendering="crispEdges" aria-hidden="true">${
+      Object.entries(paths).map(([c, d]) => `<path fill="${PX_COLORS[c]}" d="${d}"/>`).join('')}</svg>`;
+  }
+
   /* ---------------- 结算 ---------------- */
   // 结束一局：reason = crushed（被压垮）| time（到点下班）
   function finish(reason) {
     mode = 'over';
-    const P = S.player, left = potsOf(P), crushed = reason === 'crushed';
+    const P = S.player, crushed = reason === 'crushed';
     const rank = ranking();
     const myRank = crushed ? rank.length : rank.indexOf(P) + 1;
     const stars = crushed ? 0 : starsOfRank(myRank);
-    const vs = Object.entries(P.victims).sort((a, c) => c[1] - a[1]);
-    const victim = vs.length ? `${vs[0][0]}（${vs[0][1]} 口）` : '没有人';
-    const last = rank[rank.length - 1];
 
     // 进度：过关解锁下一关、记录本关最好成绩
     const prog = loadProgress();
@@ -1479,50 +1519,34 @@
     if (stars > 0) prog.unlocked = Math.max(prog.unlocked, L.id + 1);
     saveProgress(prog);
     E.sfx(stars > 0 ? 'win' : 'lose');
+    if (crushed) E.buzz(200); // 被压垮：长震
+    E.bgm(false);
+    clearBanners(); // 收起群消息和教学横幅，别压在结算弹窗上
 
-    let badge, title, share;
-    if (crushed) {
-      badge = '被锅压垮'; title = '锅太多，走不动了';
-      share = `身上堆了 ${MAX_POTS} 口锅，当场被压垮。之前已经背锅 ${P.blames} 次。`;
-    } else if (!stars) {
-      badge = `18:00 · 第 ${myRank} 名`; title = '被留下加班';
-      share = `今天背锅 ${P.blames} 次，排第 ${myRank} 名，被留下加班了。`;
-    } else {
-      badge = `18:00 · 第 ${myRank} 名`; title = ['', '甩锅宗师', '职场老油条', '勉强下班'][myRank];
-      share = `今天只背锅 ${P.blames} 次，第 ${myRank} 名下班。甩出去 ${P.thrown} 口，最大受害者：${victim}。${last !== P ? `${last.name}${last.crushed ? '被锅压垮了' : `背锅 ${last.blames} 次，被留下加班了`}。` : ''}`;
-    }
-
-    // 最终排名表
+    // 名次后面跟的短称号
+    const title = crushed ? '锅太多，走不动了' : !stars ? '被留下加班' : ['', '甩锅宗师', '职场老油条', '勉强下班'][myRank];
+    // 最终排名表：名次 / 名字 / 锅图标 + 背锅次数，被压垮的写「压垮」
     const table = rank.map((a, i) => `<li class="${a.isPlayer ? 'me' : ''}${i === PASS_RANK - 1 && rank.length > PASS_RANK ? ' cut' : ''}">
-      <b>${i + 1}</b><span>${a.name}</span><em>${a.crushed ? '压垮' : `背锅 ${a.blames} 次`}</em><i>${a.crushed ? '' : potsOf(a) + ' 口'}</i></li>`).join('');
+      <b>${i + 1}</b><span>${a.isPlayer ? '你' : a.name}</span>${a.crushed || (a.isPlayer && crushed) ? '<span class="crush">被压垮</span>' : `<img src="assets/px/ui_wok.png" alt="背锅"><em>${a.blames}</em>`}</li>`).join('');
     const next = LEVELS[LEVELS.indexOf(L) + 1];
-    // 星级用像素星星图标；顶部配一张主角：压垮 → 埋在锅堆里，过关 → 庆祝下班，没过关 → 慌张
-    const starHtml = `<div class="stars">${[1, 2, 3].map((i) => `<img src="assets/px/ui_${i <= stars ? 'star' : 'star_empty'}.png" alt="${i <= stars ? '★' : '☆'}">`).join('')}</div>`;
-    const hero = crushed ? 'player_crushed' : stars ? 'player_win' : 'player_panic';
+    // 大字：过关「第 N 名」带放射光；没过关「第 N 名」不带光；被压垮直接写「被压垮」
+    const big = crushed ? '<div class="rays res-rank bad">被压垮</div>'
+      : `<div class="rays res-rank${stars ? '' : ' bad'}">${stars ? '<i></i><i></i><i></i><i></i><i></i><i></i>' : ''}第<em>${myRank}</em>名</div>`;
+    const starHtml = `<span class="stars">${[1, 2, 3].map((i) => `<img src="assets/px/ui_${i <= stars ? 'star' : 'star_empty'}.png" alt="${i <= stars ? '★' : '☆'}">`).join('')}</span>`;
+    // 按钮：过关且有下一关 → 下一关为主按钮；否则「再来一局」为主按钮。广告按钮只在对应失败情况出现
+    const hasNext = stars && next;
     E.showPanel(`
-      <img class="hero" src="assets/px/${hero}.png" alt="">
-      <span class="badge">${badge}</span>
-      <h1>${title}</h1>
-      ${starHtml}
+      <div class="pop-head">${pxIcon('trophy')}本局结束</div>
+      ${big}
+      <p class="res-of">/ ${rank.length}人 · ${title}${starHtml}${isBest ? '<em>新纪录</em>' : ''}</p>
       <ol class="ranklist">${table}</ol>
-      <div class="stat">
-        <div><b>${P.thrown}</b><span>甩出的锅</span></div>
-        <div><b>${P.caught}</b><span>被抓现行</span></div>
-        <div><b>${left}</b><span>身上剩余</span></div>
-      </div>
-      <p class="final">背锅 <b>${P.blames}</b> 次${isBest ? ' <em>新纪录</em>' : ''}</p>
-      <div class="share">${share}<small>↑ 分享卡片文案</small></div>
       ${crushed && !S.revived ? '<button class="btn ad" data-act="revive">甩掉 6 口锅，接着熬</button>' : ''}
-      ${!crushed && !stars && !S.rescued ? '<button class="btn ad" data-act="rescue">找人顶锅：背锅 -3 重新排名</button>' : ''}
-      ${stars && next ? `<button class="btn" data-act="next">下一关：${next.name}</button>` : ''}
-      ${stars && !next ? '<button class="btn ghost" data-act="soon">更多关卡开发中</button>' : ''}
-      <button class="btn ${stars && next ? 'ghost' : ''}" data-act="retry">再来一局</button>
-      <button class="btn ghost" data-act="menu">回大厅</button>
-      <button class="btn ghost" data-act="share">晒战绩</button>`, {
+      ${!crushed && !stars && !S.rescued ? '<button class="btn ad" data-act="rescue">找人顶锅：背锅 -3</button>' : ''}
+      ${hasNext ? `<button class="btn" data-act="next">下一关：${next.name.split('·').pop().trim()}</button>` : ''}
+      <button class="btn${hasNext ? ' ghost' : ''}" data-act="retry">再来一局</button>
+      ${hasNext ? '<button class="pop-link" data-act="menu">返回首页</button>' : '<button class="btn ghost" data-act="menu">返回首页</button>'}`, {
       retry: startGame,
       menu: showLobby,
-      share: E.fakeShare,
-      soon: () => E.toast('第 3 关还在做，先把前两关打到三星吧'),
       next: () => { L = next; showIntro(); },
       revive: () => E.fakeAd(() => {
         S.revived = true;
@@ -1531,7 +1555,7 @@
         S.throws = S.throws.filter((f) => f.target !== P);
         S.over = null;
         if (S.t > L.duration - 15) S.t = L.duration - 15;
-        E.hidePanel(); mode = 'play';
+        E.hidePanel(); mode = 'play'; E.bgm(true);
         E.toast('甩掉 6 口锅，继续熬到下班');
       }),
       rescue: () => E.fakeAd(() => {
@@ -1560,23 +1584,57 @@
     inp.fire = 0;
     document.getElementById('hud').hidden = false;
     mode = 'play';
+    E.bgm(true);
   }
-  // 暂停
+  // 暂停：休息一下（锅插图 + 继续 / 重新开始 / 返回首页）
   function pauseGame() {
     if (mode !== 'play') return;
     mode = 'pause';
+    E.bgm(false);
     E.showPanel(`
-      <span class="badge">暂停</span>
-      <h1>带薪休息中</h1>
-      <p class="sub">${L.name} · 现在 ${clockAt(S.t)}</p>
-      <button class="btn" data-act="resume">继续上班</button>
+      <div class="pop-head">${pxIcon('pause')}休息一下</div>
+      <p class="pop-sub">本局已暂停</p>
+      <div class="rays pause-wok"><i></i><i></i><i></i><img src="assets/px/wok.png" alt=""><b>甩锅</b></div>
+      <button class="btn" data-act="resume">继续游戏</button>
       <button class="btn ghost" data-act="retry">重新开始</button>
-      <button class="btn ghost" data-act="menu">回大厅</button>`, {
-      resume: () => { E.hidePanel(); mode = 'play'; },
+      <button class="pop-link" data-act="menu">返回首页</button>`, {
+      resume: resumeGame,
       retry: startGame,
       menu: showLobby,
     });
   }
+  // 从暂停 / 设置回到对局
+  function resumeGame() { E.hidePanel(); mode = 'play'; E.bgm(true); }
+
+  // 设置弹窗：音乐 / 音效 / 震动三个开关，点了立即生效并保存；对局中打开会先暂停，关掉后继续
+  function showSettings() {
+    const inGame = mode === 'play';
+    if (inGame) { mode = 'pause'; E.bgm(false); }
+    const row = (key, icon, name) => {
+      const on = E.settings[key];
+      return `<div class="set-row">${pxIcon(icon)}<span>${name}</span>
+        <button class="tg" type="button" role="switch" aria-checked="${on}" aria-label="${name}" data-act="tg" data-key="${key}">${on ? '开' : '关'}</button></div>`;
+    };
+    const close = () => { if (inGame) resumeGame(); else E.hidePanel(); };
+    E.showPanel(`
+      <div class="pop-head">${pxIcon('gear')}游戏设置<button class="pop-x" type="button" data-act="close" aria-label="关闭">${pxIcon('close')}</button></div>
+      ${row('music', 'music', '音乐')}
+      ${row('sfx', 'sound', '音效')}
+      ${row('vibrate', 'vibrate', '震动')}
+      <div class="set-line"></div>
+      <button class="btn" data-act="close">完成</button>`, {
+      close,
+      tg: (btn) => {
+        const key = btn.dataset.key, on = !E.settings[key];
+        E.setSetting(key, on);
+        btn.setAttribute('aria-checked', on);
+        btn.textContent = on ? '开' : '关';
+        if (key === 'sfx' && on) { E.unlockAudio(); E.sfx('tick'); }
+        if (key === 'vibrate' && on) E.buzz(40);
+      },
+    });
+  }
+
   // 玩法规则列表（关卡介绍和大厅「玩法」共用），领导名字按当前关卡填
   function rulesHtml() {
     const leaders = L.leaders.map((d) => LEADER_TYPES[d.type].name).join('、');
@@ -1641,6 +1699,7 @@
   // 显示大厅：重画关卡日历和按钮，摆好路过的同事
   function showLobby() {
     mode = 'lobby';
+    E.bgm(true);
     S = null;
     E.hidePanel();
     clearBanners();
@@ -1660,7 +1719,7 @@
     lobby.el.innerHTML = `
       <div class="lb-top">
         <span class="chip"><img class="ico" src="assets/px/ui_badge.png" alt="">工牌 <b>${stars}</b>/${LEVELS.length * 3}<img class="ico lb-star" src="assets/px/ui_star.png" alt="星"></span>
-        <button class="chip" type="button" data-act="mute" aria-label="静音"><img class="ico" src="assets/px/ui_sound_${E.muted ? 'off' : 'on'}.png" alt=""></button>
+        <button class="chip" type="button" data-act="settings" aria-label="设置">${pxIcon('gear')}</button>
       </div>
       <div class="lb-title"><h1>甩锅侠</h1><p>今天这锅，反正不是我的</p></div>
       <div class="lb-floor">
@@ -1726,15 +1785,6 @@
     E.sfx('throw');
   }
 
-  // 切换静音（大厅和局内 HUD 的喇叭图标一起换）
-  function toggleMute() {
-    E.muted = !E.muted;
-    const src = `assets/px/ui_sound_${E.muted ? 'off' : 'on'}.png`;
-    document.getElementById('icoSound').src = src;
-    const lb = lobby.el.querySelector('[data-act="mute"] img');
-    if (lb) lb.src = src;
-  }
-
   // 大厅「玩法」：只看规则，看完回大厅
   function showRules() {
     E.showPanel(`
@@ -1755,7 +1805,7 @@
     else if (act === 'pick') { L = LEVELS.find((lv) => lv.id === Number(b.dataset.id)); showLobby(); }
     else if (act === 'rules') showRules();
     else if (act === 'hero') pokeHero(b);
-    else if (act === 'mute') toggleMute();
+    else if (act === 'settings') showSettings();
   });
 
   /* ---------------- 调试：纯 AI 对局模拟（平衡数值用） ---------------- */
@@ -1800,8 +1850,10 @@
 
   /* ---------------- 启动 ---------------- */
   document.getElementById('btnPause').addEventListener('click', pauseGame);
-  const btnMute = document.getElementById('btnMute');
-  btnMute.addEventListener('click', toggleMute);
+  // HUD 右上角齿轮：打开设置（对局中会先暂停）
+  const btnSet = document.getElementById('btnSet');
+  btnSet.innerHTML = pxIcon('gear');
+  btnSet.addEventListener('click', () => { if (mode === 'play') showSettings(); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseGame(); });
   window.addEventListener('keydown', (e) => { if (e.key === 'Escape' || e.key === 'p') pauseGame(); });
 
