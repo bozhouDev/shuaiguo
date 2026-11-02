@@ -25,6 +25,8 @@ PAD = 2        # 小图之间留白，防止裁切时取到邻居的像素
 
 def group_of(name):
     """按素材名决定放进哪张图集。"""
+    if name.startswith('intro_'):
+        return 'intro'
     if name.startswith(PROPS):          # boss_desk 要先于 boss_ 判断
         return 'props'
     for c in CHARS:

@@ -14,6 +14,7 @@ OUT = os.path.join(ROOT, 'sprites')
 
 # 每张素材表里的素材名，按「从上到下、从左到右」的顺序
 NAMES = {
+    'intro_skin': ['intro_plate', 'intro_tab_gold', 'intro_tab_blue'],
     'ui_praise': ['ui_praise_thumb', 'ui_praise_bounce', 'ui_praise_rankup'],
     'ui_closing_clock': ['ui_closing_clock'],  # 下班倒计时的黄色闹钟
     's1_player': ['player_normal', 'player_panic', 'player_crushed', 'player_win'],
@@ -113,6 +114,12 @@ def walk_rows(mask):
 def cut(sheet):
     """切一张素材表，返回 [(名字, RGBA 图)]；数量对不上时报错。"""
     img = Image.open(os.path.join(SHEETS, sheet + '.png')).convert('RGB')
+    # 开局底板按参考图坐标切片，保留完整背景，不做洋红抠图。
+    if sheet == 'intro_skin':
+        boxes = [(0, 0, 956, 1645), (48, 84, 330, 230), (338, 84, 620, 230)]
+        if img.size != (956, 1645):
+            raise SystemExit('intro_skin 必须为 956×1645，避免界面坐标漂移')
+        return [(name, img.crop(box).convert('RGBA')) for name, box in zip(NAMES[sheet], boxes)]
     rgb = np.array(img)
     mask = key_magenta(rgb)
     rgba = np.dstack([rgb, (mask * 255).astype(np.uint8)])

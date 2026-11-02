@@ -1,0 +1,7 @@
+Tool: Codex built-in image_gen (reference edit)
+Reference: assets_pixel/ref/intro-reference.jpg
+Output: intro_skin.png, 956x1645
+
+Edit this exact reference into a production game UI artwork plate. Preserve the composition, geometry, placements, proportions, palette, pixel-art rendering, border shapes, sky, clouds, cream background, bottom bushes and flowers, pan with yellow sticky note and comic yellow accent marks, clock, joystick, cartoon eyes, gold trophy, medal circles, stars, and ALL button bevels as exactly as possible. Do NOT redesign or simplify anything. Output portrait with exact reference aspect ratio 956:1645. ONLY remove ALL typography: Chinese text, digits, numbers inside medal circles, and play triangle in the yellow start button, filling each removed text region seamlessly with its original background. Remove the two padlock icons from the top second and third tabs, leaving clean blue tab surfaces. Keep first top tab yellow, other two blue. Keep white people/group silhouette in red badge, yellow heading underline, six reward stars and three blank colored medal circles. Everything else remains identical. No added objects, letters, numbers, labels or watermark. This is a blank functional interface skin for HTML text overlay. Image is the edit target, not loose inspiration.
+
+Implementation: text remains DOM; fixed crops preserve reference coordinates; build_px keeps native size and quantizes colors; pack_atlas uses a separate intro group. The full opaque plate intentionally bypasses magenta-keying.
