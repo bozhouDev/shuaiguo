@@ -23,12 +23,14 @@ NAMES = {
                             'veteran_normal', 'veteran_tea', 'veteran_hit', 'veteran_flat'],
     's4_intern_director': ['intern_normal', 'intern_cry', 'intern_hit', 'intern_flat',
                            'director_walk', 'director_aim', 'director_chase', 'director_idle'],
-    's5_boss_items': ['boss_walk', 'boss_aim', 'boss_chase', 'boss_idle',
+    # s5 第 1 行是旧版墨镜老板，2026-11-02 起改用 s9_boss，这 4 格写 None 不再输出
+    's5_boss_items': [None, None, None, None,
                       'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact'],
     's6_props': ['desk', 'meeting_table', 'boss_desk', 'cooler', 'printer', 'plant', 'plant_small',
                  'cabinet', 'whiteboard', 'tea_counter', 'sofa'],
     's7_ui': ['ui_clock', 'ui_wok', 'ui_crown', 'ui_star', 'ui_star_empty',
               'ui_pause', 'ui_sound_on', 'ui_sound_off', 'ui_warning', 'ui_exit'],
+    's9_boss': ['boss_walk', 'boss_aim', 'boss_chase', 'boss_idle'],  # 地中海盖顶版老板（gen_assets.sh）
     's8_lobby_ui': ['ui_lock', 'ui_badge', 'ui_book', 'ui_calendar'],  # 大厅图标（gen_lobby.sh）
 }
 
@@ -41,7 +43,7 @@ for _who in WALKERS:
 ROWS = {
     'ui_praise': [3],
     's1_player': [4], 's2_pm_tester': [4, 4], 's3_designer_veteran': [4, 4],
-    's4_intern_director': [4, 4], 's5_boss_items': [4, 7], 's6_props': [3, 4, 4], 's7_ui': [5, 5], 's8_lobby_ui': [4],
+    's4_intern_director': [4, 4], 's5_boss_items': [4, 7], 's6_props': [3, 4, 4], 's7_ui': [5, 5], 's8_lobby_ui': [4], 's9_boss': [4],
     **{'w_' + w: [4, 4, 4] for w in WALKERS},
 }
 
@@ -152,6 +154,8 @@ def main():
     sheets = sys.argv[1:] or list(NAMES)
     for sheet in sheets:
         for name, im in cut(sheet):
+            if name is None:  # 已废弃的格子：照常切开保证顺序，但不输出
+                continue
             im.save(os.path.join(OUT, name + '.png'))
             print(f'{sheet:22s} → {name:16s} {im.width}×{im.height}')
 

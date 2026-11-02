@@ -34,8 +34,8 @@ WHO[w_veteran]='office veteran: bald older man, small glasses, beige shirt, brow
 REF[w_veteran]=veteran_normal
 WHO[w_intern]='intern young woman: brown ponytail, white shirt, black skirt, staff badge.'
 REF[w_intern]=intern_normal
-WHO[w_boss]='the BOSS: stocky middle-aged man, black sunglasses, slicked dark hair, dark navy suit, red tie, hands behind his back, drawn bigger than normal coworkers.'
-REF[w_boss]=boss_walk
+WHO[w_boss]='the BOSS (2026-11-02 comb-over version): middle-aged man with a shiny bald crown and a few long greasy strands combed across from one side, bushy dark tufts above the ears, black sunglasses, big beer belly stretching the white shirt with one button popped open, too-tight dark navy suit, short red tie on top of the belly, hands behind his back, drawn bigger than normal coworkers. From the back view the shiny bald crown with the thin combed strands must be clearly visible.'
+REF[w_boss]=/Users/bozhou/my/min_games/prototypes/boss-ugly/sheets/a_combover.png   # 选定的丑化样稿
 WHO[w_director]='the director: middle-aged man, black glasses, neat dark hair, grey suit, blue tie, holding a yellow clipboard, drawn a bit bigger than coworkers.'
 REF[w_director]=director_walk
 
@@ -52,8 +52,10 @@ Character: ${WHO[$key]}
 Layout: landscape 3:2 image.
 
 Use your built-in image generation tool (image_gen) with the attached reference images to generate exactly ONE image, then copy the generated PNG from \$CODEX_HOME/generated_images/... into ${OUT}/${key}.png (overwrite if it exists). Do not write any other files. Do not edit any code."
+  # 参考图：写素材名就取 sprites/ 里的单张，写绝对路径就直接用
+  ref=${REF[$key]}; [[ $ref == /* ]] || ref="$SPR/$ref.png"
   codex exec --skip-git-repo-check -s workspace-write -C "$OUT" --add-dir "$HOME/.codex/generated_images" \
-    -i "$SPR/${REF[$key]}.png" -i "$STYLE_REF" -- "$PROMPT" > "$LOG/$key.log" 2>&1 &
+    -i "$ref" -i "$STYLE_REF" -- "$PROMPT" > "$LOG/$key.log" 2>&1 &
 done
 wait
 ls -la "$OUT"/w_*.png

@@ -52,6 +52,15 @@ Row 1 = 老板 the BOSS (stocky middle-aged man, black sunglasses, slicked dark 
 Row 2 = items and effects, 7 small sprites: 1) a black cooking wok with a short handle seen from above, with a BLANK yellow sticky note stuck on it (no writing), 2) the same wok tilted mid-air flying with small motion lines, 3) an anger vein symbol (red cross-shaped vein mark), 4) two streams of blue tears, 5) three blue sweat drops, 6) dizzy swirl with small yellow stars, 7) a yellow-white impact burst star."
 REFS[s5_boss_items]="$STYLE_REF $CHAR_REF"
 
+# 2026-11-02 老板改成「地中海盖顶」丑化版（样稿 prototypes/boss-ugly/sheets/a_combover.png），单独一张表，s5 里的旧老板不再使用
+BOSS_A=/Users/bozhou/my/min_games/prototypes/boss-ugly/sheets/a_combover.png
+JOB[s9_boss]="Sheet layout: landscape 3:2, ONE row of 4 sprites, all the same character: 老板 the BOSS exactly as in reference image 2 (keep his look IDENTICAL): middle-aged man with a shiny bald crown and a few long greasy strands combed across from one side (comb-over), bushy dark tufts above the ears, black sunglasses, big beer belly stretching the white shirt with one button popped open, too-tight dark navy suit, short red tie lying on top of the belly. Ugly and annoying in a FUNNY cartoon way, never gross. Drawn about 1.4x bigger than normal coworkers, same size and proportions as in reference image 2.
+1) normal patrolling walk, hands behind back, smug.
+2) aiming: winding up to throw a big black wok held overhead, shouting.
+3) chasing: running angrily, red face, belly bouncing, comb-over strands flapping up.
+4) standing with hands on hips, angry, red anger vein mark on the bald head."
+REFS[s9_boss]="$STYLE_REF $BOSS_A"
+
 JOB[s6_props]="Sheet layout: landscape 3:2, office furniture and objects only (no characters), 11 sprites arranged in 3 rows. Match the dark-wood furniture, blue monitors and navy chairs of reference image 1 exactly.
 1) double work desk: one long dark-wood desk with TWO computers (upright monitors with glowing blue/green screens, keyboards, mice, a red mug, a yellow sticky note, a paper sheet) and TWO navy office chairs with backrests in front (south side) of the desk.
 2) long meeting table: oval dark-wood table with papers and a small plant on it, with 8 navy chairs with backrests around it.
