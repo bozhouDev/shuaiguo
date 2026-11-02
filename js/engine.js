@@ -515,6 +515,7 @@
       case 'win': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, 0.16, 'triangle', 0.08, i * 0.12)); break;
       case 'lose': [392, 330, 262, 196].forEach((f, i) => tone(f, f * 0.98, 0.2, 'square', 0.06, i * 0.15)); break;
       case 'tick': tone(1200, 1200, 0.03, 'sine', 0.03); break;
+      case 'bell': tone(1046, 1046, 0.32, 'sine', 0.08); tone(1568, 1568, 0.24, 'sine', 0.04, 0.08); break; // 下班铃
       case 'whoosh': tone(700, 260, 0.12, 'sine', 0.07); break;            // 锅甩出去
       case 'parry': tone(1400, 1400, 0.05, 'square', 0.07); tone(900, 1800, 0.12, 'triangle', 0.08, 0.04); break; // 反甩
       case 'miss': tone(300, 200, 0.12, 'sine', 0.05); break;              // 甩空，锅弹回来

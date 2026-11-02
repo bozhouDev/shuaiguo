@@ -65,7 +65,9 @@
   const ALERT_SPEED = 120;     // 老板追人速度（略慢于人，绕障碍追）
   const P0_LIFE = 10;          // P0 的截止时间（比普通锅短得多）
   const P0_BLAME = 3;          // P0 到点算背几次锅
-  const FINAL_RUSH = 10;       // 最后几秒进入排名冲刺
+  const FINAL_RUSH = 8;        // 最后几秒进入排名冲刺
+  const CLOSING_BELL_TIME = 0.45; // 到点铃声提示的实际秒数
+  const CLOSING_FEEDBACK_TIME = 1; // 胜负反馈的实际秒数
   const PASS_RANK = 3;         // 进前几名过关
 
   // 同事人格：speed 速度倍率；turn 转向；react 思考间隔；aggr 甩锅积极度；seekR 找人半径；
@@ -101,7 +103,7 @@
   let forceTut = query.has('tut'); // ?tut=1：已经看过带教也再走一遍
   let L = LEVELS[0];             // 当前关卡
   let S = null;                  // 当前对局状态
-  let mode = 'loading';          // loading | lobby | intro | play | pause | over
+  let mode = 'loading';          // loading | lobby | intro | play | pause | closing | over
   let shake = 0;                 // 屏幕震动
   let hintTimer = 0;             // 当前提示剩余显示时间
   let msgTimer = 0;              // 群消息剩余显示时间
@@ -1267,7 +1269,10 @@
   function update(dt) {
     // 最后一句等玩家确认，所有角色、飞锅和截止时间一起冻结。
     if (coachLocked()) return;
+    // 截断最后一帧：18:00 之后到期的锅不能混入本局成绩。
+    if (!S.tut) dt = Math.min(dt, Math.max(0, S.t0 + L.duration - S.t));
     S.t += dt;
+    if (!S.tut && S.t0 + L.duration - S.t < 1e-7) S.t = S.t0 + L.duration;
     if (S.tea > 0) S.tea -= dt;
     if (S.tut) updateTutorial(dt);
     else updateSchedule();
@@ -1295,7 +1300,7 @@
       a.crushed = true; a.crushedAt = S.t; a.target = null;
       E.toast(`${a.name}被锅压垮了！`, 1800);
     }
-    if (workT() >= L.duration) S.over = 'time';
+    if (workT() >= L.duration - 1e-7) { S.t = S.t0 + L.duration; S.over = 'time'; }
   }
 
   /* ---------------- 提示条 / 群消息 ---------------- */
@@ -1451,7 +1456,11 @@
     const base = a.p.sprite, pots = potsOf(a);
     const walk = walkFrame(a, base, a.sn.x, a.sn.y);
     let st = null;
-    if (a.isPlayer) { if (mode === 'over' && pots >= MAX_POTS) st = 'crushed'; else if (a.stun > 0) st = 'panic'; }
+    if (a.isPlayer) {
+      if (mode === 'closing' && S.closing.t >= CLOSING_BELL_TIME) st = S.closing.passed ? 'win' : 'panic';
+      else if (mode === 'over' && pots >= MAX_POTS) st = 'crushed';
+      else if (a.stun > 0) st = 'panic';
+    }
     else if (a.crushed) st = 'flat';
     else if (a.stun > 0 || a.angry > 1.4) st = 'hit'; // 刚接锅的前 0.6 秒显示被砸中
     else if (a.teaT > 0) st = 'tea';
@@ -1774,7 +1783,7 @@
     const P = S.player, n = potsOf(P);
     const rank = ranking();
     const myRank = rank.indexOf(P) + 1;
-    const w = workT(), rush = mode === 'play' && w >= L.duration - FINAL_RUSH;
+    const w = workT();
     E.setText('hClock', clockAt(w));
     E.setText('hPotsN', `${n}/${MAX_POTS}`);
     E.setText('hRank', `第 ${myRank}/${rank.length} 名`);
@@ -1791,8 +1800,9 @@
     document.getElementById('btnSkip').hidden = !S.tut || mode !== 'play';
     updateThrowBtn();
     document.getElementById('hRank').parentElement.classList.toggle('hot', myRank > PASS_RANK);
-    // 最后 10 秒：每秒滴答一声
-    if (rush && Math.floor(w) !== S.lastTick) { S.lastTick = Math.floor(w); E.sfx('tick'); }
+    // 收尾阶段禁止暂停和设置，避免把冻结的对局恢复为 play。
+    document.getElementById('btnPause').disabled = mode === 'closing';
+    document.getElementById('btnSet').disabled = mode === 'closing';
   }
 
   /* ---------------- 像素图标（弹窗、设置用） ---------------- */
@@ -1830,10 +1840,53 @@
       Object.entries(paths).map(([c, d]) => `<path fill="${PX_COLORS[c]}" d="${d}"/>`).join('')}</svg>`;
   }
 
+  /* ---------------- 下班收尾 ---------------- */
+  // 预告贴在 HUD 下，不遮角色和锅；排名变化时同步给出最后几秒的小目标。
+  function updateClosingNotice() {
+    const el = document.getElementById('closingNotice');
+    const left = S ? L.duration - workT() : Infinity;
+    const warning = mode === 'play' && !S.tut && left > 0 && left <= FINAL_RUSH;
+    el.hidden = !warning && mode !== 'closing';
+    document.body.classList.toggle('closing-warning', warning);
+    if (el.hidden) return;
+    el.style.top = `${document.getElementById('hud').getBoundingClientRect().bottom + 10}px`;
+    if (warning) {
+      const seconds = Math.ceil(left), rank = ranking().indexOf(S.player) + 1;
+      el.className = seconds <= 3 ? 'countdown' : '';
+      E.setText('closingTitle', seconds <= 3 ? `${seconds}` : `距离下班 ${seconds} 秒`);
+      E.setText('closingDetail', rank <= PASS_RANK ? '快下班了，守住前三！' : '还剩几秒，冲进前三！');
+      if (seconds <= 3 && S.lastTick !== seconds) { S.lastTick = seconds; E.sfx('tick'); }
+    } else {
+      const result = S.closing.t >= CLOSING_BELL_TIME;
+      el.className = result ? `feedback ${S.closing.passed ? 'passed' : 'failed'}` : 'bell';
+      E.setText('closingTitle', result ? (S.closing.passed ? '准点下班！' : '这次得加班了') : '叮！下班时间到');
+      E.setText('closingDetail', result ? (S.closing.passed ? '撑到下班，这局赢了' : '没进前三，下局再甩回来') : '18:00 · 本局成绩已锁定');
+    }
+  }
+  // 物理更新已处理到点的截止锅；随后只推进表现时间，不再移动、派锅或计分。
+  function startClosing() {
+    mode = 'closing';
+    S.closing = { t: 0, passed: starsOfRank(ranking().indexOf(S.player) + 1) > 0 };
+    resetCoachInput();
+    clearBanners();
+    E.hidePanel();
+    E.bgm(false);
+    E.sfx('bell');
+  }
+  // 收尾共约 1.45 秒：铃声提示 0.45 秒，胜负反馈 1 秒；切后台时暂停表现计时。
+  function updateClosing(dt) {
+    if (document.hidden) return;
+    const before = S.closing.t;
+    S.closing.t += dt;
+    if (before < CLOSING_BELL_TIME && S.closing.t >= CLOSING_BELL_TIME) E.sfx(S.closing.passed ? 'win' : 'lose');
+    if (S.closing.t >= CLOSING_BELL_TIME + CLOSING_FEEDBACK_TIME) finish('time');
+  }
+
   /* ---------------- 结算 ---------------- */
   // 结束一局：reason = crushed（被压垮）| time（到点下班）
   function finish(reason) {
     mode = 'over';
+    resetCoachInput();
     const P = S.player, crushed = reason === 'crushed';
     const rank = ranking();
     const myRank = crushed ? rank.length : rank.indexOf(P) + 1;
@@ -1847,7 +1900,7 @@
     if (isBest) prog.best[L.id] = { blames: P.blames, stars };
     if (stars > 0) prog.unlocked = Math.max(prog.unlocked, L.id + 1);
     saveProgress(prog);
-    E.sfx(stars > 0 ? 'win' : 'lose');
+    if (!S.closing) E.sfx(stars > 0 ? 'win' : 'lose');
     if (crushed) E.buzz(200); // 被压垮：长震
     E.bgm(false);
     clearBanners(); // 收起群消息和教学横幅，别压在结算弹窗上
@@ -1865,7 +1918,7 @@
     // 按钮：过关且有下一关 → 下一关为主按钮；否则「再来一局」为主按钮。广告按钮只在对应失败情况出现
     const hasNext = stars && next;
     E.showPanel(`
-      <div class="pop-head">${pxIcon('trophy')}本局结束</div>
+      <div class="pop-head">${pxIcon('trophy')}${crushed ? '被锅压垮了' : stars ? '准点下班！' : '这次得加班了'}</div>
       ${big}
       <p class="res-of">/ ${rank.length}人 · ${title}${starHtml}${isBest ? '<em>新纪录</em>' : ''}</p>
       <ol class="ranklist">${table}</ol>
@@ -1882,7 +1935,7 @@
         P.sn.segs.splice(Math.max(0, P.sn.segs.length - 6));
         S.flying = S.flying.filter((f) => f.target !== P);
         S.throws = S.throws.filter((f) => f.target !== P);
-        S.over = null;
+        S.over = null; S.closing = null; S.lastTick = null;
         if (workT() > L.duration - 15) S.t0 = S.t - (L.duration - 15); // 上班时钟拨回到下班前 15 秒
         E.hidePanel(); mode = 'play'; E.bgm(true);
         E.toast('甩掉 6 口锅，继续熬到下班');
@@ -1890,14 +1943,17 @@
       rescue: () => E.fakeAd(() => {
         S.rescued = true;
         P.blames = Math.max(0, P.blames - 3);
+        S.closing = null;
         finish('time');
       }),
     });
+    document.getElementById('ui').classList.add('settlement');
   }
 
   /* ---------------- 流程 ---------------- */
   // 隐藏所有横幅
   function clearBanners() {
+    document.getElementById('ui').classList.remove('settlement');
     document.body.classList.remove('coach-locked');
     coachHand.hidden = true;
     document.getElementById('hint').classList.remove('on');
@@ -2211,12 +2267,15 @@
     if (mode !== 'play') inp.fire = 0;
     if (mode === 'play') {
       update(dt);
-      if (S.over) finish(S.over);
+      if (S.over === 'time') startClosing();
+      else if (S.over) finish(S.over);
     }
-    if (mode === 'play' || mode === 'over') floats.update(dt);
+    else if (mode === 'closing') updateClosing(dt);
+    if (mode === 'play' || mode === 'over' || mode === 'closing') floats.update(dt);
     updateBanners(mode === 'play' ? dt : 0);
     if (mode === 'lobby') updateLobby(dt);
     if (S) { draw(time); updateHud(); }
+    updateClosingNotice();
     updateCoachHand();
   });
 })();
