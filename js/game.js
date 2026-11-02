@@ -24,6 +24,8 @@
     'cabinet', 'whiteboard', 'tea_counter', 'sofa'];
   for (const who of ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director'])
     for (const d of 'dus') for (let i = 0; i < 4; i++) SPRITES.push(`${who}_walk_${d}${i}`);
+  // 到期小爆炸：本地 33 帧序列图，原点对应锅中心；来源及许可见 assets/fx/pixelfx-LICENSE.txt。
+  const POT_EXPLOSION = 'pot-cartoon-pow-bd83d9f0';
   // 角色绘制尺寸：脚底相对蛇头坐标的下移量、各类人物的高度、躺平时的宽度
   const FOOT_DY = 20, PLAYER_H = 70, NPC_H = 64, FLAT_W = 74;
 
@@ -630,9 +632,9 @@
     } else floats.add(`${a.name} 背锅 +${n}`, a.sn.x, a.sn.y - 40, '#5E6A84');
   }
   // 一口锅到点出事：算在 a 头上，锅消失
-  function explode(a, pot) {
+  function explode(a, pot, pos) {
     S.booms++;
-    spawnFx('fx_impact', a.sn.x, a.sn.y - 26, pot.hot ? 84 : 62, 0.45);
+    spawnFx('pot_explosion', pos.x, pos.y, pot.hot ? 110 : 92, 1.05);
     addBlame(a, pot.hot ? P0_BLAME : 1, pot.hot ? '急件炸了' : `${pot.label}出事了`);
     if (pot.hot) E.toast(a.isPlayer ? `急件炸在你手里，背锅 +${P0_BLAME}` : `急件炸在${a.name}手里，背锅 +${P0_BLAME}`, 2000);
   }
@@ -640,13 +642,15 @@
   function updateDue() {
     for (const a of S.agents) {
       if (a.crushed) continue;
+      // 删除前固定每口锅的位置，同帧多口到期也不会串位。
+      const positions = a.sn.segs.some((pot) => pot.due <= S.t) ? a.sn.positions() : [];
       for (let i = a.sn.segs.length - 1; i >= 0; i--) {
         if (a.sn.segs[i].due > S.t) continue;
         const pot = a.sn.segs.splice(i, 1)[0];
-        explode(a, pot);
+        explode(a, pot, positions[i]);
       }
     }
-    for (const f of S.throws) if (!f.dead && f.pot.due <= S.t) { f.dead = true; if (!f.owner.crushed) explode(f.owner, f.pot); }
+    for (const f of S.throws) if (!f.dead && f.pot.due <= S.t) { f.dead = true; if (!f.owner.crushed) explode(f.owner, f.pot, f); }
   }
 
   /* ---------------- 领导寻路：网格 A*，领导不再穿墙 / 穿桌子 ---------------- */
@@ -1798,6 +1802,19 @@
     // 一次性特效：先弹大再回落，后半段淡出
     for (const e of S.fx) {
       const k = e.t / e.dur;
+      if (e.name === 'pot_explosion') {
+        const sheet = E.spr[POT_EXPLOSION];
+        if (sheet) {
+          // 按实际经过时间取帧，不循环、不旋转；禁用插值保留硬像素边缘。
+          const frame = Math.min(32, Math.floor(e.t * 30));
+          ctx.save();
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(sheet.canvas, frame % 6 * 184, Math.floor(frame / 6) * 144, 184, 144,
+            e.x - e.size / 2, e.y - e.size * 72 / 184, e.size, e.size * 144 / 184);
+          ctx.restore();
+        } else E.drawSprite(ctx, 'fx_impact', e.x, e.y, e.size * 0.5, { alpha: 1 - k });
+        continue;
+      }
       const sc = k < 0.25 ? 0.5 + k * 2.6 : 1.15 - (k - 0.25) * 0.3;
       E.drawSprite(ctx, e.name, e.x, e.y, e.size * sc, { alpha: k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4, rot: k * 0.5 });
     }
@@ -1951,6 +1968,9 @@
   // 收尾共约 1.45 秒：铃声提示 0.45 秒，胜负反馈 1 秒；切后台时暂停表现计时。
   function updateClosing(dt) {
     if (document.hidden) return;
+    // 最后一帧刚到期的锅继续播完爆炸，不停在结算画面上。
+    for (const e of S.fx) e.t += dt;
+    S.fx = S.fx.filter((e) => e.t < e.dur);
     const before = S.closing.t;
     S.closing.t += dt;
     if (before < CLOSING_BELL_TIME && S.closing.t >= CLOSING_BELL_TIME) E.sfx(S.closing.passed ? 'win' : 'lose');
@@ -2485,6 +2505,7 @@
   // 先加载图集（十来个请求），图集里没有的再按单张补；然后把 HUD 里写死的图标换成图集里的图
   E.loadAtlas(window.ATLAS, 'assets/atlas/')
     .then(() => E.loadSprites(SPRITES.filter((n) => !E.spr[n]), 'assets/px/', 'png'))
+    .then(() => E.loadSprites([POT_EXPLOSION], 'assets/fx/', 'png'))
     .then(() => E.preparePraise())
     .then(() => { E.fillPxImages(); qLevel ? showIntro() : showLobby(); });
 
