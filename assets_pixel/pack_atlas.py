@@ -17,7 +17,7 @@ JS = os.path.join(ROOT, '..', 'js', 'atlas.js')
 
 # 不进图集的素材：整张背景只在大厅用一次，单独加载更合适
 SKIP = {'lobby_bg'}
-CHARS = ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director']
+CHARS = ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director', 'nephew', 'cashier', 'wife']
 PROPS = ('desk', 'meeting_table', 'boss_desk', 'cabinet', 'whiteboard', 'tea_counter', 'sofa', 'cooler', 'printer', 'plant')
 MAX_W = 2048   # 图集最大宽度，手机端单张纹理不宜超过 2048
 PAD = 2        # 小图之间留白，防止裁切时取到邻居的像素

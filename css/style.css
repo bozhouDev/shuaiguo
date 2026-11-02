@@ -288,16 +288,24 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 /* 底部菜单 */
 .lb-menu { width: 100%; max-width: 360px; margin: 0 auto; display: grid; gap: 10px; justify-items: center; }
 /* 关卡日历：奶油切角卡片；当前关深蓝金边、白字，顶上挂黄色「当前」标签，外侧三道闪光 */
-.lb-days { width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 14px; margin-top: 18px; }
+/* 关卡多了会挤：改成横向滑动条，一屏约三张多一点，露出下一张提示还能滑；
+   上下左右留白给「当前」标签和闪光（滑动区会裁掉溢出的部分），负外边距抵消留白，版面位置不变 */
+.lb-days {
+  justify-self: stretch; width: auto; display: flex; gap: 10px; margin: -16px -16px 0; padding: 34px 16px 8px;
+  overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scroll-padding: 0 16px;
+  overscroll-behavior-x: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.lb-days::-webkit-scrollbar { display: none; }
 .lb-day {
+  flex: 0 0 26%; scroll-snap-align: center;
   position: relative; display: grid; gap: 4px; justify-items: center; padding: 6px 4px 8px; cursor: pointer; color: var(--ink);
   background: none; border: 8px solid transparent; border-image: var(--frame-cream) 4 fill / 8px stretch;
   box-shadow: inset 0 -4px 0 var(--pop-line); filter: drop-shadow(0 4px 0 #0F1628); font-family: var(--pop-font);
 }
-.lb-day b { display: flex; align-items: center; gap: 6px; font-weight: 900; font-size: 24px; line-height: 1.1; }
-.lb-day b img { height: 28px; }
+.lb-day b { display: flex; align-items: center; gap: 4px; font-weight: 900; font-size: 22px; line-height: 1.1; white-space: nowrap; }
+.lb-day b img { height: 24px; }
 .lb-day span { display: flex; gap: 4px; height: 26px; align-items: center; }
-.lb-day span img { height: 25px; }
+.lb-day span img { height: 22px; }
 .lb-day span .lb-lock { height: 24px; }
 .lb-day.on { color: #FFF6D8; border-width: 10px; padding: 4px 2px 6px; border-image: var(--frame-navy-gold) 5 fill / 10px stretch; box-shadow: none; }
 .lb-day:active:not(:disabled) { translate: 0 3px; filter: drop-shadow(0 1px 0 #0F1628); }
@@ -730,3 +738,15 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 .intro-actions .intro-replay { top: 93%; height: 2.5%; font-size: 2.5cqw; color: #33466b; text-decoration: underline; text-underline-offset: 2px; }
 /* 矮屏只滚动原比例卡片；不压扁插画，也不把文字挤出按钮。 */
 @media (max-height: 650px) { #ui:has(.intro-card) { align-items: start; } }
+
+/* 关卡标签超过三个时横向滑动：每个标签保持三等分的原宽度，底色遮住原底板的三格边线 */
+.intro-card .lvtabs:has(.lv:nth-child(4)) {
+  background: var(--paper); overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none;
+}
+.intro-card .lvtabs:has(.lv:nth-child(4))::-webkit-scrollbar { display: none; }
+.intro-card .lvtabs:has(.lv:nth-child(4)) .lv { flex: 0 0 32.6%; scroll-snap-align: center; } /* 停下时对齐中间，首尾滚不到中间就停在边上 */
+
+/* 周五用规则面板盖住底板原有的三档星级，避免与两个名额冲突。 */
+.friday-goal { inset: 63% 4.5% auto 28%; height: 10%; background: var(--paper); border: 2px solid var(--ink); }
+.friday-goal strong { left: 3%; top: 8%; font-size: 2.9cqw; }
+.friday-quota { margin: 0; position: absolute; left: 3%; top: 40%; font: 900 3cqw/1.45 var(--pop-font); color: var(--ink); }

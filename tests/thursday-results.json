@@ -1,0 +1,531 @@
+{
+  "seed_method": "LCG: seed = (imul(seed,1664525)+1013904223) >>> 0; random = seed / 4294967296",
+  "node_thursday": [
+    {
+      "seed": 20261102,
+      "result": {
+        "runs": 40,
+        "crushedPlayer": 10,
+        "rankHist": {
+          "1": 5,
+          "2": 2,
+          "3": 2,
+          "4": 5,
+          "5": 4,
+          "6": 10,
+          "7": 12
+        },
+        "avgLeft": {
+          "你": 5.4,
+          "会计": 2.9,
+          "业务员": 3.1,
+          "新来的": 6,
+          "老油条": 2.3,
+          "美工": 3.2,
+          "小舅子": 1.3,
+          "出纳": 3.7
+        },
+        "avgBlame": {
+          "你": 12.2,
+          "会计": 9.3,
+          "业务员": 8.6,
+          "新来的": 16.1,
+          "老油条": 8.6,
+          "美工": 8.5,
+          "小舅子": 0,
+          "出纳": 6.5
+        },
+        "avgCaught": {
+          "你": 0.2,
+          "会计": 0.5,
+          "业务员": 0.8,
+          "新来的": 1,
+          "老油条": 0,
+          "美工": 0.5,
+          "小舅子": 0,
+          "出纳": 0.5
+        },
+        "avgBooms": 63.2,
+        "avgSkies": 6,
+        "crushedBots": 26,
+        "avgSpawned": 86.1,
+        "avgThrown": 168.3,
+        "avgLaunched": 196.2,
+        "avgMiss": 27.8,
+        "avgParry": 97.7,
+        "avgLeaderHits": 6.6,
+        "avgCrushT": 72,
+        "passed": 9,
+        "passRate": 0.225,
+        "avgPiesEaten": 1.1250000000000002,
+        "avgAllPiesEaten": 6.525000000000002,
+        "avgPieMeetings": 1.875000000000001,
+        "avgPiesSpawned": 7.500000000000004,
+        "avgNephewReceived": 35.43,
+        "nephewCrushed": 0,
+        "nephewProtected": 32
+      }
+    },
+    {
+      "seed": 20261103,
+      "result": {
+        "runs": 40,
+        "crushedPlayer": 8,
+        "rankHist": {
+          "1": 1,
+          "2": 4,
+          "3": 2,
+          "4": 10,
+          "5": 9,
+          "6": 4,
+          "7": 10
+        },
+        "avgLeft": {
+          "你": 5.1,
+          "会计": 3.1,
+          "业务员": 3.9,
+          "新来的": 6.4,
+          "老油条": 2.3,
+          "美工": 4.1,
+          "小舅子": 1.4,
+          "出纳": 4.1
+        },
+        "avgBlame": {
+          "你": 12.6,
+          "会计": 10.3,
+          "业务员": 7.8,
+          "新来的": 13.4,
+          "老油条": 9,
+          "美工": 9.1,
+          "小舅子": 0,
+          "出纳": 6.5
+        },
+        "avgCaught": {
+          "你": 0.2,
+          "会计": 0.2,
+          "业务员": 0.4,
+          "新来的": 1,
+          "老油条": 0,
+          "美工": 0.5,
+          "小舅子": 0,
+          "出纳": 0.4
+        },
+        "avgBooms": 62.9,
+        "avgSkies": 6,
+        "crushedBots": 34,
+        "avgSpawned": 86,
+        "avgThrown": 172.1,
+        "avgLaunched": 201.7,
+        "avgMiss": 29.4,
+        "avgParry": 104,
+        "avgLeaderHits": 7.2,
+        "avgCrushT": 69,
+        "passed": 7,
+        "passRate": 0.175,
+        "avgPiesEaten": 1.1749999999999998,
+        "avgAllPiesEaten": 6.075000000000002,
+        "avgPieMeetings": 1.9000000000000012,
+        "avgPiesSpawned": 7.600000000000005,
+        "avgNephewReceived": 36.6,
+        "nephewCrushed": 1,
+        "nephewProtected": 36
+      }
+    },
+    {
+      "seed": 20261104,
+      "result": {
+        "runs": 40,
+        "crushedPlayer": 11,
+        "rankHist": {
+          "1": 6,
+          "2": 4,
+          "3": 2,
+          "4": 3,
+          "5": 7,
+          "6": 6,
+          "7": 12
+        },
+        "avgLeft": {
+          "你": 6.4,
+          "会计": 4.4,
+          "业务员": 2.9,
+          "新来的": 5.2,
+          "老油条": 2,
+          "美工": 3.6,
+          "小舅子": 1,
+          "出纳": 3.5
+        },
+        "avgBlame": {
+          "你": 11.4,
+          "会计": 8.7,
+          "业务员": 9,
+          "新来的": 15.8,
+          "老油条": 7.9,
+          "美工": 9.6,
+          "小舅子": 0,
+          "出纳": 7.3
+        },
+        "avgCaught": {
+          "你": 0.3,
+          "会计": 0.4,
+          "业务员": 0.5,
+          "新来的": 1.1,
+          "老油条": 0,
+          "美工": 0.6,
+          "小舅子": 0,
+          "出纳": 0.4
+        },
+        "avgBooms": 63.5,
+        "avgSkies": 5.9,
+        "crushedBots": 29,
+        "avgSpawned": 85,
+        "avgThrown": 169,
+        "avgLaunched": 198.1,
+        "avgMiss": 28.7,
+        "avgParry": 96.3,
+        "avgLeaderHits": 6.7,
+        "avgCrushT": 70,
+        "passed": 12,
+        "passRate": 0.3,
+        "avgPiesEaten": 0.7500000000000003,
+        "avgAllPiesEaten": 6.575000000000003,
+        "avgPieMeetings": 1.900000000000001,
+        "avgPiesSpawned": 7.600000000000004,
+        "avgNephewReceived": 35,
+        "nephewCrushed": 1,
+        "nephewProtected": 30
+      }
+    },
+    {
+      "seed": 20261105,
+      "result": {
+        "runs": 40,
+        "crushedPlayer": 10,
+        "rankHist": {
+          "1": 1,
+          "2": 2,
+          "3": 1,
+          "4": 5,
+          "5": 10,
+          "6": 7,
+          "7": 14
+        },
+        "avgLeft": {
+          "你": 6.4,
+          "会计": 4.2,
+          "业务员": 3.4,
+          "新来的": 4.7,
+          "老油条": 1.9,
+          "美工": 3.1,
+          "小舅子": 1.1,
+          "出纳": 3
+        },
+        "avgBlame": {
+          "你": 13.9,
+          "会计": 10.6,
+          "业务员": 6.9,
+          "新来的": 16.2,
+          "老油条": 8.7,
+          "美工": 10.2,
+          "小舅子": 0,
+          "出纳": 6.1
+        },
+        "avgCaught": {
+          "你": 0.3,
+          "会计": 0.6,
+          "业务员": 0.6,
+          "新来的": 1.2,
+          "老油条": 0,
+          "美工": 0.7,
+          "小舅子": 0,
+          "出纳": 0.4
+        },
+        "avgBooms": 66.2,
+        "avgSkies": 6.2,
+        "crushedBots": 23,
+        "avgSpawned": 85.5,
+        "avgThrown": 167,
+        "avgLaunched": 196.6,
+        "avgMiss": 29.4,
+        "avgParry": 100.4,
+        "avgLeaderHits": 7.4,
+        "avgCrushT": 62,
+        "passed": 4,
+        "passRate": 0.1,
+        "avgPiesEaten": 1,
+        "avgAllPiesEaten": 6.449999999999999,
+        "avgPieMeetings": 1.8750000000000007,
+        "avgPiesSpawned": 7.500000000000003,
+        "avgNephewReceived": 34.08,
+        "nephewCrushed": 1,
+        "nephewProtected": 26
+      }
+    }
+  ],
+  "node_wednesday": [
+    {
+      "seed": 20261102,
+      "result": {
+        "runs": 40,
+        "crushedPlayer": 9,
+        "rankHist": {
+          "1": 2,
+          "2": 5,
+          "3": 5,
+          "4": 6,
+          "5": 7,
+          "6": 15
+        },
+        "avgLeft": {
+          "你": 5.6,
+          "会计": 3.5,
+          "业务员": 2.3,
+          "新来的": 4,
+          "老油条": 2.2,
+          "美工": 2.4,
+          "小舅子": 1.2
+        },
+        "avgBlame": {
+          "你": 10.3,
+          "会计": 7.5,
+          "业务员": 8.1,
+          "新来的": 15.8,
+          "老油条": 8,
+          "美工": 8,
+          "小舅子": 0
+        },
+        "avgCaught": {
+          "你": 0.2,
+          "会计": 0.4,
+          "业务员": 0.5,
+          "新来的": 1.4,
+          "老油条": 0,
+          "美工": 0.6,
+          "小舅子": 0
+        },
+        "avgBooms": 51.9,
+        "avgSkies": 7.4,
+        "crushedBots": 7,
+        "avgSpawned": 72,
+        "avgThrown": 141,
+        "avgLaunched": 159,
+        "avgMiss": 17.9,
+        "avgParry": 74.9,
+        "avgLeaderHits": 5.2,
+        "avgCrushT": 97,
+        "passed": 12,
+        "passRate": 0.3,
+        "avgPiesEaten": 0,
+        "avgAllPiesEaten": 0,
+        "avgPieMeetings": 0,
+        "avgPiesSpawned": 0,
+        "avgNephewReceived": 33.45,
+        "nephewCrushed": 1,
+        "nephewProtected": 26
+      }
+    },
+    {
+      "seed": 20261103,
+      "result": {
+        "runs": 40,
+        "crushedPlayer": 6,
+        "rankHist": {
+          "1": 2,
+          "2": 6,
+          "3": 5,
+          "4": 12,
+          "5": 4,
+          "6": 11
+        },
+        "avgLeft": {
+          "你": 5.3,
+          "会计": 3.2,
+          "业务员": 3.8,
+          "新来的": 3.8,
+          "老油条": 2.2,
+          "美工": 3.1,
+          "小舅子": 0.9
+        },
+        "avgBlame": {
+          "你": 12.2,
+          "会计": 9,
+          "业务员": 8.4,
+          "新来的": 15,
+          "老油条": 6.7,
+          "美工": 7.7,
+          "小舅子": 0
+        },
+        "avgCaught": {
+          "你": 0.3,
+          "会计": 0.4,
+          "业务员": 0.8,
+          "新来的": 1.1,
+          "老油条": 0,
+          "美工": 0.8,
+          "小舅子": 0
+        },
+        "avgBooms": 52.8,
+        "avgSkies": 7.3,
+        "crushedBots": 15,
+        "avgSpawned": 75.5,
+        "avgThrown": 144.3,
+        "avgLaunched": 165.6,
+        "avgMiss": 21.1,
+        "avgParry": 80,
+        "avgLeaderHits": 5.1,
+        "avgCrushT": 89,
+        "passed": 13,
+        "passRate": 0.325,
+        "avgPiesEaten": 0,
+        "avgAllPiesEaten": 0,
+        "avgPieMeetings": 0,
+        "avgPiesSpawned": 0,
+        "avgNephewReceived": 35.73,
+        "nephewCrushed": 0,
+        "nephewProtected": 24
+      }
+    },
+    {
+      "seed": 20261104,
+      "result": {
+        "runs": 40,
+        "crushedPlayer": 8,
+        "rankHist": {
+          "1": 4,
+          "2": 3,
+          "3": 5,
+          "4": 5,
+          "5": 8,
+          "6": 15
+        },
+        "avgLeft": {
+          "你": 5.1,
+          "会计": 2.5,
+          "业务员": 2.9,
+          "新来的": 3.7,
+          "老油条": 1.7,
+          "美工": 2.5,
+          "小舅子": 0.7
+        },
+        "avgBlame": {
+          "你": 12.2,
+          "会计": 10.3,
+          "业务员": 8.5,
+          "新来的": 14.4,
+          "老油条": 8.3,
+          "美工": 8.5,
+          "小舅子": 0
+        },
+        "avgCaught": {
+          "你": 0.3,
+          "会计": 0.4,
+          "业务员": 0.7,
+          "新来的": 0.7,
+          "老油条": 0,
+          "美工": 0.5,
+          "小舅子": 0
+        },
+        "avgBooms": 56.9,
+        "avgSkies": 7.8,
+        "crushedBots": 7,
+        "avgSpawned": 75.1,
+        "avgThrown": 152.1,
+        "avgLaunched": 174.5,
+        "avgMiss": 22.3,
+        "avgParry": 82.5,
+        "avgLeaderHits": 5.3,
+        "avgCrushT": 69,
+        "passed": 12,
+        "passRate": 0.3,
+        "avgPiesEaten": 0,
+        "avgAllPiesEaten": 0,
+        "avgPieMeetings": 0,
+        "avgPiesSpawned": 0,
+        "avgNephewReceived": 38,
+        "nephewCrushed": 0,
+        "nephewProtected": 24
+      }
+    },
+    {
+      "seed": 20261105,
+      "result": {
+        "runs": 40,
+        "crushedPlayer": 8,
+        "rankHist": {
+          "1": 4,
+          "2": 4,
+          "3": 5,
+          "4": 5,
+          "5": 7,
+          "6": 15
+        },
+        "avgLeft": {
+          "你": 5.7,
+          "会计": 3.2,
+          "业务员": 2.7,
+          "新来的": 4.4,
+          "老油条": 1.8,
+          "美工": 2.8,
+          "小舅子": 1
+        },
+        "avgBlame": {
+          "你": 12.3,
+          "会计": 8.6,
+          "业务员": 8.3,
+          "新来的": 14.4,
+          "老油条": 7,
+          "美工": 7.7,
+          "小舅子": 0
+        },
+        "avgCaught": {
+          "你": 0.3,
+          "会计": 0.5,
+          "业务员": 0.5,
+          "新来的": 0.9,
+          "老油条": 0,
+          "美工": 0.6,
+          "小舅子": 0
+        },
+        "avgBooms": 53.2,
+        "avgSkies": 8.2,
+        "crushedBots": 8,
+        "avgSpawned": 74.8,
+        "avgThrown": 142.6,
+        "avgLaunched": 163.8,
+        "avgMiss": 21,
+        "avgParry": 78,
+        "avgLeaderHits": 5.6,
+        "avgCrushT": 91,
+        "passed": 13,
+        "passRate": 0.325,
+        "avgPiesEaten": 0,
+        "avgAllPiesEaten": 0,
+        "avgPieMeetings": 0,
+        "avgPiesSpawned": 0,
+        "avgNephewReceived": 35,
+        "nephewCrushed": 1,
+        "nephewProtected": 21
+      }
+    }
+  ],
+  "chrome": {
+    "seed": 20261102,
+    "wednesday": {
+      "runs": 40,
+      "passed": 15,
+      "passRate": 0.375,
+      "crushedPlayer": 6,
+      "avgBlame": 12.4
+    },
+    "thursday": {
+      "runs": 40,
+      "passed": 8,
+      "passRate": 0.2,
+      "crushedPlayer": 11,
+      "avgBlame": 12.1,
+      "avgPiesEaten": 0.925,
+      "avgPieMeetings": 1.9
+    }
+  },
+  "note": "Node harness uses real engine/game with DOM/audio stubs; Chrome is the acceptance result. Early crush ends a run before its second meeting."
+}

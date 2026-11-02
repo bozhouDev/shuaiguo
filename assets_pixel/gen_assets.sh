@@ -76,12 +76,24 @@ REFS[s6_props]="$SCENE_REF $PROP_REF"
 JOB[s7_ui]="Sheet layout: landscape 3:2, UI icons for the game HUD, 10 icons in 2 rows, each icon is a chunky pixel icon about the same size: 1) alarm clock, 2) black wok (side view, small), 3) gold crown with a ribbon (ranking), 4) gold star filled, 5) empty star outline (grey), 6) pause button (two bars), 7) speaker sound on, 8) speaker muted, 9) red exclamation warning sign, 10) office door with an exit arrow (off work / 下班)."
 REFS[s7_ui]="$SCENE_REF $STYLE_REF"
 
+# 周四新增：提示词与参考角色随原表保存，仍走内置 image_gen。
+JOB[s10_nephew]="$(cat "$OUT/s10_nephew.prompt.txt")"
+REFS[s10_nephew]="$STYLE_REF $OUT/s2_pm_tester.png"
+JOB[s11_cashier]="$(cat "$OUT/s11_cashier.prompt.txt")"
+REFS[s11_cashier]="$STYLE_REF $OUT/s2_pm_tester.png"
+JOB[s12_pie]="$(cat "$OUT/s12_pie.prompt.txt")"
+REFS[s12_pie]="$OUT/s2_pm_tester.png"
+
 # 需要生成哪些表：参数指定，否则全部
+# 周五老板娘单独出表；同一角色四姿势保持计算器和耳环一致。
+JOB[s13_wife]="$(cat "$OUT/s13_wife.prompt.txt")"
+REFS[s13_wife]="$OUT/s9_boss.png $OUT/s4_intern_director.png"
+
 keys=(${@:-${(k)JOB}})
 for key in $keys; do
   refargs=()
   for r in ${=REFS[$key]}; do refargs+=(-i "$r"); done
-  if [[ $key == s6_props || $key == s7_ui ]]; then extra=''; else extra="$CHAR"; fi
+  if [[ $key == s6_props || $key == s7_ui || $key == s12_pie ]]; then extra=''; else extra="$CHAR"; fi
   PROMPT="You are producing final production sprite sheets for the 2D pixel-art mobile game 这锅你来背 (an office game where coworkers throw cooking woks = blame at each other). Reference images are attached for style and identity.
 
 ${RULES}

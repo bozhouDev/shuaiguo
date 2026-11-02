@@ -1,0 +1,63 @@
+{
+  "runs": 200,
+  "crushedPlayer": 83,
+  "rankHist": {
+    "1": 1,
+    "2": 15,
+    "3": 18,
+    "4": 16,
+    "5": 22,
+    "6": 21,
+    "7": 16,
+    "8": 91
+  },
+  "avgLeft": {
+    "你": 7.4,
+    "会计": 5.8,
+    "业务员": 5,
+    "新来的": 5.9,
+    "老油条": 4.8,
+    "美工": 5.2,
+    "小舅子": 1.5,
+    "出纳": 4.6
+  },
+  "avgBlame": {
+    "你": 14.4,
+    "会计": 11.1,
+    "业务员": 10.7,
+    "新来的": 16.3,
+    "老油条": 10.4,
+    "美工": 10.1,
+    "小舅子": 0,
+    "出纳": 9
+  },
+  "avgCaught": {
+    "你": 0.4,
+    "会计": 0.5,
+    "业务员": 0.9,
+    "新来的": 1.3,
+    "老油条": 0,
+    "美工": 0.9,
+    "小舅子": 0,
+    "出纳": 0.7
+  },
+  "avgBooms": 72.9,
+  "avgSkies": 2.6,
+  "crushedBots": 243,
+  "avgSpawned": 103.2,
+  "avgThrown": 167.2,
+  "avgLaunched": 198.8,
+  "avgMiss": 31.5,
+  "avgParry": 105.7,
+  "avgLeaderHits": 10.6,
+  "avgCrushT": 77,
+  "passed": 16,
+  "passRate": 0.08,
+  "avgPiesEaten": 1.0450000000000004,
+  "avgAllPiesEaten": 6.499999999999996,
+  "avgPieMeetings": 1.8199999999999992,
+  "avgPiesSpawned": 7.279999999999997,
+  "avgNephewReceived": 40.6,
+  "nephewCrushed": 4,
+  "nephewProtected": 295
+}

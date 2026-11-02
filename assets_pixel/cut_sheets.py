@@ -30,18 +30,23 @@ NAMES = {
                  'cabinet', 'whiteboard', 'tea_counter', 'sofa'],
     's7_ui': ['ui_clock', 'ui_wok', 'ui_crown', 'ui_star', 'ui_star_empty',
               'ui_pause', 'ui_sound_on', 'ui_sound_off', 'ui_warning', 'ui_exit'],
+    's10_nephew': ['nephew_normal', 'nephew_hit', 'nephew_flat', 'nephew_crushed', 'nephew_phone'],
+    's11_cashier': ['cashier_normal', 'cashier_hit', 'cashier_angry', 'cashier_flat'],
+    's12_pie': ['pie', 'fx_hype'],
+    's13_wife': ['wife_walk', 'wife_aim', 'wife_chase', 'wife_idle'],
     's9_boss': ['boss_walk', 'boss_aim', 'boss_chase', 'boss_idle'],  # 地中海盖顶版老板（gen_assets.sh）
     's8_lobby_ui': ['ui_lock', 'ui_badge', 'ui_book', 'ui_calendar'],  # 大厅图标（gen_lobby.sh）
 }
 
 # 四向走路表：w_<角色>.png，3 行（朝下 d / 朝上 u / 朝右 s）× 4 帧 → <角色>_walk_<方向><帧号>
-WALKERS = ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director']
+WALKERS = ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director', 'nephew', 'cashier', 'wife']
 for _who in WALKERS:
     NAMES['w_' + _who] = [f'{_who}_walk_{d}{i}' for d in 'dus' for i in range(4)]
 
 # 每张表每行有几个素材（用于在每行里挑最宽的几道空隙切开）
 ROWS = {
     'ui_praise': [3],
+    's10_nephew': [5], 's11_cashier': [4], 's12_pie': [2], 's13_wife': [4],
     's1_player': [4], 's2_pm_tester': [4, 4], 's3_designer_veteran': [4, 4],
     's4_intern_director': [4, 4], 's5_boss_items': [4, 7], 's6_props': [3, 4, 4], 's7_ui': [5, 5], 's8_lobby_ui': [4], 's9_boss': [4],
     **{'w_' + w: [4, 4, 4] for w in WALKERS},

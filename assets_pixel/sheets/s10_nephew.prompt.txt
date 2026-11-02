@@ -1,0 +1,10 @@
+Built-in image_gen production notes. Reference roles: style only unless identity reference specified.
+Background: ONE solid flat pure magenta color #FF00FF. No gradient, no grid, no shadows.
+NO TEXT anywhere.
+Crisp 16-bit pixel art: hard pixel edges, no anti-aliasing, no blur, no glow,
+limited palette, 1-pixel dark outline, the SAME pixel scale for every sprite.
+Camera: classic 16-bit RPG 3/4 top-down. Strictly flat 2D, no perspective, no isometric.
+FULL-BODY chibi characters (head approximately 1/3 height), never busts.
+Sprites must not contain magenta or pink close to #FF00FF.
+
+References: ../prototypes/style-explore/c_pixel.png and s2_pm_tester.png (style). One row, five poses: normal, hit, flat, crushed, phone. Same young man: black swept short hair, forest-green shirt, black trousers, dark brown shoes, large gold chain, small dark phone. No hat/glasses/badge/tie/tablet/cup. Full body 64px game height. Generous magenta separation.

@@ -39,6 +39,16 @@ REF[w_boss]=/Users/bozhou/my/min_games/prototypes/boss-ugly/sheets/a_combover.pn
 WHO[w_director]='the director: middle-aged man, black glasses, neat dark hair, grey suit, blue tie, holding a yellow clipboard, drawn a bit bigger than coworkers.'
 REF[w_director]=director_walk
 
+# 新同事直接附已切好的正式站姿作为身份参考。
+WHO[w_nephew]='young male coworker with black swept short hair, forest-green shirt, black trousers, dark brown shoes, large gold chain necklace, looking down at a small dark phone. No hat, glasses, badge or tie.'
+REF[w_nephew]=nephew_normal
+WHO[w_cashier]='female cashier with black chin-length bob, brick-red shirt, oversized charcoal sleeve covers on both forearms, charcoal trousers and brown shoes. No glasses, hat, badge, jewelry or handheld items.'
+REF[w_cashier]=cashier_normal
+
+# 老板娘走路以正式静态表为身份基准，左向沿用右向镜像。
+WHO[w_wife]='middle-aged boss wife, voluminous dark brown wavy perm, gold hoop earrings, ochre leopard-print jacket with black spots, plain black shirt and trousers, brown shoes, stern round face. Always hold charcoal calculator in LEFT hand, blank display without numbers. No necklace or glasses.'
+REF[w_wife]=wife_walk
+
 keys=(${@:-${(k)WHO}})
 for key in $keys; do
   PROMPT="You are producing final production sprite sheets for the 2D pixel-art mobile game 这锅你来背 (an office game). Reference images are attached.

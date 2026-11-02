@@ -245,7 +245,8 @@
     ctx.beginPath(); ctx.moveTo(R + 11, 0); ctx.lineTo(R - 2, -9); ctx.lineTo(R - 2, 9); ctx.closePath(); ctx.fill();
     ctx.restore();
     ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
-    const head = typeof icon === 'string' ? null : E.headCrop(icon.sprite);
+    // whole：道具类素材（如饼）整张缩进圈里，不按人物裁头像
+    const head = typeof icon === 'string' ? null : icon.whole ? wholeCrop(icon.sprite) : E.headCrop(icon.sprite);
     if (head) {
       // 像素头像：浅色底 + 圆形裁切，不做平滑保留像素感
       ctx.fillStyle = '#FFF8E7';
@@ -253,8 +254,8 @@
       ctx.save();
       ctx.clip();
       ctx.imageSmoothingEnabled = false;
-      const d = (R - 3) * 2.15;            // 头像略大于圆，裁掉边角留白
-      ctx.drawImage(head.canvas, head.sx, head.sy, head.size, head.size, -d / 2, -d / 2 + 2, d, d);
+      const d = (R - 3) * (icon.whole ? 1.6 : 2.15); // 头像略大于圆，裁掉边角留白；道具整张放进圈里
+      ctx.drawImage(head.canvas, head.sx, head.sy, head.size, head.size, -d / 2, -d / 2 + (icon.whole ? 0 : 2), d, d);
       ctx.restore();
     }
     ctx.restore();
@@ -265,6 +266,13 @@
 
   // 从全身像素图裁出头像区域（缓存）：取上部较窄的一段算头的水平中心，裁一个正方形
   const headCache = {};
+  // 整张素材按长边取正方形，供屏幕边缘提示画道具图标
+  function wholeCrop(name) {
+    const s = E.spr[name];
+    if (!s) return null;
+    const c = s.canvas, size = Math.max(c.width, c.height);
+    return { canvas: c, sx: (c.width - size) / 2, sy: (c.height - size) / 2, size };
+  }
   E.headCrop = function (name) {
     if (headCache[name] !== undefined) return headCache[name];
     const s = E.spr[name];
@@ -589,7 +597,10 @@
     if (current) dismissPraise(current, true);
     const el = document.createElement('div'); el.className = 'praise-item'; el.dataset.kind = kind;
     el.style.top = pos.y + 'px'; el.style.transform = `translate(-50%, -50%) scale(${pos.scale})`;
-    const inner = template.cloneNode(true); el.append(inner); layer.append(el);
+    const inner = template.cloneNode(true);
+    // 名额变化只换副标题，前三关卡仍用原文案与同宽底板。
+    if (opts.sub) inner.querySelector('.praise-sub').textContent = opts.sub;
+    el.append(inner); layer.append(el);
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const item = { kind, el, reduce }; current = item; praiseItems.add(item);
     const popDuration = reduce ? PRAISE_TIME.reduce : PRAISE_TIME.pop;
