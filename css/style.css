@@ -329,9 +329,11 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 .lb-go img { position: absolute; left: 14px; top: 50%; height: 44px; margin-top: -24px; }
 .lb-go i { position: absolute; right: 18px; top: 50%; margin-top: -14px; border-left: 17px solid var(--ink); border-top: 12px solid transparent; border-bottom: 12px solid transparent; }
 .lb-go:active { translate: 0 3px; filter: drop-shadow(0 1px 0 #0F1628); }
-/* 玩法：奶油切角小按钮，居中 */
+/* 去上班下方一行两个小按钮（老板名称 / 玩法），各占一半 */
+.lb-subs { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+/* 老板名称 / 玩法：奶油切角小按钮，内容居中 */
 .lb-rules {
-  display: flex; align-items: center; gap: 8px; padding: 3px 28px 6px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px; padding: 3px 8px 6px; cursor: pointer; white-space: nowrap;
   background: none; border: 8px solid transparent; border-image: var(--frame-cream) 4 fill / 8px stretch;
   box-shadow: inset 0 -4px 0 var(--pop-line); filter: drop-shadow(0 3px 0 #0F1628);
   font-family: var(--pop-font); font-weight: 900; font-size: 20px; color: var(--ink);

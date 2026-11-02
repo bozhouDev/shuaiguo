@@ -190,7 +190,7 @@
   function bossName() { return cleanBossName(loadProgress().bossName) || '老板'; }
   // 大厅编辑称呼：用 value/textContent 填用户内容，避免被当作 HTML。
   function showBossNameEditor() {
-    E.showPanel(`<div class="pop-head">老板称呼</div>
+    E.showPanel(`<div class="pop-head">老板名称</div>
       <label for="bossNameInput">给老板起个称呼</label>
       <input id="bossNameInput" type="text" autocomplete="off" placeholder="老板" aria-describedby="bossNameHelp">
       <p class="sub" id="bossNameHelp">最多 6 个字，留空恢复“老板”</p>
@@ -2395,10 +2395,11 @@
         <div class="lb-days">${days}</div>
         <p class="lb-cur"><span>第 ${L.id} 关 · ${L.name}</span></p>
         <button class="lb-go" type="button" data-act="go"><img src="${E.pxUrl('ui_badge')}" alt=""><span>去上班</span><i></i></button>
-        <button class="lb-rules" type="button" data-act="boss-name">老板称呼：<span id="lobbyBossName"></span></button>
-        <button class="lb-rules" type="button" data-act="rules"><img src="${E.pxUrl('ui_book')}" alt="">玩法</button>
+        <div class="lb-subs">
+          <button class="lb-rules" type="button" data-act="boss-name"><img src="${E.pxUrl('ui_crown')}" alt="">老板名称</button>
+          <button class="lb-rules" type="button" data-act="rules"><img src="${E.pxUrl('ui_book')}" alt="">玩法</button>
+        </div>
       </div>`;
-    document.getElementById('lobbyBossName').textContent = bossName();
     lobby.heroT = 0;
     lobby.el.hidden = false;
   }
