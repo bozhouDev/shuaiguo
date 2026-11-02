@@ -100,7 +100,9 @@
    * pace：领导丢锅节奏——从第 t 秒起，每位领导约每 every 秒丢一次
    * bursts：会议室定期「散会」喷锅，at 前 2.5 秒先发群消息；{time} 会替换成屏幕时钟
    * events：随机事件——从 pool 里抽 n 个不重复的，在 window 时间段内均匀错开触发
-   * ai：同事难度倍率——aggr 甩锅积极度、parry 反甩成功率（乘在人设上）
+   * ai：同事难度倍率——aggr 甩锅积极度、parry 反甩成功率、dodge 躲锅、sneak 领导面前忍住不甩（乘在人设上）；
+   *     focus 盯人程度（0 = 只找最近的人甩，越大越专挑同事里总账最少的人，玩家领先时就是盯你）
+   * leaderFocus：老板、经理每次派活先点你名的概率（你在丢锅范围内才算）
    * potLife：每口锅的截止秒数（落到人身上开始计时，甩来甩去不重置，到点在谁身上谁背锅）
    * skyChance：老板每次丢锅变成「天降锅」（只砸主角、躲不掉）的概率
    * pieMeetings：老板画饼会议列表，t 开始秒数、duration 讲话时长、count 饼数、life 留地秒数
@@ -154,7 +156,7 @@
           { do: 'expire', say: '看好了：锅*到点*在谁身上，谁就*背锅*。', say2: '*{who}*背锅 +1。你空手，~一点事没有~。' },
           { do: 'sight', say: '老板出来巡视了。他面前的!红扇形!是*视野*。', say2: '在视野里甩锅会被*抓现行*：!锅甩不走，还要背锅!。' },
           { do: 'dodge', say: '老板又给你丢了一口。先*走出红扇形*，再甩给*会计*。', alt: '老板又给你丢了一口。别在!红扇形!里甩，把锅甩给*会计*。' },
-          { do: 'rank', say: '右上角是*名次*，按背锅次数排。*18:00 背锅最少的前三名*能下班。你现在~第 1~，保持住。' },
+          { do: 'rank', say: '右上角是*名次*，按背锅次数排，身上没甩掉的锅下班时也按*半口*算。*18:00 总账最少的前三名*能下班。你现在~第 1~，保持住。' },
         ],
       },
     },
@@ -165,16 +167,17 @@
       desc: '老板派活更勤了，同事也学会了反甩。会议室散会、打印机卡纸都会喷锅，18:00 背锅最少的前三名下班。',
       duration: 120,        // 实际秒数，对应 09:00 ~ 18:00
       startPots: 1,         // 同事开局自带的锅（主角开局空手，第一口是天降锅）
-      potLife: 30,
-      skyChance: 0.25,
+      potLife: 26,          // 2026-11-02 加难：30 → 26
+      skyChance: 0.3,
       bots: ['pm', 'intern', 'veteran'],
       leaders: [{ type: 'boss', route: 'boss' }],
-      ai: { aggr: 0.7, parry: 0.45 },   // 第 2 关：同事不太主动，也不太会反甩
+      ai: { aggr: 0.9, parry: 0.7, dodge: 1.1, focus: 0.5 },   // 第 2 关：同事开始会盯着账面干净的人甩
+      leaderFocus: 0.25,
       pace: [
-        { t: 6, every: 8 },
-        { t: 40, every: 6.5 },
-        { t: 80, every: 5.2 },
-        { t: 107, every: 3, toast: '17:00 下班前突击派活！' },
+        { t: 6, every: 7 },
+        { t: 40, every: 5.5 },
+        { t: 80, every: 4.5 },
+        { t: 107, every: 2.6, toast: '17:00 下班前突击派活！' },
       ],
       bursts: [
         { t: 30, src: 'meeting', n: 3, msg: '【全员群】行政：{time} 周会结束，散会！' },
@@ -197,17 +200,18 @@
       desc: '经理和小舅子都来了。小舅子接锅就塞给别人，别当着老板的面甩给他！',
       duration: 120,
       startPots: 2,
-      potLife: 24,
-      skyChance: 0.3,
+      potLife: 20,          // 2026-11-02 加难：24 → 20
+      skyChance: 0.35,
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew'],
       nephewRanked: false, // 小舅子不占前三名额；以后周五设 true 就会占名额
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }],
-      ai: { aggr: 1.15, parry: 1.1 },  // 第 3 关同事更狠：追着甩、更会反甩
+      ai: { aggr: 1.35, parry: 1.3, dodge: 1.2, sneak: 1.2, focus: 1 },  // 第 3 关同事更狠：追着领先的人甩、更会反甩、更会躲
+      leaderFocus: 0.35,
       pace: [
-        { t: 3, every: 5.5 },
-        { t: 30, every: 4.5 },
-        { t: 70, every: 3.6 },
-        { t: 105, every: 2, toast: '17:00 下班前突击派活！' },
+        { t: 3, every: 4.8 },
+        { t: 30, every: 3.9 },
+        { t: 70, every: 3.1 },
+        { t: 105, every: 1.8, toast: '17:00 下班前突击派活！' },
       ],
       bursts: [
         { t: 25, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 月度总结会结束，散会！' },
@@ -227,14 +231,15 @@
       name: '周四 · 老板画饼',
       theme: 'autumn',
       desc: '老板开会画大饼，出纳跟着大家落井下石。吃饼多两口锅，换十秒鸡血，七人争前三！',
-      duration: 120, startPots: 2, potLife: 24, skyChance: 0.25,
+      duration: 120, startPots: 3, potLife: 20, skyChance: 0.3,  // 2026-11-02 加难：开局 2 → 3 口，期限 24 → 20
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew', 'cashier'],
       nephewRanked: false,
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }],
-      ai: { aggr: 1.2, parry: 1.1 },
+      ai: { aggr: 1.4, parry: 1.3, dodge: 1.25, sneak: 1.2, focus: 1.2 },
+      leaderFocus: 0.4,
       pace: [
-        { t: 3, every: 5.5 }, { t: 30, every: 4.5 }, { t: 70, every: 3.6 },
-        { t: 105, every: 2, toast: '17:00 下班前突击派活！' },
+        { t: 3, every: 4.8 }, { t: 30, every: 3.9 }, { t: 70, every: 3.1 },
+        { t: 105, every: 1.8, toast: '17:00 下班前突击派活！' },
       ],
       // 09:00–18:00 对应 120 秒：22 秒约 10:39，74 秒约 14:33。
       pieMeetings: [{ t: 22, duration: 3.6, count: 4, life: 9 }, { t: 74, duration: 3.6, count: 4, life: 9 }],
@@ -255,13 +260,14 @@
       id: 5,
       name: '周五 · 老板娘查账', theme: 'winter',
       desc: '今天只有 2 个下班名额，小舅子占 1 个；把他压垮就空出一个。老板娘专查同事里的第 1 名。',
-      duration: 120, startPots: 2, potLife: 23, skyChance: 0.08,
+      duration: 120, startPots: 3, potLife: 19, skyChance: 0.12,  // 2026-11-02 加难：开局 2 → 3 口，期限 23 → 19
       passRank: 2, passStars: 3, nephewRanked: true,
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew', 'cashier'],
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }, { type: 'wife', route: 'wife' }],
-      ai: { aggr: 1.25, parry: 1.15 },
+      ai: { aggr: 1.45, parry: 1.35, dodge: 1.3, sneak: 1.25, focus: 1.4 },
+      leaderFocus: 0.45,
       pace: [
-        { t: 3, every: 5 }, { t: 30, every: 4 }, { t: 70, every: 3.2 },
+        { t: 3, every: 4.4 }, { t: 30, every: 3.5 }, { t: 70, every: 2.8 },
         { t: 105, every: 2, toast: '17:00 下班前突击派活！' },
       ],
       pieMeetings: [{ t: 22, duration: 3.6, count: 4, life: 9 }, { t: 74, duration: 3.6, count: 4, life: 9 }],

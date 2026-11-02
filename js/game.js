@@ -3,7 +3,7 @@
  * 核心循环：领导远程丢锅 / 天降锅（只砸主角）/ 会议室散会喷锅 / 随机事件 → 被砸中就粘在身后
  *          → 每口锅都有截止时间，甩来甩去不重置；到点时锅在谁身上，谁「背锅 +1」（P0 +3）
  *          → 按「甩」把最急的那口扔出去：砸中谁就是谁的，甩空立刻弹回；在领导视野里甩会被抓现行
- *          → 18:00 按背锅次数排名，进前三过关；身上堆满 12 口当场压垮
+ *          → 18:00 按总账（背锅次数 + 身上锅 ×½）排名，进前三过关；身上堆满 12 口当场压垮
  * 玩家和机器人同事是同一种「打工人」，唯一区别是方向由手指给还是由 AI 给
  * ========================================================= */
 (function () {
@@ -53,6 +53,7 @@
   const NO_RETURN = 1.5;       // 同事接锅后多久内不会主动瞄准刚甩给他的人（玩家不受限）
   const MAX_POTS = 12;         // 身上堆满即被压垮（玩家直接失败，同事出局）
   const POT_ALARM = 9;         // 堆到这么多开始报警（锅数条变红、冒汗）
+  const CARRY_W = 0.5;         // 下班结算：身上还背着的锅按几口算进总账（炸了的锅算 1 次，没炸的按半口）
   const DUE_DEFAULT = 30;      // 锅的截止时间（关卡没配 potLife 时用）：落到人身上开始倒计时，甩来甩去不重置
   const DUE_WARN = 10;         // 剩几秒变黄
   const DUE_DANGER = 5;        // 剩几秒变红冒烟
@@ -152,6 +153,11 @@
   const urgentLeft = (a) => { const i = urgentIdx(a); return i < 0 ? Infinity : a.sn.segs[i].due - S.t; };
   // 某人身上有没有 P0
   const holdsHot = (a) => a.sn.segs.some((p) => p.hot);
+  // 总账 = 背锅次数（炸了的锅）+ 身上还背着的锅 × CARRY_W；急件按炸了的分量（P0_BLAME）折算。排名、HUD、结算都看它
+  const carryOf = (a) => a.sn.segs.reduce((sum, p) => sum + (p.hot ? P0_BLAME : 1), 0) * CARRY_W;
+  const debtOf = (a) => a.blames + carryOf(a);
+  // 总账显示：整数不带小数，半口显示成 .5
+  const fmtDebt = (x) => (Number.isInteger(x) ? String(x) : x.toFixed(1));
   // 两个打工人蛇头之间的距离
   const headDist = (a, b) => E.dist(a.sn.x, a.sn.y, b.sn.x, b.sn.y);
   // 上班时钟：开始上班后过了几秒（带教期间 t0 = Infinity，结果是 -Infinity，时钟停在 09:00）
@@ -391,7 +397,13 @@
   // 飞行锅砸中某人
   // 冒一个一次性特效（如撞击星）：name 贴图名，size 绘制宽度，dur 持续秒数
   function spawnFx(name, x, y, size, dur) {
-    S.fx.push({ name, x, y, size, t: 0, dur: dur || 0.35 });
+    const e = { name, x, y, size, t: 0, dur: dur || 0.35 };
+    S.fx.push(e);
+    return e;
+  }
+  // 特效跟着某人走：记下相对蛇头的偏移，绘制时按蛇头当前位置换算（人边走边炸，爆炸不留在原地）
+  function fxPos(e) {
+    return e.follow ? { x: e.follow.sn.x + e.dx, y: e.follow.sn.y + e.dy } : e;
   }
   function potHit(a, f) {
     // 带教不计入复盘；只记录实际落到主角身上的锅。
@@ -696,10 +708,12 @@
       E.sfx('blame');
     } else floats.add(`${a.name} 背锅 +${n}`, a.sn.x, a.sn.y - 40, '#5E6A84');
   }
-  // 一口锅到点出事：算在 a 头上，锅消失
-  function explode(a, pot, pos) {
+  // 一口锅到点出事：算在 a 头上，锅消失；onBody = 锅在人身上炸（特效跟着人走），否则是空中炸
+  function explode(a, pot, pos, onBody) {
     S.booms++;
-    spawnFx('pot_explosion', pos.x, pos.y, pot.hot ? 110 : 92, 1.05);
+    // 33 帧 × 30fps = 1.1 秒，整段放完；在人身上炸的跟着这个人走，空中炸的留在原地
+    const fx = spawnFx('pot_explosion', pos.x, pos.y, pot.hot ? 110 : 92, 1.1);
+    if (onBody) { fx.follow = a; fx.dx = pos.x - a.sn.x; fx.dy = pos.y - a.sn.y; }
     // 他拿着或正在塞出去的锅到期，算最后甩给他的同事；责任人已出局也照记。
     // 没人甩给他的领导/散会锅到期直接消失，不凭空栽给玩家。
     const liable = a.key === 'nephew' ? pot.nephewSender : a;
@@ -716,7 +730,7 @@
       for (let i = a.sn.segs.length - 1; i >= 0; i--) {
         if (a.sn.segs[i].due > S.t) continue;
         const pot = a.sn.segs.splice(i, 1)[0];
-        explode(a, pot, positions[i]);
+        explode(a, pot, positions[i], true);
       }
     }
     for (const f of S.throws) if (!f.dead && f.pot.due <= S.t) { f.dead = true; if (!f.owner.crushed) explode(f.owner, f.pot, f); }
@@ -869,12 +883,17 @@
     return bi;
   }
   // 「谁闲着丢给谁」：视野里身上锅最少的几个人（锅数相同随机）
+  // 关卡 leaderFocus：老板、经理每次派活有这个概率先点你的名（你在丢锅范围内才算），剩下的名额照旧丢给闲人
   function pickTargets(l) {
     // 查账按完整榜单选第一位在场同事，排除小舅子；距离和玩家身份都不改目标。
     if (l.type === 'wife') return ranking().filter((a) => !a.crushed && a.key !== 'nephew').slice(0, 1);
     const cand = S.agents.filter((a) => !a.crushed && E.dist(a.sn.x, a.sn.y, l.x, l.y) < l.cfg.range)
       .map((a) => ({ a, k: potsOf(a) + Math.random() * 0.9 }))
       .sort((x, y) => x.k - y.k);
+    const P = S.player;
+    if (cand.some((c) => c.a === P) && Math.random() < (L.leaderFocus || 0)) {
+      return [P].concat(cand.filter((c) => c.a !== P).slice(0, l.cfg.count - 1).map((c) => c.a));
+    }
     return cand.slice(0, l.cfg.count).map((c) => c.a);
   }
   // 带教时的领导：原地站着（视野照常），只按剧本走位、给人派锅；不追人，撞上也不派锅
@@ -1365,17 +1384,30 @@
     }
     return ang;
   }
+  // 同事里总账最少的人（不算自己和小舅子）：聪明的同事专挑账面干净的人甩，把领先的人拉下来
+  function cleanestRival(a) {
+    let best = null;
+    for (const b of S.agents) {
+      if (b === a || b.crushed || b.key === 'nephew') continue;
+      if (!best || debtOf(b) < debtOf(best)) best = b;
+    }
+    return best;
+  }
   // 想甩锅的对象：半径内能甩的人里最近的（已有目标且仍有效时不轻易换人）
+  // 关卡 ai.focus > 0 时，总账最少的那个人算「更近」、也能从更远处被盯上（focus 越大越执着）
   function pickDumpTarget(a) {
     const follow = followTarget(a, false);
     if (follow) return follow;
-    const r = a.p.seekR;
+    const r = a.p.seekR, focus = a.isPlayer || !L.ai ? 0 : L.ai.focus || 0; // 玩家托管时不吃关卡加成
     if (a.target && !a.target.crushed && (a.lock[a.target.id] || 0) <= S.t && headDist(a, a.target) < r * 1.3) return a.target;
-    let best = null, bd = r;
+    const top = focus ? cleanestRival(a) : null;
+    let best = null, bd = Infinity;
     for (const b of S.agents) {
       if (b === a || b.crushed || (a.lock[b.id] || 0) > S.t) continue;
-      const d = headDist(a, b);
-      if (d < bd) { bd = d; best = b; }
+      const d = headDist(a, b), isTop = b === top;
+      if (d > r * (isTop ? 1 + focus * 0.6 : 1)) continue;
+      const score = isTop ? d / (1 + focus) : d;
+      if (score < bd) { bd = score; best = b; }
     }
     return best;
   }
@@ -1427,14 +1459,14 @@
       const fx = Math.cos(f.a), fy = Math.sin(f.a);
       if ((dx * fx + dy * fy) / d < 0.75) continue; // 不是冲自己来的
       const side = fx * dy - fy * dx >= 0 ? 1 : -1;
-      const w = p.dodge * (1 - d / 260) * 3;
+      const w = p.dodge * aiMul(a, 'dodge') * (1 - d / 260) * 3;
       vx += -fy * side * w; vy += fx * side * w;
     }
     // 领导瞄准自己时也提前横移
     for (const l of S.leaders) {
       if (l.state === 'aim' && l.targets.includes(a)) {
         const d = Math.max(1, E.dist(me.x, me.y, l.x, l.y));
-        vx += (-(me.y - l.y) / d) * p.dodge; vy += ((me.x - l.x) / d) * p.dodge;
+        vx += (-(me.y - l.y) / d) * p.dodge * aiMul(a, 'dodge'); vy += ((me.x - l.x) / d) * p.dodge * aiMul(a, 'dodge');
       }
       // 2. 躲领导
       const d = E.dist(me.x, me.y, l.x, l.y);
@@ -1493,7 +1525,7 @@
     if (canFire(a)) {
       const b = pickAim(a);
       if (b && headDist(a, b) < p.throwR * (hyped(a) ? 200 / 150 : 1) && (rush || (pots >= p.seekMin && (a.lock[b.id] || 0) <= S.t)) &&
-        Math.random() < 0.45 + 0.55 * p.aggr * aiMul(a, 'aggr') && !(seenBy(a) && Math.random() < p.sneak) && !avoidsNephew(a, b)) fireThrow(a);
+        Math.random() < 0.45 + 0.55 * p.aggr * aiMul(a, 'aggr') && !(seenBy(a) && Math.random() < Math.min(1, p.sneak * aiMul(a, 'sneak'))) && !avoidsNephew(a, b)) fireThrow(a);
     }
   }
 
@@ -1549,12 +1581,12 @@
   }
 
   /* ---------------- 排名 ---------------- */
-  // 排名：没被压垮的在前；背锅次数少的在前；再比身上锅少、甩出去的多；被压垮的人越晚压垮排越前
+  // 排名：没被压垮的在前；总账（背锅次数 + 身上锅 × ½）少的在前；同分再比背锅次数少、甩出去的多；被压垮的人越晚压垮排越前
   function ranking() {
     return S.agents.filter((a) => a.key !== 'nephew' || L.nephewRanked === true).sort((a, b) =>
       (a.crushed - b.crushed) ||
       (!a.crushed && ((b.key === 'nephew') - (a.key === 'nephew'))) ||
-      (a.crushed ? b.crushedAt - a.crushedAt : (a.blames - b.blames) || (potsOf(a) - potsOf(b))) ||
+      (a.crushed ? b.crushedAt - a.crushedAt : (debtOf(a) - debtOf(b)) || (a.blames - b.blames)) ||
       (b.thrown - a.thrown));
   }
   // 名次 → 星级：第 1 名 3 星，第 2 名 2 星，第 3 名 1 星，其余 0
@@ -2092,6 +2124,7 @@
     // 一次性特效：先弹大再回落，后半段淡出
     for (const e of S.fx) {
       const k = e.t / e.dur;
+      const at = fxPos(e);
       if (e.name === 'pot_explosion') {
         const sheet = E.spr[POT_EXPLOSION];
         if (sheet) {
@@ -2100,13 +2133,13 @@
           ctx.save();
           ctx.imageSmoothingEnabled = false;
           ctx.drawImage(sheet.canvas, frame % 6 * 184, Math.floor(frame / 6) * 144, 184, 144,
-            e.x - e.size / 2, e.y - e.size * 72 / 184, e.size, e.size * 144 / 184);
+            at.x - e.size / 2, at.y - e.size * 72 / 184, e.size, e.size * 144 / 184);
           ctx.restore();
-        } else E.drawSprite(ctx, 'fx_impact', e.x, e.y, e.size * 0.5, { alpha: 1 - k });
+        } else E.drawSprite(ctx, 'fx_impact', at.x, at.y, e.size * 0.5, { alpha: 1 - k });
         continue;
       }
       const sc = k < 0.25 ? 0.5 + k * 2.6 : 1.15 - (k - 0.25) * 0.3;
-      E.drawSprite(ctx, e.name, e.x, e.y, e.size * sc, { alpha: k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4, rot: k * 0.5 });
+      E.drawSprite(ctx, e.name, at.x, at.y, e.size * sc, { alpha: k < 0.6 ? 1 : 1 - (k - 0.6) / 0.4, rot: k * 0.5 });
     }
 
     for (const l of S.leaders) if (l.meeting || l.pieSayUntil > S.t) drawPieSpeech(l, camX, camY);
@@ -2154,7 +2187,9 @@
     E.setText('hClock', clockAt(w));
     E.setText('hPotsN', `${n}/${MAX_POTS}`);
     E.setText('hRank', `第 ${myRank}/${rank.length} 名`);
-    E.setText('hBlame', `背锅 ${P.blames}`);
+    // 身上没锅时只显示背锅次数；有锅时补上「+ 身上折算」，让玩家知道没甩掉的锅下班也要算账
+    const carry = carryOf(P);
+    E.setText('hBlame', carry ? `背锅 ${P.blames}+${fmtDebt(carry)}` : `背锅 ${P.blames}`);
     // 增益图标只在生效时显示，出差到期或金牌用掉后立即隐藏。
     const buff = BUFFS[S.buff], buffChip = document.getElementById('hBuff');
     buffChip.hidden = !buff || (S.buff === 'trip' && w >= 30) || (S.buff === 'gold' && S.buffUsed);
@@ -2314,9 +2349,10 @@
     // 进度：过关解锁下一关、记录本关最好成绩
     const prog = loadProgress();
     const old = prog.best[L.id];
-    // 最好成绩：星多的好；星一样比背锅少（旧存档没有 blames，当作最差）
-    const isBest = stars > 0 && (!old || stars > old.stars || (stars === old.stars && P.blames < (old.blames == null ? Infinity : old.blames)));
-    if (isBest) prog.best[L.id] = { blames: P.blames, stars };
+    // 最好成绩：星多的好；星一样比总账少（旧存档没有 debt 就用 blames，再没有当作最差）
+    const myDebt = debtOf(P), oldDebt = old ? old.debt ?? old.blames ?? Infinity : Infinity;
+    const isBest = stars > 0 && (!old || stars > old.stars || (stars === old.stars && myDebt < oldDebt));
+    if (isBest) prog.best[L.id] = { blames: P.blames, debt: myDebt, stars };
     const unlockedNew = stars > 0 && L.id + 1 > prog.unlocked && LEVELS.some((lv) => lv.id === L.id + 1);
     if (stars > 0) prog.unlocked = Math.max(prog.unlocked, L.id + 1);
     saveProgress(prog);
@@ -2329,7 +2365,7 @@
 
     // 名次后面跟的短称号
     const title = crushed ? '锅太多，走不动了' : !stars ? '被留下加班' : ['', '甩锅宗师', '职场老油条', '勉强下班'][myRank];
-    // 最终排名表：名次 / 名字 / 锅图标 + 背锅次数，被压垮的写「压垮」
+    // 最终排名表：名次 / 名字 / 锅图标 + 总账（下面小字拆成炸了几口、身上折几口），被压垮的写「压垮」
     const nephew = S.agents.find((a) => a.key === 'nephew');
     const pieReport = P.piesEaten ? `今天吃了老板 ${P.piesEaten} 张饼` : '';
     const nephewReport = !nephew ? '' : S.nephewCrushed ? '今天我把老板小舅子压垮了' : '老板小舅子今天背锅 0 次，第一个下班';
@@ -2339,7 +2375,7 @@
       if (!stars && i >= passRank() && a !== P) return '';
       const gap = !stars && a === P && i > passRank() ? `<li class="gap">… 中间还有 ${i - passRank()} 人</li>` : '';
       return `${gap}<li class="${a.isPlayer ? 'me' : ''}${i === passRank() - 1 && rank.length > passRank() ? ' cut' : ''}">
-      <b>${i + 1}</b><span>${a.isPlayer ? '你' : a.key === 'nephew' ? '老板小舅子' : a.name}</span>${a.crushed || (a.isPlayer && crushed) ? '<span class="crush">被压垮</span>' : `<img src="${E.pxUrl('ui_wok')}" alt="背锅"><em>${a.blames}</em>`}</li>`;
+      <b>${i + 1}</b><span>${a.isPlayer ? '你' : a.key === 'nephew' ? '老板小舅子' : a.name}<small class="debt-split">炸了 ${a.blames} · 身上 ${potsOf(a)} 口</small></span>${a.crushed || (a.isPlayer && crushed) ? '<span class="crush">被压垮</span>' : `<img src="${E.pxUrl('ui_wok')}" alt="总账"><em>${fmtDebt(debtOf(a))}</em>`}</li>`;
     }).join('');
     const next = LEVELS[LEVELS.indexOf(L) + 1];
     // 大字：过关「第 N 名」带放射光；没过关「第 N 名」不带光；被压垮直接写「被压垮」
@@ -2368,6 +2404,7 @@
       <div class="pop-head">${pxIcon('trophy')}${crushed ? '被锅压垮了' : stars ? '准点下班！' : '这次得加班了'}</div>
       ${big}
       <p class="res-of">/ ${rank.length}人 · ${title}${starHtml}${isBest ? '<em>新纪录</em>' : ''}</p>
+      <p class="sub debt-rule">总账 = 炸了的锅 + 身上还背着的锅 × ½</p>
       <ol class="ranklist${stars ? '' : ' compact'}">${table}</ol>${nephewReport ? `<p class="sub">${nephewReport}</p>` : ''}${pieReport ? `<p class="sub">${pieReport}</p>` : ''}${L.id === 5 && stars ? '<p class="sub">我们是大小周，明天照常上班</p>' : ''}${diagHtml}
       <button class="share-btn${shareKind === 'blame' ? ' blame' : ''}" type="button" data-act="share">${pxIcon('share')}${shareLabel}</button>
       ${crushed && !S.revived ? '<button class="btn ad" data-act="revive">甩掉 6 口锅，接着熬</button>' : ''}
@@ -2563,7 +2600,8 @@
     const basic = `
         <li><span>⏰</span>每口锅都有截止时间（${potLife()} 秒），甩来甩去不重置；到点在谁身上，谁背锅</li>
         <li><span>🕹️</span>左下角摇杆控制方向，右下角「甩」把最急的那口锅扔出去</li>
-        <li><span>👀</span>${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅</li>`;
+        <li><span>👀</span>${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅</li>
+        <li><span>🧾</span>18:00 算总账：炸了的锅一口算 1，身上没甩掉的锅一口算 ½</li>`;
     if (L.basic) return `<ul class="rules">${basic}</ul>`;
     return `
       <ul class="rules">${basic}
@@ -2594,7 +2632,7 @@
     const prog = loadProgress();
     const best = prog.best[L.id];
     const tabs = LEVELS.map((lv) => {
-      const locked = lv.id > prog.unlocked;
+      const locked = false; // 关卡全部放开，想玩哪关点哪关（星数照常记录）
       const b = prog.best[lv.id];
       const on = lv === L;
       return `<button type="button" class="lv${on ? ' on' : ''}" data-act="pick" data-id="${lv.id}" aria-current="${on ? 'step' : 'false'}" ${locked ? 'disabled' : ''}>
@@ -2618,13 +2656,13 @@
         <h1 id="intro-title">${L.name}</h1>
         <p class="intro-desc">${desc}</p>
         <ul class="intro-rules">${introRulesHtml()}</ul>
-        <section class="intro-goal${L.passRank === 2 ? ' friday-goal' : ''}" aria-label="${L.passRank === 2 ? '18:00 前两名下班，过关就是三星' : '18:00 按背锅次数排名，第一名三星，第二名两星，第三名一星，前三名过关'}">
-          <strong>${L.passRank === 2 ? '18:00 前两名下班，过关就是三星' : '目标 18:00 按背锅次数排名（少的在前）：'}</strong>
+        <section class="intro-goal${L.passRank === 2 ? ' friday-goal' : ''}" aria-label="${L.passRank === 2 ? '18:00 前两名下班，过关就是三星' : '18:00 按总账排名：炸了的锅加上身上的锅折半，第一名三星，第二名两星，第三名一星，前三名过关'}">
+          <strong>${L.passRank === 2 ? '18:00 前两名下班，过关就是三星' : '18:00 按总账排名（炸了的锅 + 身上锅 ×½，少的在前）：'}</strong>
           ${L.passRank === 2 ? `<p class="friday-quota">小舅子占 1 个名额<br>把他压垮，空出 1 个</p>` : `<span class="intro-rank rank-one" aria-hidden="true">1</span>
           <span class="intro-rank rank-two" aria-hidden="true">2</span>
           <span class="intro-rank rank-three" aria-hidden="true">3</span>`}
         </section>
-        ${best ? `<p class="intro-best">最好成绩 ${'★'.repeat(best.stars)}${best.blames != null ? ` · 背锅 ${best.blames} 次` : ''}</p>` : ''}
+        ${best ? `<p class="intro-best">最好成绩 ${'★'.repeat(best.stars)}${best.debt != null ? ` · 总账 ${fmtDebt(best.debt)}` : best.blames != null ? ` · 背锅 ${best.blames} 次` : ''}</p>` : ''}
         <footer class="intro-actions">
           <button class="intro-start" data-act="start">开始上班 <span aria-hidden="true">▶</span></button>
           <button class="intro-back" data-act="lobby">回大厅</button>
@@ -2670,7 +2708,7 @@
     const stars = LEVELS.reduce((sum, lv) => sum + ((prog.best[lv.id] && prog.best[lv.id].stars) || 0), 0);
     // 关卡日历：每关一页，锁住的显示锁；当前关是深蓝金边，顶上挂「当前」标签、外侧冒光；点一页就切到那一关
     const days = LEVELS.map((lv) => {
-      const locked = lv.id > prog.unlocked;
+      const locked = false; // 关卡全部放开，想玩哪关点哪关（星数照常记录）
       const b = prog.best[lv.id];
       const got = b ? b.stars : 0;
       const on = lv === L;

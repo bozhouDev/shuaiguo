@@ -454,7 +454,7 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 /* 结算排名表：浅描边方框，每行 名次 / 名字 / 锅图标 + 背锅次数，自己那行黄底 */
 #ui .ranklist { margin: 6px 0 4px; border: 3px solid var(--pop-line); background: #FFFDF6; font-size: 19px; font-weight: 700; }
 #ui .ranklist li {
-  grid-template-columns: 28px 1fr 30px 34px; gap: 8px; padding: 8px 12px; border-radius: 0;
+  grid-template-columns: 28px 1fr 30px 44px; gap: 8px; padding: 8px 12px; border-radius: 0;
   border-top: 2px solid var(--pop-line);
 }
 #ui .ranklist li:first-child { border-top: 0; }
@@ -750,3 +750,7 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 .friday-goal { inset: 63% 4.5% auto 28%; height: 10%; background: var(--paper); border: 2px solid var(--ink); }
 .friday-goal strong { left: 3%; top: 8%; font-size: 2.9cqw; }
 .friday-quota { margin: 0; position: absolute; left: 3%; top: 40%; font: 900 3cqw/1.45 var(--pop-font); color: var(--ink); }
+
+/* 总账结算：名字下面一行小字拆成「炸了几口 · 身上几口」，表头下一句写清算法 */
+#ui .ranklist .debt-split { display: block; font-size: 12px; font-weight: 400; color: var(--muted); line-height: 1.2; }
+#ui .debt-rule { margin: 2px 0 0; font-size: 13px; }
