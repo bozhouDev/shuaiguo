@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>这锅你来背 · 音频试听</title>
+<style>
+  :root { --ink: #22283A; --bg: #F4F1E8; --card: #FFFDF5; --line: #D9D3C2; --red: #E8504A; --green: #2F9E6B; --gray: #8A90A0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink); font: 14px/1.5 -apple-system, "PingFang SC", sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  .sub { color: var(--gray); margin: 0 0 16px; }
+  h2 { font-size: 16px; margin: 20px 0 8px; }
+  .row { display: grid; grid-template-columns: 150px 1fr; gap: 4px 12px; background: var(--card); border: 2px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .id { font: 600 13px ui-monospace, Menlo, monospace; }
+  .use { color: var(--gray); }
+  audio { width: 100%; height: 32px; }
+  .meta { grid-column: 2; font-size: 12px; color: var(--gray); }
+  .meta a { color: inherit; }
+  .miss { grid-column: 2; color: var(--red); font-size: 13px; }
+  .gen { grid-column: 2; font-size: 12px; color: var(--green); }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr; } .meta, .miss, .gen { grid-column: 1; } }
+</style>
+</head>
+<body>
+<h1>音频试听</h1>
+<p class="sub">数据来自 <code>assets_audio/sources.json</code> 和 <code>js/audio.js</code>；改完素材跑 <code>python3 assets_audio/build_audio.py</code> 再刷新。红字的条目游戏里暂用合成音。</p>
+<div id="list"></div>
+<script src="js/audio.js"></script>
+<script>
+  // 每个条目在游戏里的用途（和 sources.json 的 id 对应）
+  const USE = {
+    bgm_lobby: '大厅 / 关卡介绍', bgm_work: '对局 09:00–16:59', bgm_rush: '17:00 突击派活后', bgm_friday: '第 5 关周五（未做）',
+    jg_win: '过关下班', jg_lose: '被留下加班', jg_crushed: '被锅压垮', jg_unlock: '解锁新关',
+    sfx_throw: '按「甩」锅飞出去', sfx_throw_hit: '甩中同事', sfx_combo: '连甩（越连越高）', sfx_pot_hit_me: '被锅砸中',
+    sfx_pot_back: '同事把锅甩给我', sfx_parry: '反甩弹回', sfx_miss: '甩空弹回自己', sfx_blame: '背锅 +N',
+    sfx_caught: '当着领导甩锅被抓', sfx_boss_aim: '领导瞄准你', sfx_boss_throw: '领导朝你丢锅', sfx_sky_warn: '天降锅阴影',
+    sfx_sky_land: '天降锅砸下', sfx_hot_fuse: '急件砸到手里', sfx_hot_boom: '急件炸了', sfx_leader_bump: '撞上领导 +3',
+    sfx_alarm: '9 口锅快压垮', sfx_crush: '同事被压垮', sfx_chat_msg: '工作群消息', sfx_meeting_burst: '会议室散会喷锅',
+    sfx_printer_jam: '打印机卡纸喷锅', sfx_tea: '下午茶', sfx_work_start: '09:00 正式上班', sfx_rush: '17:00 突击派活',
+    sfx_rank_up: '冲回前三', sfx_rank_down: '掉出前三', sfx_tick: '最后 10 秒', sfx_tick_urgent: '最后 3 秒（用 tick 升调）',
+    sfx_bell: '18:00 下班铃', ui_click: '按钮', ui_back: '返回 / 关闭', ui_toggle: '设置开关', ui_star: '结算星星',
+    ui_revive: '复活 / 找人顶锅', ui_buff: '带着 Buff 开局',
+  };
+  const GROUP = { bgm: 'BGM（循环）', jingle: '短曲', sfx: '音效' };
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  // AI 生成的条目：把两版原始文件都列出来对比（未加工的原始音量），当前用的那版标出来
+  function altHtml(it) {
+    return [1, 2].map((v) => {
+      const f = `${it.id}__v${v}.mp3`;
+      return `<div class="gen">第 ${v} 版${f === it.src ? '（游戏里用的）' : ''}：<audio controls preload="none" src="assets_audio/src/${f}"></audio></div>`;
+    }).join('') + `<div class="meta">提示词：${esc(it.gen.prompt)}</div>`;
+  }
+  // 读素材清单，按类别分组画出试听列表
+  fetch('assets_audio/sources.json').then((r) => r.json()).then((items) => {
+    const built = window.SG_AUDIO || {};
+    const html = Object.keys(GROUP).map((kind) => `<h2>${GROUP[kind]}</h2>` + items.filter((it) => it.kind === kind).map((it) => {
+      const a = built[it.id];
+      const src = it.source_url ? `<a href="${esc(it.source_url)}" target="_blank" rel="noopener">${esc(it.author || '来源')}</a>` : esc(it.author || '');
+      return `<div class="row"><div><div class="id">${it.id}</div><div class="use">${esc(USE[it.id] || '')}</div></div>
+        ${a ? `<audio controls preload="none" src="${a.url}"${kind === 'bgm' ? ' loop' : ''}></audio>
+        <div class="meta">${a.dur}s · ${esc(it.license)} · ${src}${it.note ? ' · ' + esc(it.note) : ''}</div>`
+          : `<div class="miss">${esc(it.skip || '还没有素材，游戏里用合成音')}</div>`}
+        ${it.gen && !a ? `<div class="gen">待生成：${esc(it.gen.prompt)}（${it.gen.duration}s）</div>` : ''}
+        ${it.gen && a ? altHtml(it) : ''}</div>`;
+    }).join('')).join('');
+    document.getElementById('list').innerHTML = html;
+  });
+</script>
+</body>
+</html>

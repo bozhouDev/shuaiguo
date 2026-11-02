@@ -6,3 +6,5 @@ _backup_v1/
 assets_pixel/sprites/
 # 字体源文件（约 19 MB，可按 build_fonts.py 里的地址重新下载）
 assets_pixel/fonts_src/
+# 音频原始文件（约 30 MB，来源地址记在 assets_audio/sources.json，可重新下载或生成）
+assets_audio/src/

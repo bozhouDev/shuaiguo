@@ -787,17 +787,58 @@
     return hit;
   };
 
-  /* ---------------- 音效（WebAudio 合成，免素材） ---------------- */
-  let actx = null;
+  /* ---------------- 音频：优先播采样（assets/audio/，清单在 js/audio.js），没有采样的退回 WebAudio 合成 ---------------- */
+  let actx = null, sfxBus = null, musicBus = null;
   E.muted = false; // 由下方「设置」按存档覆盖
-  // 首次用户交互时初始化音频（浏览器要求）
+  const SFX_VOL = 1, MUSIC_VOL = 0.32; // 两条总线的音量：采样已统一归一，BGM 压低不盖过音效
+  const audioList = () => window.SG_AUDIO || {};
+  const bufs = {};             // 已解码的采样：id → AudioBuffer
+  const loading = {};          // 正在加载：id → Promise
+  const failed = new Set();    // 加载失败的 id，不再重试，直接用合成音
+  // 加载并解码一个采样；没登记、加载失败都返回 null
+  function loadBuf(id) {
+    if (bufs[id]) return Promise.resolve(bufs[id]);
+    if (loading[id]) return loading[id];
+    const a = audioList()[id];
+    if (!actx || !a || failed.has(id)) return Promise.resolve(null);
+    loading[id] = fetch(a.url)
+      .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
+      .then((ab) => new Promise((ok, bad) => actx.decodeAudioData(ab, ok, bad))) // 回调写法兼容老版 Safari
+      .then((b) => (bufs[id] = b))
+      .catch(() => { failed.add(id); return null; })
+      .finally(() => { delete loading[id]; });
+    return loading[id];
+  }
+  // 首次用户交互时初始化音频（浏览器要求）；之后每次交互顺手把被挂起的音频恢复
   E.unlockAudio = function () {
-    if (actx) return;
-    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { actx = null; }
+    if (!actx) {
+      try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) { actx = null; return; }
+      sfxBus = actx.createGain(); sfxBus.gain.value = SFX_VOL; sfxBus.connect(actx.destination);
+      musicBus = actx.createGain(); musicBus.gain.value = MUSIC_VOL; musicBus.connect(actx.destination);
+      // 音效和短曲都很小（合计约 0.2 MB），一次预载完；BGM 要播哪首再加载哪首
+      Object.keys(audioList()).forEach((id) => { if (!id.startsWith('bgm_')) loadBuf(id); });
+      syncBgm();
+    }
+    if (actx.state === 'suspended' && !document.hidden) actx.resume();
   };
-  // 播放一个简单音调：频率从 f0 滑到 f1
+  // 页面任意位置的第一次触摸 / 按键就解锁音频，大厅音乐不用等到开局
+  ['pointerdown', 'touchend', 'keydown'].forEach((ev) => addEventListener(ev, E.unlockAudio, { capture: true, passive: true }));
+  // 切到后台整体挂起（音乐、音效一起停），回来再恢复
+  document.addEventListener('visibilitychange', () => {
+    if (!actx) return;
+    if (document.hidden) actx.suspend(); else actx.resume();
+  });
+
+  // 播一段采样：vol 音量，rate 播放速度（同时改变音高），delay 延迟秒数
+  function playBuf(buf, vol, rate, delay) {
+    const s = actx.createBufferSource(), g = actx.createGain();
+    s.buffer = buf; s.playbackRate.value = rate;
+    g.gain.value = vol;
+    s.connect(g); g.connect(sfxBus);
+    s.start(actx.currentTime + (delay || 0));
+  }
+  // 合成音：频率从 f0 滑到 f1（采样缺失时的后备）
   function tone(f0, f1, dur, type, vol, delay) {
-    if (!actx || E.muted) return;
     const t0 = actx.currentTime + (delay || 0);
     const o = actx.createOscillator(), g = actx.createGain();
     o.type = type || 'square';
@@ -805,41 +846,110 @@
     o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t0 + dur);
     g.gain.setValueAtTime(vol || 0.08, t0);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g); g.connect(actx.destination);
+    o.connect(g); g.connect(sfxBus);
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
-  // 预设音效
-  E.sfx = function (name) {
+  // 合成音预设（原型阶段的音效，现在只在采样缺失时兜底）
+  function synth(name) {
     switch (name) {
-      case 'hit': tone(220, 90, 0.18, 'square', 0.09); break;              // 被锅砸中
-      case 'throw': tone(300, 900, 0.14, 'triangle', 0.1); break;          // 甩锅成功
+      case 'hit': tone(220, 90, 0.18, 'square', 0.09); break;
+      case 'throw': tone(300, 900, 0.14, 'triangle', 0.1); break;
       case 'combo': tone(600, 1200, 0.1, 'triangle', 0.08); tone(900, 1600, 0.1, 'triangle', 0.07, 0.08); break;
-      case 'back': tone(500, 120, 0.3, 'sawtooth', 0.07); break;           // 锅被甩回来
+      case 'back': tone(500, 120, 0.3, 'sawtooth', 0.07); break;
       case 'boss': tone(440, 440, 0.12, 'square', 0.07); tone(330, 330, 0.18, 'square', 0.07, 0.14); break;
-      case 'warn': tone(880, 880, 0.06, 'sine', 0.05); break;              // 派锅预警
-      case 'rankup': [523, 659, 784].forEach((f, i) => tone(f, f, 0.09, 'triangle', 0.07, i * 0.08)); break; // 冲进前三
+      case 'warn': tone(880, 880, 0.06, 'sine', 0.05); break;
+      case 'rankup': [523, 659, 784].forEach((f, i) => tone(f, f, 0.09, 'triangle', 0.07, i * 0.08)); break;
       case 'win': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, 0.16, 'triangle', 0.08, i * 0.12)); break;
       case 'lose': [392, 330, 262, 196].forEach((f, i) => tone(f, f * 0.98, 0.2, 'square', 0.06, i * 0.15)); break;
       case 'tick': tone(1200, 1200, 0.03, 'sine', 0.03); break;
-      // 最后三秒双响短促方波，沿用音效总开关。
       case 'tickUrgent': tone(1500, 1200, 0.06, 'square', 0.04); tone(1500, 1200, 0.06, 'square', 0.04, 0.1); break;
-      case 'bell': tone(1046, 1046, 0.32, 'sine', 0.08); tone(1568, 1568, 0.24, 'sine', 0.04, 0.08); break; // 下班铃
-      case 'whoosh': tone(700, 260, 0.12, 'sine', 0.07); break;            // 锅甩出去
-      case 'parry': tone(1400, 1400, 0.05, 'square', 0.07); tone(900, 1800, 0.12, 'triangle', 0.08, 0.04); break; // 反甩
-      case 'miss': tone(300, 200, 0.12, 'sine', 0.05); break;              // 甩空，锅弹回来
+      case 'bell': tone(1046, 1046, 0.32, 'sine', 0.08); tone(1568, 1568, 0.24, 'sine', 0.04, 0.08); break;
+      case 'whoosh': tone(700, 260, 0.12, 'sine', 0.07); break;
+      case 'parry': tone(1400, 1400, 0.05, 'square', 0.07); tone(900, 1800, 0.12, 'triangle', 0.08, 0.04); break;
+      case 'miss': tone(300, 200, 0.12, 'sine', 0.05); break;
       default: break;
     }
+  }
+  // 游戏里用的音效名 → 采样 id、音量、音高；fb = 采样缺失时用哪个合成音（不写就用同名的）；twice = 隔几秒再响一次
+  const SFX = {
+    // 对局核心
+    whoosh: { id: 'sfx_throw', vol: 0.45 },                       // 玩家把锅甩出去
+    throw: { id: 'sfx_throw_hit', vol: 0.5 },                     // 甩中同事
+    combo: { id: 'sfx_combo', vol: 0.4, fb: 'combo' },            // 连甩，调用方按连甩数提高音高
+    hit: { id: 'sfx_pot_hit_me', vol: 0.5 },                      // 被锅砸中
+    back: { id: 'sfx_pot_back', vol: 0.4 },                       // 同事把锅甩给我
+    parry: { id: 'sfx_parry', vol: 0.5 },                         // 反甩弹回
+    miss: { id: 'sfx_miss', vol: 0.4 },                           // 甩空，锅弹回自己
+    blame: { id: 'sfx_blame', vol: 0.45, fb: 'back' },            // 背锅 +N
+    caught: { id: 'sfx_caught', vol: 0.5, fb: 'boss' },           // 当着领导甩锅被抓 / 领导盯上你
+    aim: { id: 'sfx_boss_aim', vol: 0.35, fb: 'warn' },           // 领导瞄准你
+    leaderThrow: { id: 'sfx_boss_throw', vol: 0.35 },             // 领导朝你丢出锅
+    skyWarn: { id: 'sfx_sky_warn', vol: 0.35, fb: 'warn' },       // 天降锅阴影出现
+    skyLand: { id: 'sfx_sky_land', vol: 0.45, fb: 'hit' },        // 天降锅砸下来
+    hotHit: { id: 'sfx_hot_fuse', vol: 0.4, fb: 'boss' },         // 急件砸到手里
+    boom: { id: 'sfx_hot_boom', vol: 0.5, fb: 'boss' },           // 急件炸了
+    bump: { id: 'sfx_leader_bump', vol: 0.5, fb: 'boss' },        // 撞上领导 +3
+    alarm: { id: 'sfx_alarm', vol: 0.3, fb: 'warn' },             // 快压垮报警
+    crush: { id: 'sfx_crush', vol: 0.4, fb: 'lose' },             // 同事被压垮
+    // 办公室事件
+    chat: { id: 'sfx_chat_msg', vol: 0.35, fb: 'tick' },          // 工作群消息
+    burst: { id: 'sfx_meeting_burst', vol: 0.45, fb: 'warn' },    // 会议室散会喷锅
+    printer: { id: 'sfx_printer_jam', vol: 0.45, fb: 'warn' },    // 打印机卡纸喷锅
+    tea: { id: 'sfx_tea', vol: 0.35, fb: 'bell' },                // 下午茶 / 茶水间收尾
+    workStart: { id: 'sfx_work_start', vol: 0.45, fb: 'boss' },   // 09:00 正式上班
+    rush: { id: 'sfx_rush', vol: 0.45, fb: 'boss' },              // 17:00 突击派活
+    rankup: { id: 'sfx_rank_up', vol: 0.4 },                      // 冲回前三
+    tick: { id: 'sfx_tick', vol: 0.4 },                           // 最后 10 秒
+    tickUrgent: { id: 'sfx_tick', vol: 0.5, rate: 1.35, twice: 0.1 }, // 最后 3 秒：升调连响两下
+    bell: { id: 'sfx_bell', vol: 0.45 },                          // 18:00 下班铃
+    // 短曲
+    win: { id: 'jg_win', vol: 0.5 },
+    lose: { id: 'jg_lose', vol: 0.5 },
+    crushed: { id: 'jg_crushed', vol: 0.5, fb: 'lose' },
+    unlock: { id: 'jg_unlock', vol: 0.45, fb: 'rankup' },
+    // 界面
+    click: { id: 'ui_click', vol: 0.3 },
+    uiBack: { id: 'ui_back', vol: 0.35 },
+    toggle: { id: 'ui_toggle', vol: 0.4, fb: 'tick' },
+    star: { id: 'ui_star', vol: 0.4, fb: 'tick' },
+    revive: { id: 'ui_revive', vol: 0.45, fb: 'win' },
+    buff: { id: 'ui_buff', vol: 0.4, fb: 'rankup' },
   };
+  const lastPlay = {}; // 同一个音效 50ms 内只响一次，避免一帧里多次触发叠成爆音
+  // 播放音效：opt.rate 音高倍数，opt.vol 音量倍数，opt.delay 延迟秒数
+  E.sfx = function (name, opt) {
+    if (!actx || E.muted) return;
+    const o = opt || {}, d = SFX[name] || {}, now = actx.currentTime + (o.delay || 0);
+    if (now - (lastPlay[name] ?? -1) < 0.05) return;
+    lastPlay[name] = now;
+    const buf = d.id && bufs[d.id];
+    if (!buf) {
+      if (o.delay) setTimeout(() => synth(d.fb || name), o.delay * 1000); else synth(d.fb || name);
+      return;
+    }
+    const vol = (d.vol || 0.4) * (o.vol ?? 1), rate = (d.rate || 1) * (o.rate || 1);
+    playBuf(buf, vol, rate, o.delay);
+    if (d.twice) playBuf(buf, vol, rate * 1.12, (o.delay || 0) + d.twice);
+  };
+  // 界面按钮统一的点击音：返回 / 关闭类用低一点的那个；甩锅键、设置开关、广告按钮等自己出声的跳过
+  const QUIET_ACTS = new Set(['tg', 'revive', 'rescue', 'buff', 'hero']);
+  const BACK_ACTS = new Set(['menu', 'lobby', 'close', 'back']);
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b || b.disabled || b.id === 'btnThrow' || QUIET_ACTS.has(b.dataset.act)) return;
+    E.sfx(BACK_ACTS.has(b.dataset.act) ? 'uiBack' : 'click');
+  }, true);
 
   /* ---------------- 设置：音乐 / 音效 / 震动（存本地） ---------------- */
   const SET_KEY = 'shuaiguo_settings';
   E.settings = { music: true, sfx: true, vibrate: true };
   try { Object.assign(E.settings, JSON.parse(localStorage.getItem(SET_KEY)) || {}); } catch (_) { /* 存储不可用就用默认值 */ }
   E.muted = !E.settings.sfx;
-  // 改一项设置并保存；音效开关同步到 E.muted（所有 sfx 都看它）
+  // 改一项设置并保存；音效开关同步到 E.muted（所有 sfx 都看它），音乐开关立刻生效
   E.setSetting = function (key, on) {
     E.settings[key] = !!on;
     if (key === 'sfx') E.muted = !on;
+    if (key === 'music') syncBgm();
     try { localStorage.setItem(SET_KEY, JSON.stringify(E.settings)); } catch (_) { /* 忽略 */ }
   };
   // 震动反馈（只有安卓等支持 navigator.vibrate 的浏览器有效；iOS 网页不支持，静默忽略）
@@ -849,17 +959,59 @@
     try { navigator.vibrate(ms || 30); } catch (_) { /* 忽略 */ }
   };
 
-  /* ---------------- 背景音乐：WebAudio 合成的 8-bit 循环小调 ---------------- */
-  // 32 步一循环（八分音符），0 = 休止；旋律用方波、低音用三角波，音量压得很低，不盖过音效
+  /* ---------------- 背景音乐：采样循环播放，三首按场景切换 ---------------- */
+  // lobby = 大厅，work = 对局（09:00–16:59），rush = 17:00 下班前突击派活
+  const MUSIC = { lobby: 'bgm_lobby', work: 'bgm_work', rush: 'bgm_rush' };
+  let bgmWant = null;   // 游戏想放的曲子名；null = 不放
+  let cur = null;       // 正在放的：{ name, src, gain, start, offset }
+  const bgmPos = {};    // 每首停下时放到哪了（秒），暂停后接着放
+  // 停掉当前曲子：fade 秒内淡出，记下位置
+  function stopTrack(fade) {
+    const c = cur, t = actx.currentTime;
+    cur = null;
+    bgmPos[c.name] = (c.offset + t - c.start) % c.src.buffer.duration;
+    c.gain.gain.cancelScheduledValues(t);
+    c.gain.gain.setValueAtTime(c.gain.gain.value, t);
+    c.gain.gain.linearRampToValueAtTime(0, t + fade);
+    c.src.stop(t + fade + 0.05);
+  }
+  // 让正在放的曲子和「想放的」一致：换曲时旧的淡出、新的淡入；采样还没加载好就先加载，好了再来一遍
+  function syncBgm() {
+    if (!actx) return;
+    const name = E.settings.music ? bgmWant : null;
+    if (cur && cur.name === name) return;
+    if (cur) stopTrack(name ? 0.6 : 0.3);
+    const id = name && MUSIC[name];
+    if (!id || !audioList()[id] || failed.has(id)) return; // 没有采样：交给下面的合成小调
+    const buf = bufs[id];
+    if (!buf) { loadBuf(id).then((b) => { if (b) syncBgm(); }); return; }
+    const src = actx.createBufferSource(), g = actx.createGain(), t = actx.currentTime;
+    const offset = (bgmPos[name] || 0) % buf.duration;
+    src.buffer = buf; src.loop = true;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(1, t + 0.5);
+    src.connect(g); g.connect(musicBus);
+    src.start(t, offset);
+    cur = { name, src, gain: g, start: t, offset };
+  }
+  // 游戏告诉音乐该放哪首：'lobby' | 'work' | 'rush'；false / null 停（暂停、结算）；fromStart 为真时从头放（新开一局）
+  E.bgm = function (name, fromStart) {
+    if (name === true) name = 'work'; // 兼容旧写法
+    bgmWant = name || null;
+    if (fromStart && bgmWant) { bgmPos[bgmWant] = 0; if (bgmWant === 'work') bgmPos.rush = 0; }
+    syncBgm();
+  };
+
+  // 合成小调：只在想放的曲子没有采样（清单里没有或加载失败）时响，32 步一循环，0 = 休止
   const BPM = 138, STEP = 60 / BPM / 2;
   const MEL = [76, 79, 84, 79, 81, 79, 76, 74, 76, 79, 84, 86, 84, 81, 79, 0,
                77, 81, 84, 81, 79, 76, 74, 72, 74, 76, 79, 76, 74, 72, 71, 0];
   const BASS = [48, 0, 55, 0, 48, 0, 55, 0, 45, 0, 52, 0, 45, 0, 52, 0,
                 41, 0, 48, 0, 41, 0, 48, 0, 43, 0, 50, 0, 43, 0, 47, 0];
   const midi = (n) => 440 * Math.pow(2, (n - 69) / 12);
-  let bgmWant = false, bgmStep = 0, bgmNext = 0;
+  let synthStep = 0, synthNext = 0;
   // 排一个音：t 开始时间，len 时长
-  function bgmNote(n, t, len, type, vol) {
+  function synthNote(n, t, len, type, vol) {
     const o = actx.createOscillator(), g = actx.createGain();
     o.type = type; o.frequency.setValueAtTime(midi(n), t);
     g.gain.setValueAtTime(vol, t);
@@ -867,19 +1019,19 @@
     o.connect(g); g.connect(actx.destination);
     o.start(t); o.stop(t + len + 0.02);
   }
-  // 调度器：每 100ms 往前排 0.3 秒的音；不想播 / 关了音乐 / 页面在后台时什么都不排
+  // 调度器：每 100ms 往前排 0.3 秒的音
   setInterval(() => {
-    if (!actx || !bgmWant || !E.settings.music || document.hidden) { bgmNext = 0; return; }
-    if (bgmNext < actx.currentTime) bgmNext = actx.currentTime + 0.05;
-    while (bgmNext < actx.currentTime + 0.3) {
-      const i = bgmStep % MEL.length;
-      if (MEL[i]) bgmNote(MEL[i], bgmNext, STEP * 0.9, 'square', 0.022);
-      if (BASS[i]) bgmNote(BASS[i], bgmNext, STEP * 1.8, 'triangle', 0.05);
-      bgmStep++; bgmNext += STEP;
+    const id = bgmWant && MUSIC[bgmWant];
+    const hasSample = id && audioList()[id] && !failed.has(id);
+    if (!actx || !bgmWant || hasSample || !E.settings.music || document.hidden) { synthNext = 0; return; }
+    if (synthNext < actx.currentTime) synthNext = actx.currentTime + 0.05;
+    while (synthNext < actx.currentTime + 0.3) {
+      const i = synthStep % MEL.length;
+      if (MEL[i]) synthNote(MEL[i], synthNext, STEP * 0.9, 'square', 0.022);
+      if (BASS[i]) synthNote(BASS[i], synthNext, STEP * 1.8, 'triangle', 0.05);
+      synthStep++; synthNext += STEP;
     }
   }, 100);
-  // 游戏告诉音乐该不该响（大厅、对局中响；暂停、结算不响）
-  E.bgm = function (on) { bgmWant = !!on; };
 
   window.E = E;
 })();

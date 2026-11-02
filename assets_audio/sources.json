@@ -1,0 +1,420 @@
+[
+ {
+  "id": "bgm_lobby",
+  "kind": "bgm",
+  "src": "bgm_lobby.mp3",
+  "license": "CC0",
+  "author": "HydroGene",
+  "source_url": "https://opengameart.org/content/8-bit-i-am-not-clumsy",
+  "note": "作者明确标注轻松搞笑、无缝循环的8-bit曲；39.31秒略短于40秒下限，BPM未核实，MP3接缝需引擎试听。"
+ },
+ {
+  "id": "bgm_work",
+  "kind": "bgm",
+  "src": "bgm_work.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/5-chiptunes-action",
+  "note": "74.25秒复古动作主关卡曲，作者声明无缝循环；忙碌感方向合适，但办公室滑稽感和约140 BPM未确认。"
+ },
+ {
+  "id": "bgm_rush",
+  "kind": "bgm",
+  "src": "bgm_rush.ogg",
+  "license": "CC0",
+  "author": "Zane Little Music",
+  "source_url": "https://opengameart.org/content/pixel-sprinter",
+  "note": "34.29秒官方循环版，作者标注紧张、快速、趣味及16-bit/SNES；不是主曲的同主题加速版，约165 BPM未确认。"
+ },
+ {
+  "id": "bgm_friday",
+  "kind": "bgm",
+  "src": "bgm_friday.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/5-chiptunes-action",
+  "note": "81.90秒同一作者复古动作关卡曲且声明无缝循环，可作高难关候选；尚未确认boss压迫感与滑稽程度。",
+  "skip": "第 5 关周五还没做，先不打包"
+ },
+ {
+  "id": "jg_win",
+  "kind": "jingle",
+  "src": "jg_win.wav",
+  "license": "CC0",
+  "author": "sauer2",
+  "source_url": "https://opengameart.org/content/oldschool-win-and-die-jump-and-run-sounds",
+  "note": "作者提供的oldschool胜利短曲，1.72秒略短于2秒下限，保留为过关候选。"
+ },
+ {
+  "id": "jg_lose",
+  "kind": "jingle",
+  "src": "jg_lose.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/85-short-music-jingles",
+  "note": "1.76秒NES短句，频谱显示逐级下行，适合失落提示；略短于2秒且喜剧感待试听。"
+ },
+ {
+  "id": "jg_crushed",
+  "kind": "jingle",
+  "gen": {
+   "prompt": "16-bit chiptune game over jingle, comedic sad descending notes, ending with a pile of metal cooking pans collapsing and clattering",
+   "duration": 2.8,
+   "loop": false
+  },
+  "src": "jg_crushed__v1.mp3",
+  "license": "ElevenLabs 生成（付费账号可商用）",
+  "author": "ElevenLabs eleven_text_to_sound_v2",
+  "source_url": null
+ },
+ {
+  "id": "jg_unlock",
+  "kind": "jingle",
+  "src": "jg_unlock.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/85-short-music-jingles",
+  "note": "1.26秒钢片音色短曲，与同编号NES版本的上扬结构对应，适合颁奖解锁；听感需最终确认。"
+ },
+ {
+  "id": "sfx_throw",
+  "kind": "sfx",
+  "src": "sfx_throw.wav",
+  "license": "CC0",
+  "author": "artisticdude",
+  "source_url": "https://opengameart.org/content/swishes-sound-pack",
+  "note": "作者轻型挥甩组的0.126秒whoosh，适合快速甩锅。"
+ },
+ {
+  "id": "sfx_throw_hit",
+  "kind": "sfx",
+  "src": "sfx_throw_hit.ogg",
+  "license": "CC0",
+  "author": "rubberduck",
+  "source_url": "https://opengameart.org/content/100-cc0-sfx",
+  "note": "作者实录锅类别，0.406秒适合命中反馈；尚无额外卡通弹跳层。"
+ },
+ {
+  "id": "sfx_combo",
+  "kind": "sfx",
+  "src": "sfx_combo.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "0.416秒复古单枚金币提示，可作为连甩奖励并由游戏按连击数升调；原文件没有连击变调。"
+ },
+ {
+  "id": "sfx_pot_hit_me",
+  "kind": "sfx",
+  "src": "sfx_pot_hit_me.ogg",
+  "license": "CC0",
+  "author": "rubberduck",
+  "source_url": "https://opengameart.org/content/100-cc0-sfx",
+  "note": "另一条0.629秒实录锅声，可区分自己被砸；沉闷程度待试听。"
+ },
+ {
+  "id": "sfx_pot_back",
+  "kind": "sfx",
+  "src": "sfx_pot_back.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "0.795秒复古下落类音效，可表示倒霉背锅；不是长号或真实啵声。"
+ },
+ {
+  "id": "sfx_parry",
+  "kind": "sfx",
+  "src": "sfx_parry.ogg",
+  "license": "CC0",
+  "author": "rubberduck",
+  "source_url": "https://opengameart.org/content/100-cc0-sfx",
+  "note": "0.287秒短金属类碰撞，可作反甩格挡候选；是否足够清脆需试听。"
+ },
+ {
+  "id": "sfx_miss",
+  "kind": "sfx",
+  "src": "sfx_miss.ogg",
+  "license": "CC0",
+  "author": "rubberduck",
+  "source_url": "https://opengameart.org/content/100-cc0-sfx",
+  "note": "0.497秒实录弹簧声，适合扑空回弹方向；卡通柔软度待试听。"
+ },
+ {
+  "id": "sfx_blame",
+  "kind": "sfx",
+  "src": "sfx_blame.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "0.325秒复古错误提示，适合短促背锅惩罚；为电子提示而非盖章拟音。"
+ },
+ {
+  "id": "sfx_caught",
+  "kind": "sfx",
+  "src": "sfx_caught.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/interface-sounds",
+  "note": "Kenney疑问类界面音，适合领导发现时的疑问反馈；不含人声或哨声。"
+ },
+ {
+  "id": "sfx_boss_aim",
+  "kind": "sfx",
+  "src": "sfx_boss_aim.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "0.064秒短像素beep，可放在0.8秒瞄准预警起点；不是覆盖全程的预警音。"
+ },
+ {
+  "id": "sfx_boss_throw",
+  "kind": "sfx",
+  "src": "sfx_boss_throw.wav",
+  "license": "CC0",
+  "author": "artisticdude",
+  "source_url": "https://opengameart.org/content/swishes-sound-pack",
+  "note": "作者重型挥甩组的0.197秒whoosh，可与玩家轻挥甩区分。"
+ },
+ {
+  "id": "sfx_sky_warn",
+  "kind": "sfx",
+  "src": "sfx_sky_warn.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "1.030秒复古下落类音效，时长贴合天降预警；是电子下落音而非真实滑哨。"
+ },
+ {
+  "id": "sfx_sky_land",
+  "kind": "sfx",
+  "src": "sfx_sky_land.ogg",
+  "license": "CC0",
+  "author": "rubberduck",
+  "source_url": "https://opengameart.org/content/100-cc0-sfx",
+  "note": "1.232秒金属类音效，可作落地候选；不是明确标注的重锅落地，重量感待试听。"
+ },
+ {
+  "id": "sfx_hot_fuse",
+  "kind": "sfx",
+  "gen": {
+   "prompt": "cartoon bomb fuse burning, steady hissing and sizzling sparks, seamless loop",
+   "duration": 2.0,
+   "loop": true
+  },
+  "src": "sfx_hot_fuse__v1.mp3",
+  "license": "ElevenLabs 生成（付费账号可商用）",
+  "author": "ElevenLabs eleven_text_to_sound_v2",
+  "source_url": null
+ },
+ {
+  "id": "sfx_hot_boom",
+  "kind": "sfx",
+  "src": "sfx_hot_boom.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "复古短软爆炸类别，适合卡通急件爆炸，强度与BGM混音需试听确认。"
+ },
+ {
+  "id": "sfx_leader_bump",
+  "kind": "sfx",
+  "gen": {
+   "prompt": "cartoon body bump thud, then three metal wok pans clanging quickly one after another, comedic",
+   "duration": 1.2,
+   "loop": false
+  },
+  "src": "sfx_leader_bump__v1.mp3",
+  "license": "ElevenLabs 生成（付费账号可商用）",
+  "author": "ElevenLabs eleven_text_to_sound_v2",
+  "source_url": null
+ },
+ {
+  "id": "sfx_alarm",
+  "kind": "sfx",
+  "src": "sfx_alarm.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "0.800秒低生命值循环警报，功能对应即将压垮；游戏解除危险时应停止循环。"
+ },
+ {
+  "id": "sfx_crush",
+  "kind": "sfx",
+  "gen": {
+   "prompt": "a tall stack of metal cooking woks and pans collapsing and crashing onto the floor, clattering, cartoon comedic",
+   "duration": 1.8,
+   "loop": false
+  },
+  "src": "sfx_crush__v1.mp3",
+  "license": "ElevenLabs 生成（付费账号可商用）",
+  "author": "ElevenLabs eleven_text_to_sound_v2",
+  "source_url": null
+ },
+ {
+  "id": "sfx_chat_msg",
+  "kind": "sfx",
+  "src": "sfx_chat_msg.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/interface-sounds",
+  "note": "Kenney独立发布的确认提示，可作通用消息音候选；未做与微信提示音的听感相似性验收。"
+ },
+ {
+  "id": "sfx_meeting_burst",
+  "kind": "sfx",
+  "gen": {
+   "prompt": "office door swings open, short murmur of coworkers chatting, then several metal pans whooshing out quickly one after another, cartoon",
+   "duration": 2.2,
+   "loop": false
+  },
+  "src": "sfx_meeting_burst__v1.mp3",
+  "license": "ElevenLabs 生成（付费账号可商用）",
+  "author": "ElevenLabs eleven_text_to_sound_v2",
+  "source_url": null
+ },
+ {
+  "id": "sfx_printer_jam",
+  "kind": "sfx",
+  "gen": {
+   "prompt": "office printer jamming, grinding paper crunch, mechanical clunk clunk, then a short error beep",
+   "duration": 1.8,
+   "loop": false
+  },
+  "src": "sfx_printer_jam__v1.mp3",
+  "license": "ElevenLabs 生成（付费账号可商用）",
+  "author": "ElevenLabs eleven_text_to_sound_v2",
+  "source_url": null
+ },
+ {
+  "id": "sfx_tea",
+  "kind": "sfx",
+  "src": "sfx_tea.ogg",
+  "license": "CC0",
+  "author": "rubberduck",
+  "source_url": "https://opengameart.org/content/100-cc0-sfx",
+  "note": "1.300秒实录铃声，可作下午茶到达提示；不是倒茶或明确的双音叮咚。"
+ },
+ {
+  "id": "sfx_work_start",
+  "kind": "sfx",
+  "gen": {
+   "prompt": "electronic time clock punch-in beep followed by a short bright 16-bit chiptune trumpet fanfare, cheerful",
+   "duration": 1.5,
+   "loop": false
+  },
+  "src": "sfx_work_start__v1.mp3",
+  "license": "ElevenLabs 生成（付费账号可商用）",
+  "author": "ElevenLabs eleven_text_to_sound_v2",
+  "source_url": null
+ },
+ {
+  "id": "sfx_rush",
+  "kind": "sfx",
+  "gen": {
+   "prompt": "tense 16-bit chiptune alarm stinger, rapid rising notes, urgent video game warning",
+   "duration": 1.6,
+   "loop": false
+  },
+  "src": "sfx_rush__v1.mp3",
+  "license": "ElevenLabs 生成（付费账号可商用）",
+  "author": "ElevenLabs eleven_text_to_sound_v2",
+  "source_url": null
+ },
+ {
+  "id": "sfx_rank_up",
+  "kind": "sfx",
+  "src": "sfx_rank_up.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/85-short-music-jingles",
+  "note": "0.604秒上扬像素短句，频谱显示四级上行；可表达升名次，但不是要求的严格三连音。"
+ },
+ {
+  "id": "sfx_rank_down",
+  "kind": "sfx",
+  "src": "sfx_rank_down.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/85-short-music-jingles",
+  "note": "0.391秒像素短句，频谱显示两级下行，适合掉出前三。"
+ },
+ {
+  "id": "sfx_tick",
+  "kind": "sfx",
+  "src": "sfx_tick.wav",
+  "license": "CC0",
+  "author": "cemkalyoncu",
+  "source_url": "https://opengameart.org/content/tick-and-tock",
+  "note": "作者录制的独立钟表单次滴答，便于最后10秒每秒触发；录音设备普通。"
+ },
+ {
+  "id": "sfx_tick_urgent",
+  "kind": "sfx",
+  "skip": "代码里用 sfx_tick 升调连响两次代替"
+ },
+ {
+  "id": "sfx_bell",
+  "kind": "sfx",
+  "src": "sfx_bell.ogg",
+  "license": "CC0",
+  "author": "Dub (submitted by qubodup)",
+  "source_url": "https://opengameart.org/content/doorbell-ring",
+  "note": "4.341秒老式电铃录音，可作下班铃候选；来源是门铃而非办公室下班铃，可能需要截短。",
+  "trim": 2.2,
+  "fade": 0.5
+ },
+ {
+  "id": "ui_click",
+  "kind": "sfx",
+  "src": "ui_click.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "复古菜单选择提示，适合像素按钮点击。"
+ },
+ {
+  "id": "ui_back",
+  "kind": "sfx",
+  "src": "ui_back.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/interface-sounds",
+  "note": "作者明确分类为返回的短界面音；比点击音更低的听感关系尚待确认。"
+ },
+ {
+  "id": "ui_toggle",
+  "kind": "sfx",
+  "src": "ui_toggle.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/interface-sounds",
+  "note": "Kenney短tick界面音，适合设置开关。"
+ },
+ {
+  "id": "ui_star",
+  "kind": "sfx",
+  "src": "ui_star.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "复古单枚奖励音，可用于星星逐个亮起；三次升调需游戏播放时实现。"
+ },
+ {
+  "id": "ui_revive",
+  "kind": "sfx",
+  "src": "ui_revive.wav",
+  "license": "CC0",
+  "author": "Juhani Junkala (SubspaceAudio)",
+  "source_url": "https://opengameart.org/content/512-sound-effects-8-bit-style",
+  "note": "0.836秒复古power-up提示，适合恢复能力或复活反馈。"
+ },
+ {
+  "id": "ui_buff",
+  "kind": "sfx",
+  "src": "ui_buff.ogg",
+  "license": "CC0",
+  "author": "Kenney",
+  "source_url": "https://opengameart.org/content/85-short-music-jingles",
+  "note": "0.852秒像素上扬音阶，频谱显示连续上行，适合装备强化；不是柔和shimmer音色。"
+ }
+]

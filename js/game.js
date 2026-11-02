@@ -162,7 +162,7 @@
   // 复用 HUD 排名，连续在前三外待满三秒才认可回升；不累计抖动片段。
   function checkPraiseRank(myRank) {
     if (simulating || S.tut || mode !== 'play' || S.over || workT() <= 15) { S.outSince = null; return; }
-    if (myRank > PASS_RANK) { if (S.outSince == null) S.outSince = S.t; }
+    if (myRank > PASS_RANK) { if (S.outSince == null) { S.outSince = S.t; E.sfx('rankDown'); } }
     else {
       if (S.outSince != null && S.t - S.outSince >= 3) praise('rankup');
       S.outSince = null;
@@ -322,7 +322,7 @@
     S.spawned++; S.skies++;
     if (target.isPlayer) {
       floats.add(`${from ? from.name : '老板'}：这个你来`, target.sn.x, target.sn.y - 60, '#E8504A');
-      E.sfx('warn');
+      E.sfx('skyWarn');
     }
   }
   // 离 (x, y) 最近的还没被压垮的打工人
@@ -380,13 +380,13 @@
     a.combo = 0;
     if (a.isPlayer) tutEvent('potOnMe');
     if (f.hot) {
-      if (a.isPlayer) { E.toast(`急件砸到你身上！${P0_LIFE} 秒内甩出去，炸了背锅 +${P0_BLAME}`, 2200); E.sfx('boss'); E.buzz(60); shake = 8; }
+      if (a.isPlayer) { E.toast(`急件砸到你身上！${P0_LIFE} 秒内甩出去，炸了背锅 +${P0_BLAME}`, 2200); E.sfx('hotHit'); E.buzz(60); shake = 8; }
       return;
     }
     if (a.isPlayer) {
       floats.add('+1 ' + f.label, a.sn.x, a.sn.y - 34, '#E8504A');
       shake = 6;
-      E.sfx('hit'); E.buzz(35); // 被锅砸中：短震
+      E.sfx(f.src === 'sky' ? 'skyLand' : 'hit'); E.buzz(35); // 被锅砸中：短震；天降锅用更重的落地声
     } else {
       floats.add('+1', a.sn.x, a.sn.y - 40, '#9AA6C4');
     }
@@ -449,7 +449,7 @@
     a.caught++;
     floats.add(`${l.name}：当着我的面甩锅？`, a.sn.x, a.sn.y - 60, '#E8504A');
     addBlame(a, 1, '被抓现行');
-    if (a.isPlayer) E.sfx('boss');
+    if (a.isPlayer) E.sfx('caught');
   }
   // 甩出去：扔身上最急的那口（P0 截止时间短，自然最先扔）；在领导视野里甩会被抓现行
   function fireThrow(a) {
@@ -609,7 +609,7 @@
       if (f.hot) floats.add(`急件甩给${b.name}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
       else if (b.key === 'veteran') floats.add(wasTea ? '老油条也有今天！' : '甩中老油条！', b.sn.x, b.sn.y - 44, '#2F9E6B');
       else floats.add(`甩给${b.name}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
-      if (a.combo >= 2) { floats.add(`连甩 ×${a.combo}`, a.sn.x, a.sn.y - 54, '#E8504A'); E.sfx('combo'); }
+      if (a.combo >= 2) { floats.add(`连甩 ×${a.combo}`, a.sn.x, a.sn.y - 54, '#E8504A'); E.sfx('combo', { rate: 1 + Math.min(a.combo - 2, 6) * 0.08 }); }
       else E.sfx('throw');
     } else if (b.isPlayer) {
       floats.add(`${a.name}：这个你来`, b.sn.x, b.sn.y - 40, '#E8504A');
@@ -628,7 +628,7 @@
     if (a.isPlayer) {
       floats.add(`背锅 +${n}：${why}`, a.sn.x, a.sn.y - 40, '#E8504A');
       shake = Math.max(shake, n > 1 ? 14 : 9);
-      E.sfx('back');
+      E.sfx('blame');
     } else floats.add(`${a.name} 背锅 +${n}`, a.sn.x, a.sn.y - 40, '#5E6A84');
   }
   // 一口锅到点出事：算在 a 头上，锅消失
@@ -636,6 +636,7 @@
     S.booms++;
     spawnFx('pot_explosion', pos.x, pos.y, pot.hot ? 110 : 92, 1.05);
     addBlame(a, pot.hot ? P0_BLAME : 1, pot.hot ? '急件炸了' : `${pot.label}出事了`);
+    if (pot.hot) E.sfx('boom', { vol: a.isPlayer ? 1 : 0.5 });
     if (pot.hot) E.toast(a.isPlayer ? `急件炸在你手里，背锅 +${P0_BLAME}` : `急件炸在${a.name}手里，背锅 +${P0_BLAME}`, 2000);
   }
   // 每帧：身上到点的锅出事；还在飞的锅到点，算甩它的人
@@ -783,7 +784,7 @@
     if (E.dist(l.x, l.y, intern.sn.x, intern.sn.y) > ALERT_SEE) return;
     l.state = 'chase'; l.st = ALERT_CHASE; l.chase = bully; l.alertCd = S.t + ALERT_CD;
     E.toast(bully.isPlayer ? `${l.name}：谁让新来的干这个的？` : `${l.name}盯上了${bully.name}`, 2000);
-    if (bully.isPlayer) E.sfx('boss');
+    if (bully.isPlayer) E.sfx('caught');
   }
   // 找离领导最近的巡逻点，回到路线上
   function nearestRoute(l) {
@@ -841,6 +842,7 @@
       l.aimT -= dt;
       if (l.aimT <= 0) {
         for (const t of l.targets) if (!t.crushed) launchPot(l.x, l.y - 20, t, 0, false, 'leader');
+        if (l.targets.includes(S.player)) E.sfx('leaderThrow');
         l.state = 'patrol';
       }
     } else {
@@ -859,7 +861,7 @@
           else l.targets = pickTargets(l);
           if (l.targets.length) {
             l.state = 'aim'; l.aimT = AIM_TIME;
-            if (l.targets.includes(S.player)) E.sfx('warn');
+            if (l.targets.includes(S.player)) E.sfx('aim');
           }
         }
       }
@@ -875,7 +877,7 @@
         S.leaderHits++;
         l.hitCd[a.id] = S.t + 3;
         if (l.chase === a) { l.state = 'patrol'; l.chase = null; l.i = nearestRoute(l); }
-        if (a.isPlayer) { floats.add(`${l.name}：这几个你跟一下`, a.sn.x, a.sn.y - 44, '#E8504A'); shake = 13; E.sfx('boss'); E.buzz(80); }
+        if (a.isPlayer) { floats.add(`${l.name}：这几个你跟一下`, a.sn.x, a.sn.y - 44, '#E8504A'); shake = 13; E.sfx('bump'); E.buzz(80); }
         else floats.add(`+${LEADER_HIT_POTS}`, a.sn.x, a.sn.y - 40, '#E8504A');
       }
     }
@@ -890,7 +892,7 @@
     if (idx !== S.paceIdx) {
       S.paceIdx = idx;
       S.pace = L.pace[idx] || null;
-      if (S.pace && S.pace.toast) { E.toast(S.pace.toast, 2200); E.sfx('boss'); shake = 8; }
+      if (S.pace && S.pace.toast) { E.toast(S.pace.toast, 2200); E.sfx('rush'); shake = 8; S.rush = true; E.bgm('rush'); }
     }
     // 散会、随机事件
     while (S.schedule.length && w >= S.schedule[0].t) {
@@ -937,7 +939,7 @@
     for (const pot of P.sn.segs.slice(-fin.pots)) pot.due = end;
     floats.add(fin.say, P.sn.x, P.sn.y - 60, '#E8504A');
     E.toast('同事都挤在茶水间，过去一口气甩掉！', 2400);
-    E.sfx('boss');
+    E.sfx('tea');
     shake = 8;
   }
   // 某个地点一口气喷出 n 口锅，依次瞄准离那里最近的几个人
@@ -948,13 +950,13 @@
       .slice(0, 3);
     if (!near.length) return;
     for (let i = 0; i < n; i++) launchPot(src.x, src.y, near[i % near.length], 0.9 + i * 0.2, false, 'burst');
-    E.sfx('warn');
+    E.sfx(srcKey === 'printer' ? 'printer' : 'burst');
     shake = Math.max(shake, 4);
   }
   // 随机事件生效
   function startEvent(kind) {
     if (kind === 'printer') burst('printer', 5);
-    else if (kind === 'tea') { S.tea = 10; E.toast('同事们都去茶水间了，挤在一起正好连甩', 2200); }
+    else if (kind === 'tea') { S.tea = 10; E.toast('同事们都去茶水间了，挤在一起正好连甩', 2200); E.sfx('tea'); }
     else if (kind === 'p0') {
       const l = S.leaders[0];
       const target = pickTargets(l)[0] || nearestAgent(l.x, l.y);
@@ -1020,7 +1022,7 @@
     if (btn) {
       const el = document.getElementById('hint');
       el.querySelector('.h-txt').insertAdjacentHTML('beforeend', `<button class="h-go" type="button">${btn}</button>`);
-      el.querySelector('.h-go').addEventListener('click', () => { E.sfx('throw'); startWork(); });
+      el.querySelector('.h-go').addEventListener('click', () => startWork());
     }
   }
   // 每种带教步骤：enter 布置场面；check 每帧检查是否完成；其余是事件回调（见 tutEvent）
@@ -1062,7 +1064,7 @@
         tutLater(AIM_TIME + 2.2, () => {
           caught(it, l);
           shake = 6;
-          E.sfx('boss');
+          E.sfx('caught');
           showCoach(S.tut.step.say2);
           tutLater(3.4, tutNext);
         });
@@ -1147,7 +1149,7 @@
     forceTut = false;
     clearBanners();
     E.toast('09:00 正式上班！', 1600);
-    E.sfx('boss');
+    E.sfx('workStart');
   }
 
   /* ---------------- 机器人大脑 ---------------- */
@@ -1349,7 +1351,7 @@
 
     // 快压垮提醒：玩家堆到 POT_ALARM 口提示一次，降下去后可以再提示
     const P = S.player, n = potsOf(P);
-    if (n >= POT_ALARM && !P.alarmed) { P.alarmed = true; E.toast(`身上 ${n} 口锅了，堆满 ${MAX_POTS} 口会被压垮！`, 1800); E.sfx('warn'); }
+    if (n >= POT_ALARM && !P.alarmed) { P.alarmed = true; E.toast(`身上 ${n} 口锅了，堆满 ${MAX_POTS} 口会被压垮！`, 1800); E.sfx('alarm'); }
     else if (n < POT_ALARM - 2) P.alarmed = false;
     // 压垮：机器人出局（排最后），玩家当场失败
     for (const a of S.agents) {
@@ -1357,6 +1359,7 @@
       if (a.isPlayer) { S.over = 'crushed'; return; }
       a.crushed = true; a.crushedAt = S.t; a.target = null;
       E.toast(`${a.name}被锅压垮了！`, 1800);
+      E.sfx('crush', { vol: 0.6 });
     }
     if (workT() >= L.duration - 1e-7) { S.t = S.t0 + L.duration; S.over = 'time'; }
   }
@@ -1395,7 +1398,7 @@
     el.classList.add('on');
     msgTimer = 3.4;
     placeBanners();
-    E.sfx('tick');
+    E.sfx('chat');
   }
   // 提示条和群消息的计时
   function updateBanners(dt) {
@@ -2009,9 +2012,12 @@
     // 最好成绩：星多的好；星一样比背锅少（旧存档没有 blames，当作最差）
     const isBest = stars > 0 && (!old || stars > old.stars || (stars === old.stars && P.blames < (old.blames == null ? Infinity : old.blames)));
     if (isBest) prog.best[L.id] = { blames: P.blames, stars };
+    const unlockedNew = stars > 0 && L.id + 1 > prog.unlocked && LEVELS.some((lv) => lv.id === L.id + 1);
     if (stars > 0) prog.unlocked = Math.max(prog.unlocked, L.id + 1);
     saveProgress(prog);
-    if (!S.closing) E.sfx(stars > 0 ? 'win' : 'lose');
+    if (!S.closing) E.sfx(crushed ? 'crushed' : stars > 0 ? 'win' : 'lose');
+    for (let i = 0; i < stars; i++) E.sfx('star', { delay: 0.3 + i * 0.18, rate: 1 + i * 0.12 });
+    if (unlockedNew) E.sfx('unlock', { delay: 0.4 + stars * 0.18 });
     if (crushed) E.buzz(200); // 被压垮：长震
     E.bgm(false);
     clearBanners(); // 收起群消息和教学横幅，别压在结算弹窗上
@@ -2073,11 +2079,13 @@
         S.throws = S.throws.filter((f) => f.target !== P);
         S.over = null; S.closing = null; S.lastTick = null;
         if (workT() > L.duration - 15) S.t0 = S.t - (L.duration - 15); // 上班时钟拨回到下班前 15 秒
-        E.hidePanel(); mode = 'play'; E.bgm(true);
+        E.hidePanel(); mode = 'play'; E.bgm(workTrack());
+        E.sfx('revive');
         E.toast('甩掉 6 口锅，继续熬到下班');
       }),
       rescue: () => E.fakeAd(() => {
         S.rescued = true;
+        E.sfx('revive');
         P.blames = Math.max(0, P.blames - 3);
         S.closing = null;
         finish('time');
@@ -2178,9 +2186,9 @@
     inp.fire = 0;
     document.getElementById('hud').hidden = false;
     mode = 'play';
-    E.bgm(true);
+    E.bgm('work', true);
     if (tut) tutNext();
-    if (S.buff) E.toast(`带着「${BUFFS[S.buff].name}」上班`, 1800);
+    if (S.buff) { E.toast(`带着「${BUFFS[S.buff].name}」上班`, 1800); E.sfx('buff'); }
   }
   // 暂停：休息一下（锅插图 + 继续 / 重新开始 / 返回首页）
   function pauseGame() {
@@ -2200,7 +2208,9 @@
     });
   }
   // 从暂停 / 设置回到对局
-  function resumeGame() { E.hidePanel(); mode = 'play'; E.bgm(true); }
+  function resumeGame() { E.hidePanel(); mode = 'play'; E.bgm(workTrack()); }
+  // 对局里该放哪首 BGM：17:00 突击派活以后换紧张版
+  function workTrack() { return S && S.rush ? 'rush' : 'work'; }
 
   // 设置弹窗：音乐 / 音效 / 震动三个开关，点了立即生效并保存；对局中打开会先暂停，关掉后继续
   function showSettings() {
@@ -2225,7 +2235,7 @@
         E.setSetting(key, on);
         btn.setAttribute('aria-checked', on);
         btn.textContent = on ? '开' : '关';
-        if (key === 'sfx' && on) { E.unlockAudio(); E.sfx('tick'); }
+        E.unlockAudio(); E.sfx('toggle'); // 关音效时 E.muted 已为真，不会响
         if (key === 'vibrate' && on) E.buzz(40);
       },
     });
@@ -2261,6 +2271,7 @@
 
   // 以 956×1645 原稿为坐标系；美术在底板，所有文字和点击行为由 DOM 承担。
   function showIntro() {
+    E.bgm('lobby');
     mode = 'intro';
     S = makeState();
     clearBanners();
@@ -2323,7 +2334,7 @@
   function showLobby() {
     E.clearPraise();
     mode = 'lobby';
-    E.bgm(true);
+    E.bgm('lobby');
     S = null;
     E.hidePanel();
     clearBanners();
@@ -2438,6 +2449,8 @@
     simulate(levelIdx, runs) {
       const keepL = L, keepAuto = auto, keepS = S, keepMode = mode;
       simulating = true;
+      const keepMuted = E.muted;
+      E.muted = true; // 模拟对局不出声
       try {
       L = LEVELS[levelIdx || 0]; auto = true;
       const out = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, avgBlame: {}, avgCaught: {}, avgBooms: 0, avgSkies: 0, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLaunched: 0, avgMiss: 0, avgParry: 0, avgLeaderHits: 0, avgCrushT: 0 };
@@ -2471,7 +2484,7 @@
       L = keepL; auto = keepAuto; S = keepS; mode = keepMode;
       floats.list = []; clearBanners();
       return out;
-      } finally { simulating = false; L = keepL; auto = keepAuto; S = keepS; mode = keepMode; }
+      } finally { simulating = false; E.muted = keepMuted; L = keepL; auto = keepAuto; S = keepS; mode = keepMode; }
     },
     praise,
     state: () => S,
