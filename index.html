@@ -29,7 +29,8 @@
 <div id="hint"></div>
 <!-- 下班预告不挡操作；到点后在冻结的办公室上给出结果反馈。 -->
 <div id="closingNotice" role="status" aria-live="polite" aria-atomic="true" hidden>
-  <div class="closing-clock" aria-hidden="true"><img data-px="ui_closing_clock" alt=""></div>
+  <img id="closingBase" class="closing-base" data-px="closing_base_yellow" alt="" aria-hidden="true">
+  <div class="closing-clock" aria-hidden="true"><img id="closingClock" data-px="closing_clock_yellow" alt=""></div>
   <div class="closing-copy"><strong id="closingTitle"></strong><span id="closingDetail"></span></div>
   <div id="closingNumber"><b id="closingDigit"></b><small>秒</small></div>
 </div>

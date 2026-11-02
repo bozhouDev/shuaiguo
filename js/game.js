@@ -20,7 +20,8 @@
     'designer_normal', 'designer_hit', 'designer_angry', 'designer_flat',
     'veteran_normal', 'veteran_tea', 'veteran_hit', 'veteran_flat', 'intern_normal', 'intern_cry', 'intern_hit', 'intern_flat',
     'boss_walk', 'boss_aim', 'boss_chase', 'boss_idle', 'director_walk', 'director_aim', 'director_chase', 'director_idle',
-    'ui_praise_thumb', 'ui_praise_bounce', 'ui_praise_rankup', 'ui_closing_clock', 'ui_coach_hand', 'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact', 'ui_wok', 'desk', 'meeting_table', 'boss_desk', 'plant', 'plant_small', 'printer', 'cooler',
+    'ui_praise_thumb', 'ui_praise_bounce', 'ui_praise_rankup', 'closing_base_yellow', 'closing_base_orange', 'closing_base_red', 'closing_base_plain',
+    'closing_clock_yellow', 'closing_clock_orange', 'closing_clock_red', 'ui_coach_hand', 'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact', 'ui_wok', 'desk', 'meeting_table', 'boss_desk', 'plant', 'plant_small', 'printer', 'cooler',
     'cabinet', 'whiteboard', 'tea_counter', 'sofa'];
   for (const who of ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director'])
     for (const d of 'dus') for (let i = 0; i < 4; i++) SPRITES.push(`${who}_walk_${d}${i}`);
@@ -1927,6 +1928,14 @@
   }
 
   /* ---------------- 下班收尾 ---------------- */
+  // 只在层名变化时换图，复用图集裁片缓存，不在每帧重新生成图片。
+  function setClosingLayer(id, name) {
+    const img = document.getElementById(id);
+    if (img.dataset.px !== name) {
+      img.dataset.px = name;
+      img.src = E.pxUrl(name);
+    }
+  }
   // 预告贴在 HUD 下，不遮角色和锅；排名变化时同步给出最后几秒的小目标。
   function updateClosingNotice() {
     const el = document.getElementById('closingNotice');
@@ -1938,8 +1947,11 @@
     el.style.top = `${document.getElementById('hud').getBoundingClientRect().bottom + 10}px`;
     if (warning) {
       const seconds = Math.ceil(left), rank = ranking().indexOf(S.player) + 1;
-      // 色档可调：10–6 秒黄、5–3 秒亮橙、2–1 秒红；振动从 3 秒开始。
-      el.className = `countdown ${seconds <= 2 ? 'danger' : seconds <= 5 ? 'warning' : 'calm'}${seconds <= 3 ? ' shaking' : ''}`;
+      // 色档可调：10–6 秒黄、5–3 秒亮橙、2–1 秒红；闹钟从 5 秒开始振动。
+      el.className = `countdown ${seconds <= 2 ? 'danger' : seconds <= 5 ? 'warning' : 'calm'}${seconds <= 5 ? ' shaking' : ''}`;
+      setClosingLayer('closingBase', `closing_base_${seconds <= 2 ? 'red' : seconds <= 5 ? 'orange' : 'yellow'}`);
+      setClosingLayer('closingClock', `closing_clock_${seconds <= 2 ? 'red' : seconds <= 5 ? 'orange' : 'yellow'}`);
+      el.classList.toggle('double-digit', seconds === 10);
       E.setText('closingTitle', '下班倒计时');
       E.setText('closingDetail', rank <= PASS_RANK ? '守住前三' : '冲进前三');
       E.setText('closingDigit', seconds);
@@ -1952,6 +1964,8 @@
       }
     } else {
       document.getElementById('closingNumber').hidden = true;
+      setClosingLayer('closingBase', 'closing_base_plain');
+      setClosingLayer('closingClock', 'closing_clock_yellow');
       const result = S.closing.t >= CLOSING_BELL_TIME;
       el.className = result ? `feedback ${S.closing.passed ? 'passed' : 'failed'}` : 'bell';
       E.setText('closingTitle', result ? (S.closing.passed ? '准点下班！' : '这次得加班了') : '叮！下班时间到');
