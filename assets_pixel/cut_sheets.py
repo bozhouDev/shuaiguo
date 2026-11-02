@@ -14,6 +14,8 @@ OUT = os.path.join(ROOT, 'sprites')
 
 # 每张素材表里的素材名，按「从上到下、从左到右」的顺序
 NAMES = {
+    'ui_praise': ['ui_praise_thumb', 'ui_praise_bounce', 'ui_praise_rankup'],
+    'ui_closing_clock': ['ui_closing_clock'],  # 下班倒计时的黄色闹钟
     's1_player': ['player_normal', 'player_panic', 'player_crushed', 'player_win'],
     's2_pm_tester': ['pm_normal', 'pm_hit', 'pm_angry', 'pm_flat',
                      'tester_normal', 'tester_hit', 'tester_angry', 'tester_flat'],
@@ -37,6 +39,8 @@ for _who in WALKERS:
 
 # 每张表每行有几个素材（用于在每行里挑最宽的几道空隙切开）
 ROWS = {
+    'ui_praise': [3],
+    'ui_closing_clock': [1],
     's1_player': [4], 's2_pm_tester': [4, 4], 's3_designer_veteran': [4, 4],
     's4_intern_director': [4, 4], 's5_boss_items': [4, 7], 's6_props': [3, 4, 4], 's7_ui': [5, 5], 's8_lobby_ui': [4],
     **{'w_' + w: [4, 4, 4] for w in WALKERS},

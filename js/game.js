@@ -19,7 +19,7 @@
     'designer_normal', 'designer_hit', 'designer_angry', 'designer_flat',
     'veteran_normal', 'veteran_tea', 'veteran_hit', 'veteran_flat', 'intern_normal', 'intern_cry', 'intern_hit', 'intern_flat',
     'boss_walk', 'boss_aim', 'boss_chase', 'boss_idle', 'director_walk', 'director_aim', 'director_chase', 'director_idle',
-    'ui_coach_hand', 'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact', 'ui_wok', 'desk', 'meeting_table', 'boss_desk', 'plant', 'plant_small', 'printer', 'cooler',
+    'ui_praise_thumb', 'ui_praise_bounce', 'ui_praise_rankup', 'ui_closing_clock', 'ui_coach_hand', 'wok', 'wok_flying', 'fx_anger', 'fx_tears', 'fx_sweat', 'fx_dizzy', 'fx_impact', 'ui_wok', 'desk', 'meeting_table', 'boss_desk', 'plant', 'plant_small', 'printer', 'cooler',
     'cabinet', 'whiteboard', 'tea_counter', 'sofa'];
   for (const who of ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director'])
     for (const d of 'dus') for (let i = 0; i < 4; i++) SPRITES.push(`${who}_walk_${d}${i}`);
@@ -65,7 +65,7 @@
   const ALERT_SPEED = 120;     // 老板追人速度（略慢于人，绕障碍追）
   const P0_LIFE = 10;          // P0 的截止时间（比普通锅短得多）
   const P0_BLAME = 3;          // P0 到点算背几次锅
-  const FINAL_RUSH = 8;        // 最后几秒进入排名冲刺
+  const FINAL_RUSH = 10;       // 下班预告秒数，只影响横幅，不改变 AI 和计分
   const CLOSING_BELL_TIME = 0.45; // 到点铃声提示的实际秒数
   const CLOSING_FEEDBACK_TIME = 1; // 胜负反馈的实际秒数
   const PASS_RANK = 3;         // 进前几名过关
@@ -83,30 +83,31 @@
   // parry 锅飞来时反甩成功的概率；throwR 目标进入多近才出手；sneak 在领导视野里时忍住不甩的概率
   const PERSONAS = {
     me:       { name: '你', sprite: 'player', speed: 1, turn: 5.2, react: 0.2, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.9, caution: 0.7, parry: 0.5, throwR: 130, sneak: 0.9 },
-    pm:       { name: '产品经理', sprite: 'pm', speed: 0.93, turn: 4.6, react: 0.22, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.8, caution: 0.6, parry: 0.35, throwR: 120, sneak: 0.85 },
-    tester:   { name: '测试小王', sprite: 'tester', speed: 0.88, turn: 4.4, react: 0.24, aggr: 0.85, seekR: 440, seekMin: 1, dodge: 1, caution: 0.8, parry: 0.4, throwR: 110, sneak: 0.7 },
-    intern:   { name: '实习生', sprite: 'intern', speed: 0.85, turn: 4, react: 0.36, aggr: 0.4, seekR: 260, seekMin: 3, dodge: 0.45, caution: 1, parry: 0.1, throwR: 90, sneak: 0.2 },
+    pm:       { name: '会计', sprite: 'pm', speed: 0.93, turn: 4.6, react: 0.22, aggr: 1, seekR: 520, seekMin: 1, dodge: 0.8, caution: 0.6, parry: 0.35, throwR: 120, sneak: 0.85 },
+    tester:   { name: '业务员', sprite: 'tester', speed: 0.88, turn: 4.4, react: 0.24, aggr: 0.85, seekR: 440, seekMin: 1, dodge: 1, caution: 0.8, parry: 0.4, throwR: 110, sneak: 0.7 },
+    intern:   { name: '新来的', sprite: 'intern', speed: 0.85, turn: 4, react: 0.36, aggr: 0.4, seekR: 260, seekMin: 3, dodge: 0.45, caution: 1, parry: 0.1, throwR: 90, sneak: 0.2 },
     veteran:  { name: '老油条', sprite: 'veteran', speed: 0.95, turn: 4.8, react: 0.2, aggr: 0.65, seekR: 320, seekMin: 2, dodge: 1.3, caution: 1.3, parry: 0.65, throwR: 110, sneak: 1, tea: true },
-    designer: { name: '设计师', sprite: 'designer', speed: 0.9, turn: 4.5, react: 0.26, aggr: 0.75, seekR: 400, seekMin: 1, dodge: 0.9, caution: 0.9, parry: 0.3, throwR: 115, sneak: 0.6 },
+    designer: { name: '美工', sprite: 'designer', speed: 0.9, turn: 4.5, react: 0.26, aggr: 0.75, seekR: 400, seekMin: 1, dodge: 0.9, caution: 0.9, parry: 0.3, throwR: 115, sneak: 0.6 },
   };
 
   // 领导类型：count 一次丢几口（分别瞄准锅最少的几个人）；range 视野；everyMul 丢锅间隔倍率
   const LEADER_TYPES = {
     boss:     { name: '老板', sprite: 'boss', h: 94, emoji: '🤵', speed: 68, count: 1, range: 700, everyMul: 1 },
-    director: { name: '总监', sprite: 'director', h: 86, emoji: '👔', speed: 80, count: 2, range: 600, everyMul: 1.3 },
+    director: { name: '经理', sprite: 'director', h: 86, emoji: '👔', speed: 80, count: 2, range: 600, everyMul: 1.3 },
   };
 
   // 随机事件：先发群消息，2 秒后生效
   const EVENTS = {
     printer: { msg: '【全员群】行政：打印机又卡纸了！谁离得近去看一下' },
-    tea: { msg: '【全员群】HR：下午茶到了，茶水间自取 🧋' },
-    p0: { msg: '【技术群】老板：@所有人 线上 P0 事故，谁来跟一下？' },
+    tea: { msg: '【全员群】人事：下午茶到了，茶水间自取 🧋' },
+    p0: { msg: '【工作群】老板：@所有人 大客户急件，今天必须交，谁来跟一下？' },
   };
 
   // 所有碰撞体：墙 + 有碰撞框的摆设
   const obstacles = OFFICE.walls.concat(OFFICE.props.filter((p) => p.hit).map((p) => p.hit));
   const floats = new E.Floats();
   const query = new URLSearchParams(location.search);
+  let simulating = false; // 批量模拟禁止创建表现贴纸 DOM
   let auto = query.has('auto');  // ?auto=1：玩家也交给 AI（调试 / 平衡测试用）
   let forceTut = query.has('tut'); // ?tut=1：已经看过带教也再走一遍
   let L = LEVELS[0];             // 当前关卡
@@ -125,7 +126,7 @@
   // 新的一口锅：label 锅上的字，due 到点时刻（对局秒数），hot 是否 P0
   // 带教期间的锅不走时间（due = Infinity），开始上班时再统一起算
   function newPot(t, hot, label) {
-    return { label: hot ? 'P0' : label || E.pick(OFFICE.potLabels), due: S && S.tut ? Infinity : t + (hot ? P0_LIFE : potLife()), hot: !!hot };
+    return { label: hot ? '急件' : label || E.pick(OFFICE.potLabels), due: S && S.tut ? Infinity : t + (hot ? P0_LIFE : potLife()), hot: !!hot };
   }
   // 某人身上最急的一口锅的下标（没有锅返回 -1）
   function urgentIdx(a) {
@@ -142,6 +143,28 @@
   // 上班时钟：开始上班后过了几秒（带教期间 t0 = Infinity，结果是 -Infinity，时钟停在 09:00）
   // S.t 是对局物理时间（锅的截止、动画都用它），派锅节奏、散会、下班判定都用上班时钟
   const workT = () => S.t - S.t0;
+  // 真实表现统一入口：带教、模拟、暂停及锁榜后都不触发，冷却用对局时间。
+  function praise(kind) {
+    if (simulating || !S || S.tut || mode !== 'play' || S.over) return false;
+    if (kind === 'calm' && S.player.blames !== 0) return false;
+    const cooldown = { calm: 10, parry: 3, rankup: 0 }[kind];
+    if (cooldown == null || S.t - (S.praiseAt[kind] ?? -Infinity) < cooldown) return false;
+    const me = S.player.sn, world = OFFICE.world;
+    const camY = world.h < st.h ? (world.h - st.h) / 2 : E.clamp(me.y - st.h / 2, 0, world.h - st.h);
+    const rect = st.c.getBoundingClientRect();
+    const shown = E.praise(kind, { avoidY: rect.top + (me.y - camY) * rect.height / st.h });
+    if (shown) S.praiseAt[kind] = S.t;
+    return shown;
+  }
+  // 复用 HUD 排名，连续在前三外待满三秒才认可回升；不累计抖动片段。
+  function checkPraiseRank(myRank) {
+    if (simulating || S.tut || mode !== 'play' || S.over || workT() <= 15) { S.outSince = null; return; }
+    if (myRank > PASS_RANK) { if (S.outSince == null) S.outSince = S.t; }
+    else {
+      if (S.outSince != null && S.t - S.outSince >= 3) praise('rankup');
+      S.outSince = null;
+    }
+  }
   // 上班秒数 → 屏幕时钟文字（09:00 ~ 18:00）
   function clockAt(t) {
     const mins = (E.clamp(t, 0, L.duration) / L.duration) * 9 * 60;
@@ -228,6 +251,7 @@
     const player = makeAgent(0, 'me', OFFICE.player.x, OFFICE.player.y, true);
     const bots = L.bots.map((k, i) => { const sp = spots[k] || OFFICE.spawns[i]; return makeAgent(i + 1, k, sp.x, sp.y, false, tut); });
     return {
+      praiseAt: {}, outSince: null, // 同类冷却与连续掉出前三的起点，每局重置
       buff, buffUsed: false,
       t: 0, t0: tut ? Infinity : 0, player, bots, agents: [player, ...bots],
       leaders: L.leaders.map(makeLeader),
@@ -283,7 +307,7 @@
     S.flying.push({
       src, phase: warn > 0 ? 'warn' : 'fly', t: warn, warn0: warn, x, y, target, hot: !!hot,
       a: Math.atan2(target.sn.y - y, target.sn.x - x), spin: 0, life: POT_LIFE,
-      label: hot ? 'P0' : E.pick(OFFICE.potLabels),
+      label: hot ? '急件' : E.pick(OFFICE.potLabels),
     });
     S.spawned++;
   }
@@ -353,7 +377,7 @@
     a.combo = 0;
     if (a.isPlayer) tutEvent('potOnMe');
     if (f.hot) {
-      if (a.isPlayer) { E.toast(`P0 砸到你身上！${P0_LIFE} 秒内甩出去，炸了背锅 +${P0_BLAME}`, 2200); E.sfx('boss'); E.buzz(60); shake = 8; }
+      if (a.isPlayer) { E.toast(`急件砸到你身上！${P0_LIFE} 秒内甩出去，炸了背锅 +${P0_BLAME}`, 2200); E.sfx('boss'); E.buzz(60); shake = 8; }
       return;
     }
     if (a.isPlayer) {
@@ -574,10 +598,12 @@
     b.angry = 2;
     if (b.key === 'intern') { b.cry = 2; if (potsOf(b) >= 3) leaderAlert(a, b); }
 
+    if (a.isPlayer && f.bounces > 0) praise('parry');
+    else if (a.isPlayer && f.bounces === 0 && S.player.blames === 0) praise('calm');
     if (a.isPlayer) tutEvent('land', b);
     if (a.isPlayer) {
       const wasTea = b.teaT > 0;
-      if (f.hot) floats.add(`P0 甩给${b.name}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
+      if (f.hot) floats.add(`急件甩给${b.name}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
       else if (b.key === 'veteran') floats.add(wasTea ? '老油条也有今天！' : '甩中老油条！', b.sn.x, b.sn.y - 44, '#2F9E6B');
       else floats.add(`甩给${b.name}`, b.sn.x, b.sn.y - 44, '#2F9E6B');
       if (a.combo >= 2) { floats.add(`连甩 ×${a.combo}`, a.sn.x, a.sn.y - 54, '#E8504A'); E.sfx('combo'); }
@@ -606,8 +632,8 @@
   function explode(a, pot) {
     S.booms++;
     spawnFx('fx_impact', a.sn.x, a.sn.y - 26, pot.hot ? 84 : 62, 0.45);
-    addBlame(a, pot.hot ? P0_BLAME : 1, pot.hot ? 'P0 炸了' : `${pot.label}出事了`);
-    if (pot.hot) E.toast(a.isPlayer ? `P0 炸在你手里，背锅 +${P0_BLAME}` : `P0 炸在${a.name}手里，背锅 +${P0_BLAME}`, 2000);
+    addBlame(a, pot.hot ? P0_BLAME : 1, pot.hot ? '急件炸了' : `${pot.label}出事了`);
+    if (pot.hot) E.toast(a.isPlayer ? `急件炸在你手里，背锅 +${P0_BLAME}` : `急件炸在${a.name}手里，背锅 +${P0_BLAME}`, 2000);
   }
   // 每帧：身上到点的锅出事；还在飞的锅到点，算甩它的人
   function updateDue() {
@@ -751,7 +777,7 @@
     if (!l || L.basic || S.tut || l.state === 'chase' || S.t < l.alertCd) return;
     if (E.dist(l.x, l.y, intern.sn.x, intern.sn.y) > ALERT_SEE) return;
     l.state = 'chase'; l.st = ALERT_CHASE; l.chase = bully; l.alertCd = S.t + ALERT_CD;
-    E.toast(bully.isPlayer ? `${l.name}：谁让实习生干这个的？` : `${l.name}盯上了${bully.name}`, 2000);
+    E.toast(bully.isPlayer ? `${l.name}：谁让新来的干这个的？` : `${l.name}盯上了${bully.name}`, 2000);
     if (bully.isPlayer) E.sfx('boss');
   }
   // 找离领导最近的巡逻点，回到路线上
@@ -983,8 +1009,8 @@
   function tutLater(sec, fn) { S.tut.timers.push({ t: sec, fn }); }
   // 老周说话：沿用教学横幅的样式，一直显示到下一句；btn 为按钮文字（点了开始上班）
   function showCoach(text, btn) {
-    const who = (S.tut && S.tut.victim && S.tut.victim.name) || '实习生';
-    showHint({ title: '带教', icon: ['veteran_tea'], sub: '老周', text: text.replace('{who}', who) });
+    const who = (S.tut && S.tut.victim && S.tut.victim.name) || '新来的';
+    showHint({ title: '教学', icon: ['veteran_tea'], sub: '老周', text: text.replace('{who}', who) });
     hintTimer = 0; // 0 = 不自动收起
     if (btn) {
       const el = document.getElementById('hint');
@@ -1419,7 +1445,7 @@
     const r = 26 + Math.sin(time * 14) * 3;
     ctx.fillStyle = 'rgba(232,80,74,.35)';
     ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    drawWok(x, y, 'P0', 42, Math.sin(time * 10) * 0.2);
+    drawWok(x, y, '急件', 42, Math.sin(time * 10) * 0.2);
     if (left != null) E.label(ctx, String(Math.ceil(left)), x + 22, y - 18, 18, '#E8504A');
   }
   // 主角头顶右侧：最急那口锅快到点时，标一个闹钟倒计时（黄 → 红）
@@ -1804,12 +1830,13 @@
     btnThrow.classList.toggle('parry', parryNow);
     btnThrow.classList.toggle('empty', !parryNow && !has);
     btnThrow.style.setProperty('--cd', parryNow ? 0 : Math.max(0, P.cool, P.stun) / THROW_CD);
-    btnThrow.firstChild.textContent = parryNow ? '弹!' : holdsHot(P) ? 'P0' : '甩!';
+    btnThrow.firstChild.textContent = parryNow ? '弹!' : holdsHot(P) ? '急件' : '甩!';
   }
   function updateHud() {
     const P = S.player, n = potsOf(P);
     const rank = ranking();
     const myRank = rank.indexOf(P) + 1;
+    checkPraiseRank(myRank);
     const w = workT();
     E.setText('hClock', clockAt(w));
     E.setText('hPotsN', `${n}/${MAX_POTS}`);
@@ -1890,11 +1917,20 @@
     el.style.top = `${document.getElementById('hud').getBoundingClientRect().bottom + 10}px`;
     if (warning) {
       const seconds = Math.ceil(left), rank = ranking().indexOf(S.player) + 1;
-      el.className = seconds <= 3 ? 'countdown' : '';
-      E.setText('closingTitle', seconds <= 3 ? `${seconds}` : `距离下班 ${seconds} 秒`);
-      E.setText('closingDetail', rank <= PASS_RANK ? '快下班了，守住前三！' : '还剩几秒，冲进前三！');
-      if (seconds <= 3 && S.lastTick !== seconds) { S.lastTick = seconds; E.sfx('tick'); }
+      // 色档可调：10–6 秒黄、5–3 秒亮橙、2–1 秒红；振动从 3 秒开始。
+      el.className = `countdown ${seconds <= 2 ? 'danger' : seconds <= 5 ? 'warning' : 'calm'}${seconds <= 3 ? ' shaking' : ''}`;
+      E.setText('closingTitle', '下班倒计时');
+      E.setText('closingDetail', rank <= PASS_RANK ? '守住前三' : '冲进前三');
+      E.setText('closingDigit', seconds);
+      document.getElementById('closingNumber').hidden = false;
+      // 每个新秒数只响一次；奇偶交替动画名，无需强制布局即可重新弹跳。
+      if (S.lastTick !== seconds) {
+        S.lastTick = seconds;
+        el.dataset.beat = seconds % 2 ? 'odd' : 'even';
+        E.sfx(seconds <= 3 ? 'tickUrgent' : 'tick');
+      }
     } else {
+      document.getElementById('closingNumber').hidden = true;
       const result = S.closing.t >= CLOSING_BELL_TIME;
       el.className = result ? `feedback ${S.closing.passed ? 'passed' : 'failed'}` : 'bell';
       E.setText('closingTitle', result ? (S.closing.passed ? '准点下班！' : '这次得加班了') : '叮！下班时间到');
@@ -2068,9 +2104,9 @@
     // 甩锅给好友：主角把一口 P0 锅甩向问号，问号就是点开卡片的人
     if (info.kind === 'blame') {
       return {
-        title: info.crushed ? '我被锅压垮了，剩下这口 P0 你来背' : `我背了 ${info.blames} 次锅被留下加班，这口锅甩给你了`,
+        title: info.crushed ? '我被锅压垮了，剩下这口急件你来背' : `我背了 ${info.blames} 次锅被留下加班，这口锅甩给你了`,
         pic: `<span class="sp-clock">${img('ui_clock', '')}18:00 前甩掉</span>
-          ${img('player_win', 'sp-thrower')}${img('wok_flying', 'sp-wok')}<span class="sp-tag">P0</span><span class="sp-target">?</span>`,
+          ${img('player_win', 'sp-thrower')}${img('wok_flying', 'sp-wok')}<span class="sp-tag">急件</span><span class="sp-target">?</span>`,
       };
     }
     // 晒战绩：大号名次 + 星星 + 背锅次数，两侧放老板和主角
@@ -2108,6 +2144,8 @@
   // 开新局
   // 第 1 关第一次玩（或要求重看）时先走带教；?auto 自动玩时不走
   function startGame() {
+    E.clearPraise();
+    E.preparePraise();
     E.unlockAudio();
     const tut = !!L.tutorial && !auto && (forceTut || !loadProgress().tutDone);
     S = makeState(tut, nextBuff);
@@ -2184,7 +2222,7 @@
     return `
       <ul class="rules">${basic}
         <li><span>☄️</span>天降锅只砸你，躲不掉；${leaders}的普通锅看到红线就躲</li>
-        <li><span>🛡️</span>锅朝你飞来时按「甩」能弹回去；P0 只有 ${P0_LIFE} 秒，炸了背锅 +${P0_BLAME}</li>
+        <li><span>🛡️</span>锅朝你飞来时按「甩」能弹回去；急件只有 ${P0_LIFE} 秒，炸了背锅 +${P0_BLAME}</li>
         <li><span>💥</span>身上堆满 ${MAX_POTS} 口锅当场压垮，直接失败</li>
       </ul>`;
   }
@@ -2213,7 +2251,7 @@
       </div>
       <button class="btn" data-act="start">开始上班</button>
       <button class="btn ghost" data-act="lobby">回大厅</button>
-      ${L.tutorial && prog.tutDone ? '<button class="pop-link" data-act="tut">重看带教</button>' : ''}`, {
+      ${L.tutorial && prog.tutDone ? '<button class="pop-link" data-act="tut">重看教学</button>' : ''}`, {
       start: startGame,
       lobby: showLobby,
       tut: () => { forceTut = true; startGame(); },
@@ -2224,11 +2262,12 @@
   /* ---------------- 大厅 ---------------- */
   // 大厅是盖在画布上的一层 DOM（#lobby）：像素门厅背景 + 标题 + 主角（头顶三口锅）和两边的同事 + 关卡日历 + 去上班
   // 布局按用户给的图稿；小人和锅的待机动画全用 CSS，大厅期间画布不重绘（见主循环）
-  const LOBBY_LINES = ['这锅不是我的', '这个你来跟一下', '我就路过一下', '收到，马上甩', '先对齐一下口径', '谁提的需求谁负责'];
+  const LOBBY_LINES = ['这锅不是我的', '这个你来跟一下', '我就路过一下', '收到，马上甩', '你问经理去', '谁接的活谁负责'];
   const lobby = { el: document.getElementById('lobby'), heroT: 0, line: -1 };
 
   // 显示大厅：按当前进度重画工牌星数、关卡日历和当前关
   function showLobby() {
+    E.clearPraise();
     mode = 'lobby';
     E.bgm(true);
     S = null;
@@ -2344,6 +2383,8 @@
   window.SG_DEBUG = {
     simulate(levelIdx, runs) {
       const keepL = L, keepAuto = auto, keepS = S, keepMode = mode;
+      simulating = true;
+      try {
       L = LEVELS[levelIdx || 0]; auto = true;
       const out = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, avgBlame: {}, avgCaught: {}, avgBooms: 0, avgSkies: 0, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLaunched: 0, avgMiss: 0, avgParry: 0, avgLeaderHits: 0, avgCrushT: 0 };
       for (let r = 0; r < out.runs; r++) {
@@ -2376,7 +2417,9 @@
       L = keepL; auto = keepAuto; S = keepS; mode = keepMode;
       floats.list = []; clearBanners();
       return out;
+      } finally { simulating = false; L = keepL; auto = keepAuto; S = keepS; mode = keepMode; }
     },
+    praise,
     state: () => S,
   };
 
@@ -2408,6 +2451,7 @@
   // 先加载图集（十来个请求），图集里没有的再按单张补；然后把 HUD 里写死的图标换成图集里的图
   E.loadAtlas(window.ATLAS, 'assets/atlas/')
     .then(() => E.loadSprites(SPRITES.filter((n) => !E.spr[n]), 'assets/px/', 'png'))
+    .then(() => E.preparePraise())
     .then(() => { E.fillPxImages(); qLevel ? showIntro() : showLobby(); });
 
   E.loop((dt, time) => {
@@ -2423,6 +2467,7 @@
     if (mode === 'lobby') updateLobby(dt);
     if (S) { draw(time); updateHud(); }
     updateClosingNotice();
+    if (mode === 'play') E.checkPraiseOcclusion();
     updateCoachHand();
   });
 })();

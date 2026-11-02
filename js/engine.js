@@ -302,9 +302,314 @@
     }
   };
 
+  /* ---------------- 表现反馈：2px 像素贴纸 ---------------- */
+  const C = {
+    K: '#1F2A44', // 墨水蓝描边
+    E: '#0F1628', // 最深的边
+    W: '#FFF8E6', // 奶油白
+    w: '#C9D5E8', // 手掌暗部（浅蓝灰）
+    Y: '#FFD84D', // 便利贴黄
+    y: '#F0C000', // 深黄
+    O: '#FD6D2C', // 亮橙
+    G: '#2F9E6B', // 绿
+    g: '#7ED6A2', // 亮绿
+    S: '#3A3A44', // 锅身
+    s: '#5A5A66', // 锅内
+    R: '#E8504A', // 红
+  };
+
+  // 四角星（闪烁装饰）
+  const SPARK = [
+    '....K....',
+    '...KYK...',
+    '...KYK...',
+    '.KKYWYKK.',
+    'KYYWWWYYK',
+    '.KKYWYKK.',
+    '...KYK...',
+    '...KYK...',
+    '....K....',
+  ];
+
+  // 三种反馈：文案、图标、优先级、停留时长、副标题两侧短线的颜色
+  const KINDS = {
+    calm:   { title: '稳住了！', sub: '零背锅',   icon: 'thumb',  pri: 1, hold: 900,  dash: '#8FA3D1' },
+    parry:  { title: '漂亮！',   sub: '反弹成功', icon: 'bounce', pri: 2, hold: 900,  dash: '#7ED6A2' },
+    rankup: { title: '好样的！', sub: '冲进前三', icon: 'rankup', pri: 3, hold: 1200, dash: '#FFD84D' },
+  };
+
+  const FONT = '"Noto Sans SC", "PingFang SC", "Hiragino Sans GB", sans-serif';
+  const layer = document.getElementById('praise');
+  let current = null; // 当前贴纸，退出动画期间仍参与优先级判断
+
+  /* ---------------- 工具：掩码与膨胀 ---------------- */
+  // 在 w×h 的格子上，把掩码 m 往外扩 r 格（方形邻域），返回新掩码
+  function dilate(m, w, h, r) {
+    const out = new Uint8Array(w * h);
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      if (!m[y * w + x]) continue;
+      for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
+        // 去掉四个角，轮廓更圆润一点（像素贴纸的阶梯角）
+        if (r > 1 && Math.abs(dx) === r && Math.abs(dy) === r) continue;
+        const nx = x + dx, ny = y + dy;
+        if (nx >= 0 && ny >= 0 && nx < w && ny < h) out[ny * w + nx] = 1;
+      }
+    }
+    return out;
+  }
+  // 小画布：按两倍像素绘制装饰星星。
+  function pixelCanvas(map, block) {
+    const w = Math.max(...map.map((r) => r.length)), h = map.length;
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    const ctx = cv.getContext('2d');
+    map.forEach((row, y) => [...row].forEach((ch, x) => { if (C[ch]) { ctx.fillStyle = C[ch]; ctx.fillRect(x, y, 1, 1); } }));
+    cv.style.width = w * block + 'px'; cv.style.height = h * block + 'px';
+    return cv;
+  }
+
+  /* ---------------- 方案一：像素贴纸 ---------------- */
+  // 把「图标 + 像素化标题 + 副标题底板」合成在一张低分辨率画布上，
+  // 再对整体轮廓做两次膨胀，得到墨水蓝内描边 → 奶油白贴纸边 → 最外细边。
+  const stickerCache = new Map();
+  function buildSticker(kind, block) {
+    const key = kind + block;
+    if (stickerCache.has(key)) return stickerCache.get(key);
+    const k = KINDS[kind];
+    // 标题字高（格）：字先在 G px 下画，再按格放大，得到像素字。粗像素格子大但笔画糊，细像素更好认
+    // 字数少的标题（漂亮！）字号放大，让三种标题宽度接近，复杂字也更好认
+    const tmp = document.createElement('canvas').getContext('2d');
+    tmp.font = `900 100px ${FONT}`;
+    const per100 = tmp.measureText(k.title).width / 100;
+    const G = Math.min(32, Math.floor(108 / per100));
+    const sprite = E.spr['ui_praise_' + k.icon];
+    const iw = 42, ih = 42;
+    const PAD = 5;           // 留给描边的格数
+
+    // 1) 量字宽（格）
+    tmp.font = `900 ${G}px ${FONT}`;
+    const tw = Math.ceil(tmp.measureText(k.title).width);
+    // 副标题按真实分辨率量，换算成格
+    tmp.font = `900 18px ${FONT}`;
+    const subW = Math.ceil((tmp.measureText(k.sub).width + k.sub.length * 2) / block);
+
+    // 2) 版面（单位：格）
+    const titleX = PAD + iw - 1, titleY = PAD;             // 图标贴着标题，像参考图
+    const plateH = Math.ceil(30 / block);                   // 底板约 30px 高
+    const plateW = Math.max(subW + Math.ceil(80 / block), Math.round(tw * 0.72)); // 两侧留给短线，至少占标题宽的七成
+    const W = Math.max(titleX + tw, PAD + iw + 4 + plateW) + PAD + 1;
+    const plateX = Math.round(titleX + tw / 2 - plateW / 2);
+    const plateY = titleY + G - 1;
+    // 图标竖直居中于「标题 + 底板」，太高时往下撑开画布，保证描边不被裁掉
+    const iconX = PAD, iconY = Math.max(PAD - 1, Math.round(titleY + (G + plateH) / 2 - ih / 2) - 1);
+    const H = Math.max(plateY + plateH, iconY + ih) + PAD + 1;
+
+    // 3) 标题像素化：白字画进透明画布，按透明度阈值取掩码
+    const tcv = document.createElement('canvas'); tcv.width = W; tcv.height = H;
+    const tctx = tcv.getContext('2d');
+    tctx.font = `900 ${G}px ${FONT}`; tctx.textBaseline = 'top'; tctx.fillStyle = '#fff';
+    tctx.fillText(k.title, titleX, titleY + 1);
+    const td = tctx.getImageData(0, 0, W, H).data;
+    const tm = new Uint8Array(W * H);
+    let top = H, bot = 0;
+    for (let i = 0; i < W * H; i++) if (td[i * 4 + 3] > 120) { tm[i] = 1; const y = (i / W) | 0; top = Math.min(top, y); bot = Math.max(bot, y); }
+
+    // 4) 合成
+    const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+    const ctx = cv.getContext('2d');
+    const union = new Uint8Array(W * H);
+    // 底板：深蓝底 + 顶部亮边 + 底部暗边，四角缺一格
+    for (let y = plateY; y < plateY + plateH; y++) for (let x = plateX; x < plateX + plateW; x++) {
+      const corner = (y === plateY || y === plateY + plateH - 1) && (x === plateX || x === plateX + plateW - 1);
+      if (corner) continue;
+      union[y * W + x] = 1;
+      ctx.fillStyle = y === plateY ? '#3D63B0' : y === plateY + plateH - 1 ? '#1E2C52' : '#2A3B66';
+      ctx.fillRect(x, y, 1, 1);
+    }
+    // 底板两侧短线
+    // 底板两侧短线：贴着副标题两边，像参考图「— 零背锅 —」
+    const dashY = plateY + Math.floor(plateH / 2), dashLen = Math.ceil(14 / block);
+    const cx = plateX + plateW / 2, half = Math.ceil(subW / 2) + Math.ceil(8 / block);
+    ctx.fillStyle = k.dash;
+    ctx.fillRect(Math.round(cx - half - dashLen), dashY, dashLen, Math.max(1, Math.round(3 / block)));
+    ctx.fillRect(Math.round(cx + half), dashY, dashLen, Math.max(1, Math.round(3 / block)));
+
+    // 标题：内描边（墨水蓝 1 格，压在底板上）
+    const tRing = dilate(tm, W, H, 1);
+    for (let i = 0; i < W * H; i++) if (tRing[i] && !tm[i]) { union[i] = 1; ctx.fillStyle = C.K; ctx.fillRect(i % W, (i / W) | 0, 1, 1); }
+    // 标题填色：顶边高光、上半亮黄、下半深黄、底边橙（硬切，不做渐变）
+    const mid = top + (bot - top) * 0.52;
+    for (let i = 0; i < W * H; i++) {
+      if (!tm[i]) continue;
+      const x = i % W, y = (i / W) | 0;
+      union[i] = 1;
+      const upEmpty = y === 0 || !tm[i - W], dnEmpty = y === H - 1 || !tm[i + W];
+      ctx.fillStyle = upEmpty ? '#FFF3B0' : dnEmpty ? '#F09A00' : y < mid ? '#FFDC3A' : '#FFC21A';
+      ctx.fillRect(x, y, 1, 1);
+    }
+    // 图标压在最上面
+    // 正式图先缩成 21×21 真像素，再放大两倍到低分辨率画布，关闭平滑。
+    if (sprite) {
+      const tiny = document.createElement('canvas'); tiny.width = tiny.height = 21;
+      const tc = tiny.getContext('2d'); tc.imageSmoothingEnabled = false;
+      const ratio = Math.min(21 / sprite.w, 21 / sprite.h);
+      const sw = Math.round(sprite.w * ratio), sh = Math.round(sprite.h * ratio);
+      tc.drawImage(sprite.canvas, Math.floor((21 - sw) / 2), Math.floor((21 - sh) / 2), sw, sh);
+      const pixels = tc.getImageData(0, 0, 21, 21);
+      for (let i = 3; i < pixels.data.length; i += 4) pixels.data[i] = pixels.data[i] > 120 ? 255 : 0;
+      tc.putImageData(pixels, 0, 0);
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(tiny, iconX, iconY, iw, ih);
+      for (let y = 0; y < ih; y++) for (let x = 0; x < iw; x++) {
+        if (pixels.data[(Math.floor(y / 2) * 21 + Math.floor(x / 2)) * 4 + 3]) union[(iconY + y) * W + iconX + x] = 1;
+      }
+    }
+
+    // 5) 整体贴纸边：奶油白 2 格 + 墨水蓝 1 格，画在最底层
+    const ring2 = dilate(union, W, H, 2), ring3 = dilate(ring2, W, H, 1);
+    ctx.globalCompositeOperation = 'destination-over';
+    for (let i = 0; i < W * H; i++) if (ring2[i] && !union[i]) { ctx.fillStyle = C.W; ctx.fillRect(i % W, (i / W) | 0, 1, 1); }
+    for (let i = 0; i < W * H; i++) if (ring3[i] && !ring2[i]) { ctx.fillStyle = C.E; ctx.fillRect(i % W, (i / W) | 0, 1, 1); }
+    ctx.globalCompositeOperation = 'source-over';
+
+    const out = {
+      url: cv.toDataURL(), w: W * block, h: H * block,
+      subX: (plateX + plateW / 2) * block, subY: (plateY + plateH / 2) * block + 1,
+      // 装饰星星的位置（相对整块，单位 px）
+      sparks: [
+        { x: iconX * block - 6, y: (iconY - 2) * block, s: 1 },
+        { x: (iconX - 3) * block, y: (iconY + ih * 0.7) * block, s: 0.6 },
+        { x: (titleX + tw + 2) * block, y: (plateY + 2) * block, s: 0.9 },
+        { x: (titleX + tw - 4) * block, y: (titleY - 2) * block, s: 0.6 },
+      ],
+    };
+    stickerCache.set(key, out);
+    return out;
+  }
+
+  // 方案一的 DOM：一张贴纸图 + 副标题文字 + 四颗闪烁星
+  function renderPixel(kind) {
+    const k = KINDS[kind], b = 2, st = buildSticker(kind, b);
+    const inner = document.createElement('div');
+    inner.className = 'praise-inner';
+    inner.style.width = st.w + 'px'; inner.style.height = st.h + 'px';
+    const img = new Image(); img.src = st.url; img.className = 'sticker';
+    img.style.cssText = `width:${st.w}px;height:${st.h}px;image-rendering:pixelated;display:block`;
+    inner.appendChild(img);
+    const sub = document.createElement('div');
+    sub.className = 'praise-sub'; sub.textContent = k.sub;
+    sub.style.left = st.subX + 'px'; sub.style.top = st.subY + 'px';
+    sub.style.fontSize = '18px';
+    inner.appendChild(sub);
+    st.sparks.forEach((p, i) => {
+      const cv = pixelCanvas(SPARK, Math.max(1, Math.round(b * p.s)));
+      const s = new Image(); s.src = cv.toDataURL(); s.style.width = cv.style.width; s.style.height = cv.style.height;
+      s.className = 'praise-spark';
+      s.style.left = p.x + 'px'; s.style.top = p.y + 'px';
+      s.style.animationDelay = (i * 120) + 'ms';
+      inner.appendChild(s);
+    });
+    return inner;
+  }
+
+
+  // 所有时长都用真实毫秒；退出动画期间仍保留优先级，防止低级贴纸抢入。
+  const PRAISE_TIME = { pop: 220, nodDelay: 260, nod: 260, out: 360, interrupt: 120, reduce: 160 };
+  const praiseItems = new Set(), praiseTemplates = new Map();
+  let praiseReady = null;
+  // 字体与精灵就绪后一次预合成三种贴纸，并提前解码图片。
+  E.preparePraise = function () {
+    if (!praiseReady) praiseReady = document.fonts.load(`900 32px ${FONT}`, '稳住了！漂亮！好样的！零背锅反弹成功冲进前三').then(async () => {
+      for (const kind of Object.keys(KINDS)) {
+        if (!E.spr['ui_praise_' + KINDS[kind].icon]) throw new Error('缺少贴纸图标：' + kind);
+        const template = renderPixel(kind);
+        await Promise.all([...template.querySelectorAll('img')].map(img => img.decode()));
+        praiseTemplates.set(kind, template);
+      }
+    }).catch(error => { console.warn('表现贴纸预热失败', error); });
+    return praiseReady;
+  };
+  // 撤销动画和定时器，包括已被顶掉但还在淡出的贴纸。
+  function removePraise(item) {
+    clearTimeout(item.timer);
+    item.el.getAnimations({ subtree: true }).forEach(animation => animation.cancel());
+    item.el.remove(); praiseItems.delete(item);
+    if (current === item) current = null;
+  }
+  E.clearPraise = function () { [...praiseItems].forEach(removePraise); };
+  // 上浮收起；打断时从当前姿态淡出，不突然跳回完整大小。
+  function dismissPraise(item, interrupted) {
+    clearTimeout(item.timer);
+    const inner = item.el.firstChild, style = getComputedStyle(inner);
+    const from = { opacity: style.opacity, transform: style.transform };
+    inner.getAnimations().forEach(animation => animation.cancel());
+    const duration = item.reduce ? PRAISE_TIME.reduce : interrupted ? PRAISE_TIME.interrupt : PRAISE_TIME.out;
+    const out = inner.animate([from, { opacity: 0, transform: item.reduce ? 'none' : `translateY(${interrupted ? -10 : -28}px)` }],
+      { duration, easing: 'cubic-bezier(.5,0,.9,.6)', fill: 'forwards' });
+    out.onfinish = () => removePraise(item);
+  }
+  // 固定弹出时的位置；给出入场放大、轻跳、退场上浮及四角星预留空间。
+  function praisePosition(sticker, avoidY) {
+    const scale = Math.min(1, (innerWidth - 24) / ((sticker.w + 18) * 1.06));
+    const half = (sticker.h + 20) * scale * 1.06 / 2;
+    let y = innerHeight * (avoidY >= innerHeight * .16 && avoidY <= innerHeight * .46 ? .62 : .30);
+    const occupied = [...document.querySelectorAll('#closingNotice, #msg, #hint')].filter(el => {
+      const style = getComputedStyle(el);
+      return !el.hidden && style.display !== 'none' && style.visibility !== 'hidden' && +style.opacity > 0;
+    }).map(el => el.getBoundingClientRect());
+    // 主角也算占位：头顶到脚下大约 avoidY-50 ~ avoidY+40，备选位置同样不能盖住他
+    if (avoidY != null && isFinite(avoidY)) occupied.push({ top: avoidY - 50, bottom: avoidY + 40 });
+    const safe = candidate => candidate - half - 28 >= 12 && candidate + half <= innerHeight - 12 &&
+      occupied.every(rect => candidate + half < rect.top - 8 || candidate - half - 28 > rect.bottom + 8);
+    if (!safe(y)) {
+      const candidates = [innerHeight * .62, innerHeight * .30, ...occupied.flatMap(r => [r.bottom + half + 37, r.top - half - 9])];
+      y = candidates.filter(safe).sort((a, b) => Math.abs(a - y) - Math.abs(b - y))[0];
+    }
+    return y == null ? null : { y, scale };
+  }
+  // 后到的群消息或教学横幅优先保留；发生遮挡时移除贴纸，不在播放途中改位置。
+  E.checkPraiseOcclusion = function () {
+    if (!current) return;
+    const r = current.el.getBoundingClientRect();
+    for (const banner of document.querySelectorAll('#closingNotice, #msg, #hint')) {
+      const style = getComputedStyle(banner);
+      if (banner.hidden || style.display === 'none' || style.visibility === 'hidden' || +style.opacity <= 0) continue;
+      const b = banner.getBoundingClientRect();
+      if (r.left < b.right && r.right > b.left && r.top - 28 < b.bottom + 8 && r.bottom > b.top - 8) {
+        E.clearPraise(); return;
+      }
+    }
+  };
+  // 不排队：只有更高级能打断；没有足够空间时安静跳过。
+  E.praise = function (kind, opts = {}) {
+    const k = KINDS[kind], template = praiseTemplates.get(kind);
+    if (!k || !template || (current && k.pri <= KINDS[current.kind].pri)) return false;
+    const pos = praisePosition(buildSticker(kind, 2), opts.avoidY);
+    if (!pos) return false;
+    if (current) dismissPraise(current, true);
+    const el = document.createElement('div'); el.className = 'praise-item'; el.dataset.kind = kind;
+    el.style.top = pos.y + 'px'; el.style.transform = `translate(-50%, -50%) scale(${pos.scale})`;
+    const inner = template.cloneNode(true); el.append(inner); layer.append(el);
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const item = { kind, el, reduce }; current = item; praiseItems.add(item);
+    const popDuration = reduce ? PRAISE_TIME.reduce : PRAISE_TIME.pop;
+    inner.animate(reduce ? [{ opacity: 0 }, { opacity: 1 }] : [
+      { opacity: 0, transform: 'translateY(6px) scale(.72)' },
+      { opacity: 1, transform: 'translateY(0) scale(1.06)', offset: .6 },
+      { opacity: 1, transform: 'translateY(0) scale(1)' }
+    ], { duration: popDuration, easing: 'cubic-bezier(.2,.8,.3,1)', fill: 'forwards' });
+    if (!reduce) inner.animate([
+      { transform: 'translateY(0)' }, { transform: 'translateY(-3px)', offset: .3 }, { transform: 'translateY(0)' }
+    ], { duration: PRAISE_TIME.nod, delay: popDuration + PRAISE_TIME.nodDelay, composite: 'add' });
+    item.timer = setTimeout(() => dismissPraise(item, false), popDuration + k.hold);
+    if (kind === 'rankup') { E.sfx('rankup'); E.buzz(30); }
+    return true;
+  };
+
   /* ---------------- 界面浮层 ---------------- */
   // 显示一个卡片浮层；handlers 按 data-act 绑定按钮回调
   E.showPanel = function (html, handlers) {
+    E.clearPraise();
     const ui = document.getElementById('ui');
     ui.innerHTML = `<div class="card">${html}</div>`;
     ui.hidden = false;
@@ -512,9 +817,12 @@
       case 'back': tone(500, 120, 0.3, 'sawtooth', 0.07); break;           // 锅被甩回来
       case 'boss': tone(440, 440, 0.12, 'square', 0.07); tone(330, 330, 0.18, 'square', 0.07, 0.14); break;
       case 'warn': tone(880, 880, 0.06, 'sine', 0.05); break;              // 派锅预警
+      case 'rankup': [523, 659, 784].forEach((f, i) => tone(f, f, 0.09, 'triangle', 0.07, i * 0.08)); break; // 冲进前三
       case 'win': [523, 659, 784, 1046].forEach((f, i) => tone(f, f, 0.16, 'triangle', 0.08, i * 0.12)); break;
       case 'lose': [392, 330, 262, 196].forEach((f, i) => tone(f, f * 0.98, 0.2, 'square', 0.06, i * 0.15)); break;
       case 'tick': tone(1200, 1200, 0.03, 'sine', 0.03); break;
+      // 最后三秒双响短促方波，沿用音效总开关。
+      case 'tickUrgent': tone(1500, 1200, 0.06, 'square', 0.04); tone(1500, 1200, 0.06, 'square', 0.04, 0.1); break;
       case 'bell': tone(1046, 1046, 0.32, 'sine', 0.08); tone(1568, 1568, 0.24, 'sine', 0.04, 0.08); break; // 下班铃
       case 'whoosh': tone(700, 260, 0.12, 'sine', 0.07); break;            // 锅甩出去
       case 'parry': tone(1400, 1400, 0.05, 'square', 0.07); tone(900, 1800, 0.12, 'triangle', 0.08, 0.04); break; // 反甩

@@ -1,0 +1,6 @@
+工具：Codex 内置 image_gen
+参考图：/Users/bozhou/my/min_games/prototypes/style-explore/c_pixel.png
+原型截图因浏览器不可用未能生成或附入。
+
+原始提示词：
+Create a single sprite sheet for a 16-bit office comedy game: one horizontal row of THREE separated icons, equal size, large blank magenta gaps. Left: cream-white thumbs-up hand with yellow cuff. Middle: unmistakable shallow black wok with visible open gray oval bowl and long handle pointing lower-left, a green curved return arrow above the wok clearly showing rebound; NOT a bomb, no fuse. Right: yellow three-point crown plus green up arrow. Icons should be extremely simple readable at 21x21 true pixels, each enlarged with nearest-neighbor crisp square pixels, consistent pixel scale, 1-pixel dark navy outline. Reference image is style reference only. Flat 2D classic RPG 3/4 top-down. Background ONE solid flat pure magenta #FF00FF, no gradient, grid or shadows. NO TEXT anywhere. Hard pixel edges, no anti-aliasing, no blur, no glow, limited palette. No magenta/pink within icons. No characters. Three icons only.
