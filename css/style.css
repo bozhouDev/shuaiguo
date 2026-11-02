@@ -545,3 +545,91 @@ button.chip { font-family: var(--display); cursor: pointer; pointer-events: auto
 #ui.settlement .card { animation: settlementIn .22s ease-out; }
 @keyframes settlementIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { #ui.settlement .card { animation: none; } }
+
+/* ===== 分享（Demo）：结算页分享按钮 + 分享预览弹窗 ===== */
+/* 结算页分享按钮：比主按钮小一号的描边条，左边纸飞机图标；甩锅版用绿色，表示“可以甩” */
+#ui .share-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin: 8px 0 0; padding: 7px 8px;
+  background: #FFFDF6; border: 3px solid var(--ink); box-shadow: 0 3px 0 var(--ink); cursor: pointer;
+  font-family: var(--pop-font); font-weight: 900; font-size: 16px; color: var(--ink);
+}
+#ui .share-btn .px { width: 20px; height: 20px; }
+#ui .share-btn.blame { background: var(--ok); color: #fff; }
+#ui .share-btn:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+/* 预览浮层：盖在结算页上、广告层下 */
+#sharePv {
+  position: fixed; inset: 0; z-index: 25; display: flex; align-items: center; justify-content: center; padding: 16px;
+  background: rgba(15, 22, 40, .6);
+}
+#sharePv[hidden] { display: none; }
+#sharePv .card {
+  width: 100%; max-width: 320px; padding: 4px 12px 12px; background: none; box-shadow: none; border-radius: 0;
+  border: 8px solid transparent; border-image: var(--frame-cream) 4 fill / 8px stretch;
+  filter: drop-shadow(4px 5px 0 #0F1628); font-family: var(--pop-font); color: var(--ink);
+}
+#sharePv .btn {
+  width: 100%; margin-top: 10px; padding: 7px 8px 9px; border-radius: 0; font-family: var(--pop-font); font-weight: 900; font-size: 20px; color: var(--ink);
+  background: none; border: 8px solid transparent; border-image: var(--frame-yellow) 4 fill / 8px stretch;
+  box-shadow: inset 0 -4px 0 var(--pop-gold); filter: drop-shadow(0 3px 0 #0F1628); cursor: pointer;
+}
+/* 模拟聊天背景 + 小游戏卡片（标题最多两行、5:4 配图、来源） */
+.sp-chat { background: #EDEDED; padding: 12px; display: flex; justify-content: flex-end; }
+.sp-card { width: 220px; background: #fff; padding: 8px 9px 0; font-family: var(--body); }
+.sp-title { margin: 0 0 6px; font-size: 14px; line-height: 1.4; color: #111; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.sp-from { margin: 6px 0 0; padding: 5px 0 6px; border-top: 1px solid #EEE; font-size: 11px; color: #999; }
+.sp-pic { position: relative; width: 100%; aspect-ratio: 5 / 4; overflow: hidden; image-rendering: pixelated; }
+.sp-pic img { image-rendering: pixelated; }
+/* 甩锅图：地毯格子底、倒计时、主角扔锅、问号目标 */
+.sp-pic.blame { background: var(--carpet); background-image: linear-gradient(#B2C2D6 1px, transparent 1px), linear-gradient(90deg, #B2C2D6 1px, transparent 1px); background-size: 16px 16px; }
+.sp-clock { position: absolute; left: 6px; top: 6px; display: flex; align-items: center; gap: 4px; padding: 2px 6px; background: var(--alarm); color: #fff; font: 900 12px var(--pop-font); }
+.sp-clock img { height: 14px; }
+.sp-thrower { position: absolute; left: 6px; bottom: 6px; height: 96px; }
+.sp-wok { position: absolute; left: 76px; top: 34px; height: 50px; transform: rotate(-12deg); }
+.sp-tag { position: absolute; left: 98px; top: 30px; padding: 0 4px; background: var(--note); border: 2px solid var(--ink); font: 900 13px var(--pop-font); color: var(--ink); transform: rotate(-8deg); }
+.sp-target { position: absolute; right: 8px; bottom: 10px; width: 50px; height: 72px; display: flex; align-items: center; justify-content: center; border: 3px dashed var(--alarm); background: rgba(232, 80, 74, .12); font: 400 34px var(--display); color: var(--alarm); }
+/* 战绩图：深蓝底、黄框名次、星星 */
+.sp-pic.brag { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; background: var(--panel); color: #fff; }
+.sp-day { font: 900 11px var(--pop-font); color: var(--note); letter-spacing: .1em; }
+.sp-rank { padding: 0 10px; border: 6px solid transparent; border-image: var(--frame-yellow) 4 fill / 6px stretch; font: 900 30px var(--pop-font); color: var(--ink); }
+.sp-stars img { height: 18px; }
+.sp-line { position: relative; z-index: 1; padding: 0 4px; background: var(--panel); font: 700 10.5px var(--pop-font); color: #C4D6F2; }
+.sp-boss { position: absolute; left: 2px; top: 4px; height: 50px; }
+.sp-me { position: absolute; right: 4px; top: 4px; height: 46px; }
+/* 证书图：奶油纸 + 双线金边 + 圆章；关系户版换成淡紫 */
+.sp-cert { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px 8px; text-align: center; background: #FFF8E6; border: 5px double #B08A3E; color: var(--ink); }
+.sp-cert .sp-medal { height: 28px; }
+.sp-cert b { font: 900 15px var(--pop-font); letter-spacing: .12em; }
+.sp-cert span { margin-top: 3px; font: 700 10px/1.5 var(--pop-font); color: #3A4660; }
+.sp-cert em { font-style: normal; color: var(--alarm); }
+.sp-cert i { position: absolute; right: 3px; top: 3px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--alarm); border-radius: 50%; font: normal 900 9px/1.1 var(--pop-font); color: var(--alarm); transform: rotate(-14deg); }
+.sp-cert.guanxi { background: #F3EEF8; border-color: #8C7AB0; }
+.sp-cert.guanxi i { border-color: #8C7AB0; color: #8C7AB0; }
+
+/* ===== 失败复盘：死因说明与对症增益，沿用直角像素弹窗 ===== */
+.diag { margin: 8px 0 0; border: 3px solid var(--ink); background: #FFFDF6; border-radius: 0; }
+.diag-why {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  font: 700 13.5px/1.45 var(--pop-font); color: var(--ink);
+}
+.diag-why p { margin: 0; }
+.diag-why b { color: var(--alarm); font-weight: 900; }
+.diag-why img { height: 44px; width: auto; flex: none; image-rendering: pixelated; }
+.diag-rx {
+  margin: 0; display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  background: #FFF3C2; border-top: 2px dashed var(--ink); border-radius: 0;
+}
+.diag-rx b { display: block; font-size: 15px; font-weight: 900; color: var(--ink); }
+.diag-rx small { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin-top: 0; }
+.diag-ico { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--pop-head); flex: none; }
+.diag-ico img { max-width: 28px; max-height: 28px; image-rendering: pixelated; }
+/* 广告重来保持黄色主按钮；窄卡片缩小字号，整句不换行。 */
+#ui .btn.ad-main { font-size: 19px; letter-spacing: 0; white-space: nowrap; padding-left: 0; padding-right: 0; }
+.btn.ad-main::before { content: '▶ 广告 · '; color: var(--alarm); font-size: .8em; }
+/* 顶栏增益用便利贴黄，墨水蓝文字保证可读。 */
+#hud .chip.buff { background: var(--note); color: var(--ink); }
+
+/* ===== 失败结算：压短排名表，省略中间名次 ===== */
+#ui .ranklist.compact li { padding-top: 4px; padding-bottom: 4px; }
+#ui .ranklist.compact li b, #ui .ranklist.compact li em { font-size: 17px; }
+#ui .ranklist.compact li img { height: 20px; }
+#ui .ranklist li.gap { display: block; padding: 2px 0; text-align: center; font-size: 12px; font-weight: 700; color: var(--muted); background: none; border-top: 0; }
