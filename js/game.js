@@ -2226,7 +2226,24 @@
         <li><span>💥</span>身上堆满 ${MAX_POTS} 口锅当场压垮，直接失败</li>
       </ul>`;
   }
-  // 关卡介绍 + 选关
+  // 开局说明按当天的新机制组织；数值取实际配置，避免介绍和对局脱节。
+  function introRulesHtml() {
+    const deadline = { icon: 'ui_closing_clock', title: `每口锅只有 ${potLife()} 秒`, text: '甩来甩去不重置；到点在谁身上，谁背锅。' };
+    const vision = { icon: 'boss_idle', title: '红色扇形里，别甩锅', text: '那是老板的视野。被抓现行，锅不走，还要背锅。' };
+    let rows;
+    if (L.basic) {
+      rows = [deadline, { icon: 'ui_coach_hand', title: '左手走位，右手甩锅', text: '左下摇杆控制方向；对准同事，按右下「甩」。' }, vision];
+    } else if (L.leaders.length === 1) {
+      rows = [deadline, { icon: 'ui_praise_bounce', title: '同事会反甩，你也能弹', text: '锅快砸中时按「甩」能弹回去；自己甩空，锅也会弹回。' },
+        { icon: 'meeting_table', title: '一散会，门口就喷锅', text: '工作群一说散会，就离门口远点。随机事件也会添乱。' }];
+    } else {
+      rows = [deadline, { icon: 'director_idle', title: '老板、经理，两道视野', text: '经理一次丢两口。避开两人的红扇形，再找同事甩锅。' },
+        { icon: 'fx_anger', title: '急件来了，先甩为敬', text: `冒火的锅只有 ${P0_LIFE} 秒，到点背锅 +${P0_BLAME}。散会、卡纸也会喷锅。` }];
+    }
+    return rows.map((row) => `<li><span class="intro-rule-icon"><img src="${E.pxUrl(row.icon)}" alt=""></span><div><strong>${row.title}</strong><p>${row.text}</p></div></li>`).join('');
+  }
+
+  // 三天共用像素开局卡；锁定、星级和重看教学沿用真实存档。
   function showIntro() {
     mode = 'intro';
     S = makeState();
@@ -2236,27 +2253,45 @@
     const tabs = LEVELS.map((lv) => {
       const locked = lv.id > prog.unlocked;
       const b = prog.best[lv.id];
-      return `<button class="lv${lv === L ? ' on' : ''}" data-act="pick" data-id="${lv.id}" ${locked ? 'disabled' : ''}>
-        ${locked ? `<img class="ico" src="${E.pxUrl('ui_lock')}" alt="">` : ''}第 ${lv.id} 关<small>${b ? '★'.repeat(b.stars) : locked ? '前一关进前三解锁' : '未通关'}</small></button>`;
+      return `<button type="button" class="lv${lv === L ? ' on' : ''}" data-act="pick" data-id="${lv.id}" aria-current="${lv === L ? 'step' : 'false'}" ${locked ? 'disabled' : ''}>
+        <span>${locked ? `<img src="${E.pxUrl('ui_lock')}" alt="锁定">` : ''}第${lv.id}关</span><small>${b ? '★'.repeat(b.stars) : locked ? '前一关进前三解锁' : '未通关'}</small></button>`;
     }).join('');
+    const [day, title] = L.name.split(' · ');
+    const introDesc = L.basic ? '入职第一天，老周带你走一遍。学会甩锅，争取准点下班。' : L.leaders.length === 1 ? '老板派活更勤，同事也会反甩了。今天，别当最好说话的那个。' : L.desc;
+    // 头图使用现有像素素材；周三经理登场，其余两天让锅当主角。
+    const hero = L.leaders.length > 1 ? 'director_idle' : L.basic ? 'wok' : 'wok_flying';
+    const medals = [3, 2, 1].map((stars, i) => `<div class="intro-medal"><b>${i + 1}</b><span aria-label="${stars}星">${Array.from({ length: stars }, () => `<img src="${E.pxUrl('ui_star')}" alt="">`).join('')}</span></div>`).join('');
     E.showPanel(`
-      <div class="lvtabs">${tabs}</div>
-      <span class="badge">第 ${L.id} 关 · ${1 + L.bots.length} 人</span>
-      <h1>${L.name}</h1>
-      <p class="sub">${L.desc}</p>
-      ${rulesHtml()}
-      <div class="goal">
-        <b>目标</b> 18:00 按背锅次数排名（少的在前）：第 1 名 ★★★ · 第 2 名 ★★ · 第 3 名 ★，进前三过关
-        ${best ? `<br><b>最好成绩</b> ${'★'.repeat(best.stars)}${best.blames != null ? ` · 背锅 ${best.blames} 次` : ''}` : ''}
-      </div>
-      <button class="btn" data-act="start">开始上班</button>
-      <button class="btn ghost" data-act="lobby">回大厅</button>
-      ${L.tutorial && prog.tutDone ? '<button class="pop-link" data-act="tut">重看教学</button>' : ''}`, {
+      <nav class="lvtabs" aria-label="选择关卡">${tabs}</nav>
+      <header class="intro-hero">
+        <span class="intro-badge"><img src="${E.pxUrl('ui_badge')}" alt="">第 ${L.id} 关 · ${1 + L.bots.length} 人</span>
+        <h1 id="intro-title"><span>${day} ·</span><br><em>${title}</em></h1>
+        <div class="intro-art" aria-hidden="true"><img src="${E.pxUrl(hero)}" alt=""><i></i><i></i><i></i></div>
+        <p>${introDesc}</p>
+      </header>
+      <ul class="intro-rules">${introRulesHtml()}</ul>
+      ${L.basic ? '' : `<p class="intro-caution"><img src="${E.pxUrl('ui_warning')}" alt="">红扇形里别甩锅，攒满 ${MAX_POTS} 口就压垮。</p>`}
+      <section class="intro-goal" aria-label="过关目标">
+        <img class="intro-cup" src="${E.pxUrl('ui_crown')}" alt="">
+        <div><strong>18:00，背锅最少的前三名下班</strong><div class="intro-medals">${medals}</div></div>
+      </section>
+      ${best ? `<p class="intro-best">最好成绩 ${'★'.repeat(best.stars)}${best.blames != null ? ` · 背锅 ${best.blames} 次` : ''}</p>` : ''}
+      <footer class="intro-actions">
+        <button class="btn" data-act="start">开始上班 <span aria-hidden="true">▶</span></button>
+        <button class="btn ghost" data-act="lobby">回大厅</button>
+        ${L.tutorial && prog.tutDone ? '<button class="pop-link" data-act="tut">重看教学</button>' : ''}
+      </footer>
+      <div class="intro-garden" aria-hidden="true"><img src="${E.pxUrl('plant_small')}" alt=""><span>今天这锅，反正不是我的</span><img src="${E.pxUrl('plant_small')}" alt=""></div>`, {
       start: startGame,
       lobby: showLobby,
       tut: () => { forceTut = true; startGame(); },
-      pick: (btn) => { L = LEVELS.find((lv) => lv.id === Number(btn.dataset.id)); showIntro(); },
+      pick: (btn) => { if (btn.disabled) return; L = LEVELS.find((lv) => lv.id === Number(btn.dataset.id)); showIntro(); },
     });
+    const card = document.querySelector('#ui .card');
+    card.classList.add('intro-card');
+    card.setAttribute('aria-labelledby', 'intro-title');
+    // 切关后把焦点放回当前关按钮，键盘可继续切关或进入游戏。
+    card.querySelector('.lv.on').focus({ preventScroll: true });
   }
 
   /* ---------------- 大厅 ---------------- */
