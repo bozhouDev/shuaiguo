@@ -24,7 +24,7 @@ export class PraiseView {
     const y=safe(target)?target:[c.height*.62,c.height*.30,...rects.flatMap(r=>[r.bottom+half+37,r.top-half-9])].filter(safe).sort((a,b)=>Math.abs(a-target)-Math.abs(b-target))[0];if(y===undefined)return false;
     if(this.current){this.current.out=real;this.current.interrupt=true;this.leaving.push(this.current);}this.current={kind:k,at:real,y,scale,reduce};this.at[k]=m.S.t;if(k==='rankup'){this.sound('rankup');this.buzz(30);}return true;
   }
-  // 连续名额外3秒才表扬；rankDown仍只保留原型的无声调用。
+  // 连续名额外3秒才表扬；首次掉出名额播放rankDown，由音效层统一去重。
   rank(m: Match, real: number, occupied: Box[], reduce: boolean, paused: boolean): void {if(paused||m.simulating||m.S.tut||m.mode!=='play'||m.S.over||m.workT()<=15){this.outSince=null;return;}if(m.ranking().indexOf(m.S.player)+1>m.passRank()){if(this.outSince===null){this.outSince=m.S.t;this.sound('rankDown');}}else{if(this.outSince!==null&&m.S.t-this.outSince>=3)this.show('rankup',m,real,occupied,reduce);this.outSince=null;}}
   // 后到横幅优先，按原型当前贴纸矩形检测遮挡，立即移除。
   draw(real: number, occupied: Box[], rankWords: string): void {

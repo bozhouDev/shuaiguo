@@ -1,4 +1,4 @@
-// 原型音效表逐项搬运，rankDown故意不登记（P4-2）。
+// 原型音效表逐项搬运；按移植计划§9补齐掉出名额的已有采样。
 export const SFX: Record<string, {id:string;vol:number;rate?:number;twice?:number;fb?:string}> = {
     // 对局核心
     whoosh: { id: 'sfx_throw', vol: 0.45 },                       // 玩家把锅甩出去
@@ -27,6 +27,7 @@ export const SFX: Record<string, {id:string;vol:number;rate?:number;twice?:numbe
     workStart: { id: 'sfx_work_start', vol: 0.45, fb: 'boss' },   // 09:00 正式上班
     rush: { id: 'sfx_rush', vol: 0.45, fb: 'boss' },              // 17:00 突击派活
     rankup: { id: 'sfx_rank_up', vol: 0.4 },                      // 冲回前三
+    rankDown: { id: 'sfx_rank_down', vol: 0.4 },                  // 掉出过关名额，音量与冲回名额一致
     tick: { id: 'sfx_tick', vol: 0.4 },                           // 最后 10 秒
     tickUrgent: { id: 'sfx_tick', vol: 0.5, rate: 1.35, twice: 0.1 }, // 最后 3 秒：升调连响两下
     bell: { id: 'sfx_bell', vol: 0.45 },                          // 18:00 下班铃

@@ -53,7 +53,7 @@ export class AudioView {
     const d = SFX[name], now = (this.context?.currentTime ?? performance.now() / 1000) + (opt.delay || 0);
     if (now - (this.last[name] ?? -1) < .05) return;
     this.last[name] = now;
-    if (!d) return; // rankDown原型实际不响，不擅自登记。
+    if (!d) return; // 未登记的音效保持静默。
     if(this.context&&!this.buffers.has(d.id)){if(opt.delay)this.later(opt.delay,()=>this.synth(d.fb||name));else this.synth(d.fb||name);return;}
     const volume = d.vol * (opt.vol ?? 1), rate = (d.rate || 1) * (opt.rate || 1);
     const play = (delay: number, speed: number) => {

@@ -1,3 +1,47 @@
+## 2026-11-04 · P4-2 有意改进与调试面板（分项记录）
+
+### A · rankDown 音效
+
+- **用户定的：** 只做任务卡 A；先读任务卡及全部前置文件。保持 main，不运行/操作 CocosCreator、不构建、不提交/推送；冻结原型，不新增 `cocos/assets` 文件，不做 B–E。
+- **我定的细节（可改）：** `rankDown → sfx_rank_down`，音量 0.4，与现有 `rankup` 一致。沿用原有预载、播放和 50ms 同名去重路径，不改触发条件。直接扩充已有 Node 外围契约，无新增资产或测试专用生产接口。
+- **偏差说明：** 任务卡写“core 发 rankDown”，当前源码实际由 `AppView.render → PraiseView.rank → AudioView.sfx` 触发（排名依据仍来自 core）；沿用既有边界，未移动到 core。
+
+**改动文件与原因：**
+
+- `cocos/assets/scripts/view/audio-data.ts`：登记已有掉榜采样及音量。
+- `cocos/assets/scripts/view/AudioView.ts`、`PraiseView.ts`：仅修正“掉榜故意无声”的过时注释，运行逻辑未改。
+- `cocos/tools/check-peripheral.cjs`：以真实 `Match.ranking()` 和 `PraiseView.rank()` 触发 `AudioView.sfx()`，在 WebAudio 设备边界记录排播采样、音量与倍速；覆盖前三和周五前两名、持续掉榜不逐帧重播、快速回榜再掉榜的 49ms 去重/51ms 恢复。原有 38 项仍与冻结原型逐项严格比较，只允许新增 rankDown；音频测试失败也在 finally 释放音频和定时器。
+- `implementation-notes.md`：新增本节，后续各项在本节追加。
+
+**已验证（命令均从仓库根目录执行）：**
+
+| 命令 / 检查 | 输出 |
+|---|---|
+| `node cocos/tools/check-peripheral.cjs`（先加测试、未登记采样） | 退出 1：`掉出名额应实际排播 sfx_rank_down`，`5 !== 6`，确认回归测试抓住原问题 |
+| `node cocos/tools/check-peripheral.cjs`（登记后） | 退出 0；真实排名掉出前三/前两名播放 sfx_rank_down，音量 0.4，49ms 去重/51ms 恢复；其余外围契约全部 PASS |
+| `node tests/golden/verify.cjs --adapter cocos/tests/golden-adapter.cjs` | PASS 100/100，快照、事件、最终结果完全一致 |
+| `npm run test:core --prefix cocos` | tests 14 / pass 14 / fail 0，含五关各 50 局模拟逐字段比较 |
+| `npm run check:types --prefix cocos` | 退出 0，无类型错误；仅 Node 执行 tsc，未启动编辑器 |
+| `node tests/check-port-protected.cjs` | PASS 416 个保护文件，内容变化 0，保护目录无增删 |
+| `for file in js/*.js cocos/tools/check-peripheral.cjs; do node --check "$file" || exit; done` | 退出 0 |
+| `git diff --check` | 退出 0，无空白错误 |
+| Node 内联只读 `.meta` 审计与开工前 SHA-256 对比 | PASS 125 个 meta：无缺失、孤立、星号 importer、重复 UUID；所有 TS importer 正确。`cocos/assets` 240 个文件无增删，仅上述 3 个 view 源码变化；core、meta、音频和资源字节均未变 |
+
+**待刷新复拍 / 未验证：**
+
+1. 编辑器刷新确认加载了末次源码后，网页中实际掉出前三、周五掉出前两名各录一次，核对 sfx_rank_down 加载和听感，持续落榜不连响；快速回榜再落榜补声音调用记录。
+2. 设置关闭音效再掉榜应静音，重开后复验；微信 AudioSource 路径及真机实际声音留待刷新/后续平台验收。Node 排音通过不等于已听音或真机通过，未使用 7456 旧预览作证明。
+
+**发现但未改：**
+
+- 掉榜触发位置与任务卡描述有差异，见上；core 和事件文本未改。
+- `AudioView.synth` 没有 rankDown 合成预设，采样尚未就绪/加载失败时仍可能无声；本项按卡片只登记现有采样，未新增兜底策略。
+- 自定义老板称呼、分享人物图、emoji、隐藏调试面板保留给 B–E；开工前已有的 `AGENTS.md`、`.claude/` 与任务卡等改动保留。
+
+**清理：** Node 检查进程已结束，测试 finally 释放音频/定时器；未创建浏览器、CUA、开发服务器或其他长驻助手，未操作用户已开的编辑器及服务。
+
+---
+
 ## 2026-11-04 · P4-1 外围界面与声音（无人值守续做收尾，最终源码待刷新复验）
 
 - **用户定的：** 按任务卡末尾裁定继续：先采当前新预览的完整基线，再只改已有cocos/assets文件；7456未重编译也继续做Node检查并交付。保持main，不运行/操作CocosCreator、不构建、不改原型/core、不提交/推送/部署，不新增资产文件。

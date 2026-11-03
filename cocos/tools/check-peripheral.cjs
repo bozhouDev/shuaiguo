@@ -5,7 +5,7 @@ const cache=new Map();
 // WebAudio边界桩只记录实际排音参数，不替画面/玩法作结论。
 const scheduled=[],oscillators=[];
 class Param {value=1;setValueAtTime(v,t){this.value=v;return this;}linearRampToValueAtTime(v,t){this.value=v;return this;}exponentialRampToValueAtTime(v,t){this.value=v;return this;}cancelScheduledValues(){return this;}}
-class Context {currentTime=1;state='running';destination={};createGain(){return {gain:new Param(),connect(){},disconnect(){}};}createBufferSource(){const s={playbackRate:new Param(),connect(){},disconnect(){},start(t,offset){scheduled.push({t,offset,rate:s.playbackRate.value,loop:s.loop});},stop(){}};return s;}createOscillator(){const o={frequency:new Param(),connect(){},start(t){oscillators.push({t,f:o.frequency.value,type:o.type});},stop(){}};return o;}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}}
+class Context {currentTime=1;state='running';destination={};createGain(){return {gain:new Param(),connect(){},disconnect(){}};}createBufferSource(){const s={playbackRate:new Param(),connect(gain){s.gain=gain;},disconnect(){},start(t,offset){scheduled.push({t,offset,rate:s.playbackRate.value,loop:s.loop,buffer:s.buffer,volume:s.gain.gain.value});},stop(){}};return s;}createOscillator(){const o={frequency:new Param(),connect(){},start(t){oscillators.push({t,f:o.frequency.value,type:o.type});},stop(){}};return o;}resume(){this.state='running';return Promise.resolve();}suspend(){this.state='suspended';return Promise.resolve();}close(){this.state='closed';return Promise.resolve();}}
 const ccStub={KeyCode:new Proxy({},{get:(_,k)=>k}),AudioClip:class{},AudioSource:class{},Node:class{},assetManager:{loadBundle(){}}};
 
 // 只在内存转译，避免写编辑器缓存。
@@ -20,10 +20,10 @@ function load(file){file=path.resolve(file);if(!file.endsWith('.ts'))file+='.ts'
  const {WebPlatform}=load('cocos/assets/scripts/platform/WebPlatform');const originalSet=global.setTimeout,originalClear=global.clearTimeout;let time=0,seq=0,tasks=new Map();global.setTimeout=(fn,ms)=>{const id=++seq;tasks.set(id,{fn,at:time+ms});return id;};global.clearTimeout=id=>tasks.delete(id);
  try {const web=new WebPlatform(),ticks=[];let reward=false;const promise=web.showRewardedAd(n=>ticks.push({n,time})).then(ok=>reward=ok);assert.equal(reward,false);for(const expected of [650,1300,1950]){const [id,task]=[...tasks.entries()].sort((a,b)=>a[1].at-b[1].at)[0];tasks.delete(id);time=task.at;task.fn();await Promise.resolve();if(expected<1950)assert.equal(reward,false);}await promise;assert.equal(reward,true);assert.deepEqual(ticks,[{n:3,time:0},{n:2,time:650},{n:1,time:1300},{n:null,time:1950}]);const pending=web.showRewardedAd();web.dispose();assert.equal(await pending,false);assert.equal(tasks.size,0);}finally{global.setTimeout=originalSet;global.clearTimeout=originalClear;}
  console.log('PASS 假广告1950ms结束才发奖，取消释放定时器不发奖');
- const source=fs.readFileSync('js/engine.js','utf8'),raw=source.slice(source.indexOf('  const SFX = {')+'  const SFX = '.length,source.indexOf('  const lastPlay')).trim().replace(/;$/,'');const oracle=vm.runInNewContext('('+raw+')'),{SFX}=load('cocos/assets/scripts/view/audio-data');assert.deepEqual(JSON.parse(JSON.stringify(SFX)),JSON.parse(JSON.stringify(oracle)));assert.equal(SFX.rankDown,undefined);const names=fs.readdirSync('assets/audio').filter(n=>n.endsWith('.mp3'));assert.equal(names.length,41);for(const name of names)assert.deepEqual(fs.readFileSync('cocos/assets/audio/'+name),fs.readFileSync('assets/audio/'+name));assert.equal(fs.readdirSync('cocos/assets/audio').filter(n=>n.endsWith('.mp3')).length,41);const bundle=JSON.parse(fs.readFileSync('cocos/assets/audio.meta'));assert.equal(bundle.userData.bundleName,'audio');assert.equal(bundle.userData.bundleConfigID,'default');const config=JSON.parse(fs.readFileSync('cocos/settings/v2/packages/builder.json'));assert.equal(config.bundleConfig.custom.default.configs.miniGame.overwriteSettings.wechatgame.compressionType,'subpackage');
+ const source=fs.readFileSync('js/engine.js','utf8'),raw=source.slice(source.indexOf('  const SFX = {')+'  const SFX = '.length,source.indexOf('  const lastPlay')).trim().replace(/;$/,'');const oracle=vm.runInNewContext('('+raw+')'),{SFX}=load('cocos/assets/scripts/view/audio-data');const {rankDown,...unchanged}=SFX;assert.deepEqual(JSON.parse(JSON.stringify(unchanged)),JSON.parse(JSON.stringify(oracle)));const names=fs.readdirSync('assets/audio').filter(n=>n.endsWith('.mp3'));assert.equal(names.length,41);for(const name of names)assert.deepEqual(fs.readFileSync('cocos/assets/audio/'+name),fs.readFileSync('assets/audio/'+name));assert.equal(fs.readdirSync('cocos/assets/audio').filter(n=>n.endsWith('.mp3')).length,41);const bundle=JSON.parse(fs.readFileSync('cocos/assets/audio.meta'));assert.equal(bundle.userData.bundleName,'audio');assert.equal(bundle.userData.bundleConfigID,'default');const config=JSON.parse(fs.readFileSync('cocos/settings/v2/packages/builder.json'));assert.equal(config.bundleConfig.custom.default.configs.miniGame.overwriteSettings.wechatgame.compressionType,'subpackage');
  // 同名去重、双响音高、总线、暂停恢复位置和缺采样兜底。
- const previousWindow=global.window;global.window={AudioContext:Context};
- try {const {AudioView}=load('cocos/assets/scripts/view/AudioView'),settings={music:true,sfx:true,vibrate:true},audio=new AudioView({}, {kind:'web'},settings);audio.unlock();
+ const previousWindow=global.window;global.window={AudioContext:Context};let audio;
+ try {const {AudioView}=load('cocos/assets/scripts/view/AudioView'),settings={music:true,sfx:true,vibrate:true};audio=new AudioView({}, {kind:'web'},settings);audio.unlock();
   assert.equal(audio.sfxBus.gain.value,1);assert.equal(audio.musicBus.gain.value,.32);
   audio.buffers.set('sfx_tick',{duration:1});audio.sfx('tickUrgent');audio.sfx('tickUrgent');assert.equal(scheduled.length,2);assert.deepEqual(scheduled.map(x=>[x.t,x.rate]),[[1,1.35],[1.1,1.5120000000000002]]);
   settings.sfx=false;audio.sfx('hit');assert.equal(scheduled.length,2);settings.sfx=true;
@@ -31,9 +31,30 @@ function load(file){file=path.resolve(file);if(!file.endsWith('.ts'))file+='.ts'
   audio.buffers.set('bgm_work',{duration:100});audio.clips.set('bgm_work',{});audio.bgm('work',true);assert.equal(scheduled.at(-1).offset,0);audio.context.currentTime=7;audio.bgm(false);audio.bgm('work');assert.equal(scheduled.at(-1).offset,6);audio.bgm(false);audio.bgm('work',true);assert.equal(scheduled.at(-1).offset,0);
   audio.hidden(true);assert.equal(audio.context.state,'suspended');audio.hidden(false);assert.equal(audio.context.state,'running');
   audio.bgm(false);audio.want='lobby';audio.loads.set('bgm_lobby',Promise.resolve(null));audio.failed.add('bgm_lobby');let before=oscillators.length;audio.synthMusic();assert.ok(oscillators.length>before);audio.hidden(true);before=oscillators.length;audio.synthMusic();assert.equal(oscillators.length,before);
-  audio.destroy();
- }finally{global.window=previousWindow;}
+  // 用真实排名触发画面层掉榜入口，覆盖前三与周五前两名；只替换最外层音频设备。
+  const {Match}=load('cocos/assets/scripts/core/match'),{PraiseView}=load('cocos/assets/scripts/view/PraiseView');
+  audio.hidden(false);audio.want=null;
+  const buffer={duration:1};audio.buffers.set('sfx_rank_down',buffer);
+  for(const level of [0,4]){
+   const m=new Match({level,seed:1001}),praise=new PraiseView({},name=>audio.sfx(name),()=>{});
+   m.S.t=16;const clock=8+level,before=scheduled.length,calls=audio.calls.rankDown||0;
+   const renderRank=()=>praise.rank(m,0,[],false,false);
+   assert.ok(m.ranking().indexOf(m.S.player)+1<=m.passRank());renderRank();assert.equal(scheduled.length,before);
+   audio.context.currentTime=clock;m.S.player.blames=20;
+   assert.ok(m.ranking().indexOf(m.S.player)+1>m.passRank());renderRank();
+   assert.equal(scheduled.length,before+1,'掉出名额应实际排播 sfx_rank_down');
+   assert.equal(scheduled.at(-1).buffer,buffer);assert.equal(scheduled.at(-1).volume,.4);assert.equal(scheduled.at(-1).rate,1);
+   renderRank();assert.equal(audio.calls.rankDown,calls+1,'持续落榜不逐帧重复触发');
+   // 快速回榜再掉榜，49ms应去重；51ms应再次播放同一采样。
+   m.S.player.blames=0;renderRank();audio.context.currentTime=clock+.049;m.S.player.blames=20;renderRank();
+   assert.equal(audio.calls.rankDown,calls+2);assert.equal(scheduled.length,before+1,'49ms重复掉榜应静音');
+   m.S.player.blames=0;renderRank();audio.context.currentTime=clock+.051;m.S.player.blames=20;renderRank();
+   assert.equal(audio.calls.rankDown,calls+3);assert.equal(scheduled.length,before+2,'超过50ms应恢复排播');assert.equal(scheduled.at(-1).buffer,buffer);
+  }
+  assert.deepEqual(rankDown,{id:'sfx_rank_down',vol:.4});assert.equal(rankDown.vol,SFX.rankup.vol);
+ }finally{audio?.destroy();global.window=previousWindow;}
  console.log('PASS WebAudio总线/50ms去重/双响音高/静音/缺采样兜底/BGM续播与从头/后台暂停');
+ console.log('PASS 真实排名掉出前三/前两名播放sfx_rank_down，音量0.4，持续落榜不重播，49ms去重/51ms恢复');
  // 真正的App动作入口必须结束当前教学，不能重建一局。
  const {AppView}=load('cocos/assets/scripts/view/AppView'),{Match}=load('cocos/assets/scripts/core/match');
  const m=new Match({level:0,seed:1001,tutorial:true});for(let i=0;i<6;i++)m.tutNext();assert.equal(m.coachLocked(),true);
@@ -51,5 +72,5 @@ function load(file){file=path.resolve(file);if(!file.endsWith('.ts'))file+='.ts'
  for(const [width,height,goY,dayY,cardWidth] of [[375,812,655.203125,520.015625,101.609375],[375,667,527.40625,396.40625,101.609375],[360,780,623.203125,492.203125,95.28125]]){surface.width=width;surface.height=height;paint.actions=[];lobby.select(0);lobby.draw(0,{unlocked:1,best:{}},0,{top:0},true);const go=paint.actions.find(a=>a.action==='go'),day=paint.actions.find(a=>a.action==='pick:0');assert.ok(Math.abs(go.y-goY)<.1);assert.ok(Math.abs(day.y-dayY)<.1);assert.ok(Math.abs(day.w-cardWidth)<.1);}
  surface.width=375;surface.height=812;paint.actions=[];lobby.draw(0,{unlocked:1,best:{}},0,{top:44,capsule:{x:281,y:50,w:87,h:32}},true);const gear=paint.actions.find(a=>a.action==='settings');assert.ok(gear.x+gear.w<=281&&gear.y>=44);
  console.log('PASS 三种屏宽大厅去上班/日期矩形与原型DOM相差小于0.1px，齿轮避让假胶囊');
- console.log('PASS 38项音效参数与冻结原型完全相同，rankDown未登记，41份mp3原字节，默认audio微信分包配置');
+ console.log('PASS 原有38项音效参数与冻结原型完全相同，仅新增rankDown，41份mp3原字节，默认audio微信分包配置');
 })().catch(e=>{console.error(e);process.exitCode=1;});
