@@ -11,6 +11,7 @@ import { createNAV } from './navigation';
 import { createTIP_CHECKS } from './tips';
 import { createTUT_STEPS } from './tutorial-steps';
 import * as C from './config';
+import { simulate } from './simulate';
 import type { State, Level, Input, MatchOptions, CoreEvent, Hint, Fx, Progress } from './types';
 
 type StateLogic = typeof stateLogic;
@@ -27,6 +28,7 @@ export class Match {
   E: Engine;
   floats: Floats;
   inp: Input = { down: false, id: null, x: 0, y: 0, angle: null, mag: 0, keys: {}, fire: 0 };
+  simulate = simulate;
   forceTut = false;
   auto: boolean;
   simulating: boolean;
@@ -101,6 +103,34 @@ export class Match {
   // 称呼清理规则和默认值保持原型写法。
   bossName() { return this.cleanBossName(this.loadProgress().bossName) || '老板'; }
 
+  // 对应 draw() 的 pickAim(P)：画面层每帧必须在 update 后调用一次。
+  // aimTgt 会记住 1.25 倍扇形内的旧目标；只在按甩时计算会改变下一次出手。
+  frameAim() { return this.pickAim(this.S.player); }
+  // 激励广告成功回调：与原型 finish 中 revive 回调相同，由平台播放成功后调用。
+  revive() {
+    const P = this.S.player;
+    this.S.revived = true;
+    P.sn.segs.splice(Math.max(0, P.sn.segs.length - 6));
+    this.S.flying = this.S.flying.filter(f => f.target !== P);
+    this.S.throws = this.S.throws.filter(f => f.target !== P);
+    this.S.over = null; this.S.closing = null; this.S.lastTick = null;
+    if (this.workT() > this.L.duration - 15) this.S.t0 = this.S.t - (this.L.duration - 15);
+    this.emit('hidePanel'); this.mode = 'play'; this.E.bgm(this.S.rush ? 'rush' : 'work');
+    this.E.sfx('revive'); this.E.toast('甩掉 6 口锅，继续熬到下班');
+  }
+  // 激励广告成功回调：顶包后重新结算，保留原型的存档和反馈顺序。
+  rescue() {
+    this.S.rescued = true; this.E.sfx('revive');
+    this.S.player.blames = Math.max(0, this.S.player.blames - 3);
+    this.S.closing = null;
+    return this.finish('time');
+  }
+  // shareCard 的纯判断；HTML、像素图片和分享平台留给画面层。
+  shareOutcome(info: {kind: string; nephewCrushed?: boolean; revived?: boolean; rescued?: boolean}) {
+    const achievement = !!info.nephewCrushed && info.kind !== 'cert';
+    const helps = [info.revived && '复活 1 次', info.rescued && '顶包 1 次'].filter(Boolean);
+    return {achievement, certificate: info.kind === 'cert' ? (helps.length ? '关系户下班证书' : '凭本事下班证书') : null, helps};
+  }
   // finish 的纯计算部分：排名、总账、星级、最好成绩和下一关解锁，不写平台存储。
   calculateResult(reason: 'time' | 'crushed', prog: Progress = this.loadProgress()) {
     const P = this.S.player, crushed = reason === 'crushed';
@@ -121,6 +151,8 @@ export class Match {
     const diag = !stars ? this.diagnose(P) : null;
     const shareKind = !stars ? 'blame' : next ? 'brag' : 'cert';
     return { reason, crushed, rank, myRank, stars, myDebt, isBest, unlockedNew, prog, title, pieReport, nephewReport, next, diag,
+      epilogue: this.L.id === 5 && stars ? '我们是大小周，明天照常上班' : '',
+      ads: { revive: crushed && !this.S.revived, rescue: !crushed && !stars && !this.S.rescued },
       accounts: rank.map(a => ({ id: a.id, blames: a.blames, pots: this.potsOf(a), carry: this.carryOf(a), debt: this.debtOf(a) })),
       shareInfo: { pieReport, nephewReport, nephewCrushed: this.S.nephewCrushed, kind: shareKind, crushed, blames: P.blames,
         rank: myRank, total: rank.length, stars, title, day: this.L.name.split('·')[0].trim(), revived: !!this.S.revived, rescued: !!this.S.rescued } };

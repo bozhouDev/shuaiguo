@@ -134,6 +134,9 @@ export function collide(o: Point, r: number, rects: Rect[]) {
 // 每局的 E 门面：工具运算不变，随机流归本局所有，表现实现改为事件。
 export class Engine {
   rng: Mulberry32;
+  muted = false;
+  // 表现随机不消费玩法流，与原型 E.fxRand 相同。
+  fxRand(a: number, b: number) { return a + Math.random() * (b - a); }
   private emit: (kind: string, ...args: unknown[]) => void;
   Snake = Snake;
   dist = dist;

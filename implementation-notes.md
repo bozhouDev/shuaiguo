@@ -1,3 +1,98 @@
+## 2026-11-03 · P2-2 补齐录像外逻辑验证
+
+- **用户定的：** 按 `port/tasks/P2-2-补齐录像外的逻辑验证.md` 执行，读取任务卡、AGENTS、移植计划要求章节、P2-1 卡、上一节记录、黄金录像工具、适配器和 core 全部源码。原型和旧 100 组录像冻结，只补 core / 测试 / 本节；保持 main，不运行 CocosCreator，不碰 view / platform / 场景 / 素材，不提交、不推送、不部署。
+- **我定的细节（可改）：** 新录像独立存 `tests/golden/input/`、`tutorial/`、`buffs/`、`ads/`，清单为 `extra-manifest.json`。按末尾裁定，新录像 gzip 仅在本地缓存并由 `.gitignore` 排除，只入库脚本和清单；清单新增完整录像的 SHA-256（对象键排序的规范 JSON，保留数组顺序和原始浮点），录制与自动重建均先核对哈希，绝不重写基准。每帧存完整玩法状态 SHA256（包含蛇身轨迹、全部角色、目标、锅、日程、教学定时器剩余时间和随机流），每 30 帧及终局另存完整检查点；浮点仍按 P0 的四位小数。教学回调仅保存占位标记，不在取快照时执行。表扬、特效和飞锅弧线继续按 P0 的表现边界排除。
+- **输入与按钮：** 输入随机流用独立 LCG，由输入种子初始化，不消费玩法 RNG；包含追近同事、随机转向、0 / 0.15 / 0.34 / 0.35 / 0.7 / 1 的力度、松手、窗口内按弹和同帧多按。原型自验重新生成主输入，TS 重放保存的实际输入。无瞄准对照重放完全相同的输入，共同输入结束后松手。七步教学只靠摇杆、甩锅和真实“开始上班”按钮回调完成；跳过走真实 `btnSkip` 回调。
+- **接口补齐：** `Match.frameAim()` 明确要求每帧 update 后调用；`revive()` / `rescue()` 对应原型广告成功回调，平台层以后在广告成功时调用；`shareOutcome()` 返回隐藏成就 / 证书判断；`calculateResult` 增加广告资格和周五彩蛋；`simulate.ts` 忠实搬运 SG_DEBUG.simulate（固定种子和异常都恢复 RNG / 活动对局，无种子继续消费流）。`Engine.fxRand` 不消耗玩法流，`muted` 对应模拟标志。新增 TS 的 meta 按已有 schema 生成，未启动编辑器导入。
+- **偏差 / 测试适配：** 无玩法、数值或旧录像比对规则偏差。结算 oracle 只在 harness 的内存源码里读取真实 finish 局部变量，没有重写原型公式。周四 / 周五里的 HTML 包含判断分别映射到纯计算返回的吃饼文案、彩蛋、广告资格和证书名称，原有规则断言保留；画面本身留给 P3 / P4。广告夹具通过真实加锅触发压垮，顶包先构造明确落榜的终局；广告等待由 fakeAd 立即回调替代。周三晚复活 / 顶包改选种子 5002，避免 5001 在 104.9167 秒自然压垮而未到目标时刻，其余广告样本用 5001。
+- **已验证：** 原型和 TS 各通过旧 100/100；按末尾裁定删除全部 177 个本地新录像后，TS 验证器自动从原型重建 177/177 个并全部核对完整 SHA-256，逐帧比对 PASS 177/177；原 100 组终局和全部新录像的结算 / 存档一致；五关各 50 局、种子 6011 的统计未使用误差容忍，全部字段完全一致。core 测试 14/14，含搬来的周四 10 个场景、周五、随机契约、40 组存档兼容夹具、复盘平分、隐藏成就、早晚广告、18:00 截断、后台冻结和教学确认锁定。类型、JS / CJS / MJS 语法及 diff 空白检查通过；16 个 core meta importer 正确且 UUID 无重复。受保护 433 个文件开工前后 SHA256 变化 0；相对 HEAD 的逐文件内容哈希也全部相同，保护目录无增删。
+- **未验证：** Cocos 编辑器 / 构建 / 网页画面 / 微信包 / 真机 / 真实广告服务均未运行；本卡验证的是 Node 中的纯逻辑、输入和广告成功回调。没有创建浏览器、CUA、开发服务器或长驻测试助手。
+
+**新增录像数量与体积（只计 gzip，不计清单和工具）：**
+
+| 覆盖 | 组数 | 压缩体积 | 逐帧记录数 |
+|---|---:|---:|---:|
+| 手动输入 | 50 | 50,469,958 B（48.13 MiB） | 285,151 |
+| 同输入、不额外调用帧末瞄准 | 50 | 49,780,555 B（47.47 MiB） | 272,182 |
+| 七步带教 / 跳过带教 | 2 | 704,654 B（0.67 MiB） | 9,525 |
+| 4 种增益 × 5 关 × 3 种子 | 60 | 57,570,744 B（54.90 MiB） | 371,769 |
+| 5 关的早复活 / 晚复活 / 顶包 | 15 | 19,831,279 B（18.91 MiB） | 101,844 |
+
+共 **177 组、178,357,190 字节（170.09 MiB）、1,040,471 帧**。保留逐帧摘要及完整检查点，所以本轮录像体积较大。手动 50 组为 0–4 关 × 2001–2010；增益种子 4001–4003；带教 3001 / 3002。
+
+手动玩家：按键 12,066 次，甩出 3,415 次，甩中 1,330 次，反甩 564 次，被抓现行 586 次，按空 7,501 次；冷却期间输入 3,243 次，轻推 172,577 帧、松手 13,200 帧、最短角差超过 2 弧度的急转输入 2,006 帧。按空次数由互斥的四个 pressFire 分支计算：总按键 − 甩出 − 被抓 − 反甩；另直接记录触发 WHIFF_LOCK 的 4,456 帧。完整教学经历 walk / sky / throw / expire / sight / dodge / rank 后正式开局，跳过路径也保存 tutDone。15 组免死金牌录像中，5 组实际消耗了金牌。
+
+**每帧瞄准对照：** 50 对全部改变玩法状态，其中 20 对连结算结果都改变。周一（关卡 0）种子 2001 第 49 帧（0.8167 秒）首先分叉，首个不同的完整检查点为第 60 帧，字段 `agents[0].aimTgt`：有帧末瞄准为角色 2，对照为 null。P3 “先 update 再算瞄准”的硬性要求应保留。
+
+**验收命令与输出（仓库根目录）：**
+
+```text
+node tests/golden/verify.cjs
+PASS 100/100 组黄金录像完全一致（快照 + 事件 + 最终结果）
+node tests/golden/verify.cjs --adapter cocos/tests/golden-adapter.cjs
+PASS 100/100 组黄金录像完全一致（快照 + 事件 + 最终结果）
+
+# 按 extra-manifest.json 逐项删除 177 个新 gzip，确认四目录剩余文件 0；未删除旧录像。
+node tests/golden/verify-extra.cjs --adapter cocos/tests/extra-adapter.cjs
+自动重建 177 个；PASS 177/177 新录像（逐帧状态 + 输入 + 事件 + 结算 + 存档）
+
+# 指定重录：先删除该组及对应 aim 组，验证自动补齐依赖。
+node tests/golden/record-extra.cjs --case input-0-2001-noaim
+自动重建 input/input-0-2001-aim.json.gz
+PASS 新录像 1 组，366027 bytes，SHA-256 全部一致（清单未改）
+node tests/golden/verify-extra.cjs --case input-0-2001-noaim
+PASS 1/1 新录像（逐帧状态 + 输入 + 事件 + 结算 + 存档）
+
+node tests/golden/record-extra.cjs --resume
+PASS 新录像 177 组，178357190 bytes，SHA-256 全部一致（清单未改）
+shasum -a256 -c port/tmp/p2-2-ruling/manifest.sha256
+tests/golden/extra-manifest.json: OK
+
+node --test tests/golden/files.test.cjs
+tests 3 / pass 3 / fail 0
+# 完整哈希保护原始浮点、数组顺序及非帧字段；两个真实 CLI 遇到错误哈希都退出 1。
+# 缺失录像不落盘、坏缓存不被覆盖，清单内容始终不变；负测进程由测试收回。
+
+node tests/golden/report-extra.cjs
+数量、覆盖断言通过；50 对状态不同，20 对结算不同；体积和覆盖次数均与原记录相同
+npm run test:core --prefix cocos
+tests 14 / pass 14 / fail 0
+# 包含结算 / 存档 / 广告 / 收尾、搬来的规则断言，以及五关各 50 局统计逐字段完全相同。
+npm run check:types --prefix cocos
+退出 0，无类型错误
+node tests/check-port-protected.cjs
+PASS 受保护文件 433 个，内容变化 0，保护目录无增删（相对 HEAD）
+# 另逐文件比较开工前快照：470 个文件 SHA-256 全部不变，含旧工具与 core。
+
+git status --short --untracked-files=all -- tests/golden/input tests/golden/buffs tests/golden/ads tests/golden/tutorial
+无输出；另检查 177 个缓存全被 git check-ignore 命中，清单未被忽略
+git ls-files -- 'tests/golden/level-*.json.gz' | wc -l
+100
+rg -n '/[t]mp/shuaiguo-p2-2' tests cocos/tests implementation-notes.md
+无匹配（退出 1）；旧临时输入清单命令改为 --mode input，直接用仓库清单
+
+for file in js/*.js tests/*.cjs tests/golden/*.cjs cocos/tests/*.cjs cocos/tests/*.mjs; do node --check "$file" || exit; done
+git diff --check
+均退出 0
+# extra.cjs / report-extra.cjs 整理前后语法树一致；原有比对逻辑和 TS 玩法未改。
+```
+
+Node 23 的 ExperimentalWarning 为类型擦除提示。类型检查仅由 Node 执行 tsc，没有启动 CocosCreator。`record-extra.cjs` 无 --resume 时重录全部新录像，可用 --mode / --case 指定范围；--resume 复用哈希一致的缓存，verify-extra 自动从原型重建缺失缓存。所有路径均校验清单哈希，清单不会随录制更新；旧 record.cjs / verify.cjs / manifest / 100 个 gzip 均未改。本轮日志与开工前校验快照保存在已忽略的 `port/tmp/p2-2-ruling/`。
+
+**调试修正：**
+
+1. 关卡 0 / 种子 2001 初次接入缺少 frameAim，报 `m.frameAim is not a function`；补上对 pickAim(player) 的明确帧末 API。
+2. 种子 6011 的模拟测试先观察到 `m.simulate is not a function`；原样搬运原型统计和 try / finally 恢复逻辑，随后五关各 50 局全字段一致。
+3. 未出现需调整现有 TS 玩法的关卡 / 种子 / 字段差异。没有改数值、随机顺序或在适配器里修值。
+4. harness 调试修正了教学按钮的 DOM 替身（稳定 querySelector、focus、insertAdjacentHTML、parentElement.classList）及 VM 跨上下文数组的结构比较；JSON 转换仅移除 VM 原型身份。顶包结果直接读取真实广告回调触发的那次 finish，未额外结算一次。广告选样调整见上。
+
+**发现但未改（仅追加，未重复 P2-1）：**
+
+- `js/game.js:2458`：末关过关仍将 unlocked 更新到 6，虽然 LEVELS 只有 5 关；是否把 6 当作全通标记留待后续裁定，未擅自夹到 5。
+- `js/game.js:2962`：simulate 成功返回时清空原对局的浮字和横幅计时，没有恢复模拟前的这些表现状态；本轮照搬清理语义。
+
+---
+
 ## 2026-11-03 · P2-1 玩法逻辑忠实翻译（黄金录像 100/100 一致）
 
 - **用户定的：** 完整阅读 `port/tasks/P2-1-玩法逻辑翻译.md` 及其全部前置源文件，按原型忠实翻译，不调数值、不修原型问题。只改 core、测试入口、package 命令和本节；保持 main。Cocos 编辑器已开，不运行 CocosCreator，不触碰 view / platform / 场景 / 素材，不提交、不推送、不部署。

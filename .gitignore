@@ -10,6 +10,12 @@ assets_pixel/fonts_src/
 assets_audio/src/
 port/tmp/
 
+# P2-2 新录像由冻结原型重建；只入库工具和含 SHA-256 的 extra-manifest.json
+tests/golden/input/*.json.gz
+tests/golden/tutorial/*.json.gz
+tests/golden/buffs/*.json.gz
+tests/golden/ads/*.json.gz
+
 # Cocos 3.8.8 本机缓存和构建产物；settings/ 与素材 meta 需要入库
 cocos/library/
 cocos/temp/
