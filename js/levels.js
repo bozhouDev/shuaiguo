@@ -100,8 +100,13 @@
    * pace：领导丢锅节奏——从第 t 秒起，每位领导约每 every 秒丢一次
    * bursts：会议室定期「散会」喷锅，at 前 2.5 秒先发群消息；{time} 会替换成屏幕时钟
    * events：随机事件——从 pool 里抽 n 个不重复的，在 window 时间段内均匀错开触发
-   * ai：同事难度倍率——aggr 甩锅积极度、parry 反甩成功率、dodge 躲锅、sneak 领导面前忍住不甩（乘在人设上）；
+   * ai：同事开局的难度倍率——aggr 甩锅积极度、parry 反甩成功率、dodge 躲锅、sneak 领导面前忍住不甩（乘在人设上）；
    *     focus 盯人程度（0 = 只找最近的人甩，越大越专挑同事里总账最少的人，玩家领先时就是盯你）
+   * aiEnd：同事下班时的难度倍率（字段同 ai）；从 ai 按上班进度前缓后陡地爬到 aiEnd，没写的项不变
+   * rushAt：第几秒进入「急着下班」——同事走得更快、反应更快、更爱甩锅，头上冒汗（不写默认 75% 处）
+   * incidents：临时事件，固定时刻发生，提前 2 秒群消息预告。kind: rage 老板发火（10 秒内派锅又快又多、视野更大，同事跟着慌）、
+   *     inspect 领导查岗（9 秒内走到你跟前盯着看，视野罩住你就别甩）；who 写领导类型，默认 boss
+   * news：关卡介绍页三行图解，只讲这关新出现的东西（icon 为 assets/px 素材名）；不写就讲基本规则（第 1 关）
    * leaderFocus：老板、经理每次派活先点你名的概率（你在丢锅范围内才算）
    * potLife：每口锅的截止秒数（落到人身上开始计时，甩来甩去不重置，到点在谁身上谁背锅）
    * skyChance：老板每次丢锅变成「天降锅」（只砸主角、躲不掉）的概率
@@ -109,7 +114,7 @@
    * theme：主题配色（地图不变，只换地毯颜色；配色见 game.js 的 THEMES），不填就是默认办公
    * 下面几项可选，不填就没有：
    * basic：关卡介绍只列基本规则（第 1 关还没教反弹、P0、压垮）
-   * tips：看情况弹的提示（on 为触发条件名，见 game.js 的 TIP_CHECKS），每条每局只弹一次
+   * tips：看情况弹的提示（on 为触发条件名，见 game.js 的 TIP_CHECKS），每条每局只弹一次；每关只留一条，新东西第一次出现时弹
    * finale：收尾——t 秒时发群消息、开下午茶，老板给主角塞 pots 口锅，期限卡在 18:00
    * tutorial：带教段（时钟停在 09:00，做到了才往下走）。spots 是带教时各人站的位置；
    *           steps 每步 do 为动作名（做法见 game.js 的 TUT_STEPS），say 是老周说的话，say2 是动作完成后的下一句，
@@ -120,27 +125,28 @@
       id: 1,
       name: '周一 · 入职第一天',
       theme: 'office',      // 默认办公
-      desc: '入职第一天，老员工老周先带你走一遍。锅到点在谁身上谁背锅，18:00 背锅最少的前三名下班。',
-      duration: 90,         // 正式上班的实际秒数，对应 09:00 ~ 18:00（带教时间不算）
+      desc: '入职第一天，老周先带你走一遍。锅到点在谁身上谁背锅，18:00 背锅最少的前三名下班。',
+      duration: 70,         // 正式上班的实际秒数，对应 09:00 ~ 18:00（带教时间不算）；2026-11-03 由 90 缩短
       startPots: 1,         // 开始上班时每个同事发 1 口锅
       potLife: 40,
       skyChance: 0,         // 带教之后不再有天降锅
       basic: true,
       bots: ['pm', 'intern', 'veteran'],
       leaders: [{ type: 'boss', route: 'boss' }],
-      ai: { aggr: 0.5, parry: 0 },      // 新手关：同事懒得追着甩，也完全不反弹
+      ai: { aggr: 0.5, parry: 0 },                                // 刚上班：同事懒得追着甩，也不反弹
+      aiEnd: { aggr: 0.95, parry: 0.4, dodge: 1.1, focus: 0.4 },  // 快下班：开始追着甩、偶尔弹回来
       pace: [
-        { t: 8, every: 10 },
-        { t: 45, every: 8 },
+        { t: 5, every: 9 },
+        { t: 28, every: 7 },
+        { t: 48, every: 5.5 },
       ],
+      rushAt: 46,
+      incidents: [{ t: 32, kind: 'rage' }],
       bursts: [],
-      hints: [],
       tips: [
-        { on: 'potWarn', title: '快到点', icon: ['wok', 'ui_clock'], sub: '你的锅变*黄*、变!红!了', text: '赶紧*甩出去*' },
         { on: 'seen', title: '领导视野', icon: ['boss_idle'], sub: '你站在老板的!红扇形!里', text: '先*走出去*再甩' },
-        { on: 'rankOut', title: '名次', icon: ['ui_crown'], sub: '你掉出前三了', text: '把锅*甩给别人*，追回来' },
       ],
-      finale: { t: 68, pots: 4, msg: '【全员群】人事：下午茶到了，茶水间自取', say: '老板：下班前这几个你分一下' },
+      finale: { t: 58, pots: 4, msg: '【全员群】人事：下午茶到了，茶水间自取', say: '老板：下班前这几个你分一下' },
       tutorial: {
         spots: {
           ring: { x: 595, y: 745 },     // 第一步要走到的黄圈（别放太右，窄屏会被切边）
@@ -149,14 +155,15 @@
           pm: { x: 640, y: 880 },       // 会计站在老板视野外
           boss: { x: 765, y: 540 },     // 老板出来巡视停在这（离主角近一点，视野更容易同时罩住实习生和主角）
         },
+        // 2026-11-03 带教提速：每句话砍短，步骤间等待减半
         steps: [
-          { do: 'walk', say: '第一天上班？我是老周，大家都叫我*老油条*，今天我带你。按住*左下摇杆*，走到*黄圈*那儿。' },
-          { do: 'sky', say: '站好别动，!老板点名了!。', say2: '这叫*天降锅*，!躲不掉!。每口锅都有*截止时间*，快到点会变黄、变红。' },
-          { do: 'throw', say: '到点前甩出去，就不是你的锅了。那边那个*新来的*比你早来一周，走到她跟前，扇形变~绿~就按「*甩*」。', say2: '漂亮，~甩出去了~。' },
-          { do: 'expire', say: '看好了：锅*到点*在谁身上，谁就*背锅*。', say2: '*{who}*背锅 +1。你空手，~一点事没有~。' },
-          { do: 'sight', say: '老板出来巡视了。他面前的!红扇形!是*视野*。', say2: '在视野里甩锅会被*抓现行*：!锅甩不走，还要背锅!。' },
-          { do: 'dodge', say: '老板又给你丢了一口。先*走出红扇形*，再甩给*会计*。', alt: '老板又给你丢了一口。别在!红扇形!里甩，把锅甩给*会计*。' },
-          { do: 'rank', say: '右上角是*名次*，按背锅次数排，身上没甩掉的锅下班时也按*半口*算。*18:00 总账最少的前三名*能下班。你现在~第 1~，保持住。' },
+          { do: 'walk', say: '我是老周，今天带你。按住*左下摇杆*，走到*黄圈*。' },
+          { do: 'sky', say: '站好，!老板点名了!。', say2: '这叫*天降锅*，!躲不掉!。锅有*截止时间*，快到点变黄、变红。' },
+          { do: 'throw', say: '到点前甩出去，就不是你的锅。走到*新来的*跟前，扇形变~绿~就按「*甩*」。', say2: '~甩出去了~。' },
+          { do: 'expire', say: '看好：锅*到点*在谁身上，谁*背锅*。', say2: '*{who}*背锅 +1，~你没事~。' },
+          { do: 'sight', say: '老板面前的!红扇形!是*视野*。', say2: '在视野里甩锅会被*抓现行*：!锅不走，还要背锅!。' },
+          { do: 'dodge', say: '又来一口。先*走出红扇形*，再甩给*会计*。', alt: '又来一口。别在!红扇形!里甩，甩给*会计*。' },
+          { do: 'rank', say: '右上角是*名次*：炸了的锅算 1，身上没甩掉的算*半口*。*18:00 前三名*下班，越到下班大家越急。' },
         ],
       },
     },
@@ -164,40 +171,44 @@
       id: 2,
       name: '周二 · 早会之后',
       theme: 'spring',      // 春日绿意
-      desc: '老板派活更勤了，同事也学会了反甩。会议室散会、打印机卡纸都会喷锅，18:00 背锅最少的前三名下班。',
+      desc: `老板派活更勤，同事也会反甩了。下午老板还要发一次火，身上攒满 12 口就压垮。`,
       duration: 120,        // 实际秒数，对应 09:00 ~ 18:00
       startPots: 1,         // 同事开局自带的锅（主角开局空手，第一口是天降锅）
       potLife: 26,          // 2026-11-02 加难：30 → 26
       skyChance: 0.3,
       bots: ['pm', 'intern', 'veteran'],
       leaders: [{ type: 'boss', route: 'boss' }],
-      ai: { aggr: 0.9, parry: 0.7, dodge: 1.1, focus: 0.5 },   // 第 2 关：同事开始会盯着账面干净的人甩
-      leaderFocus: 0.25,
+      ai: { aggr: 0.9, parry: 0.7, dodge: 1.1, focus: 0.5 },      // 上午和原来一样
+      aiEnd: { aggr: 1.5, parry: 1.35, dodge: 1.4, focus: 1.5 },  // 下班前盯着账面干净的人甩
+      leaderFocus: 0.3,
       pace: [
         { t: 6, every: 7 },
         { t: 40, every: 5.5 },
         { t: 80, every: 4.5 },
-        { t: 107, every: 2.6, toast: '17:00 下班前突击派活！' },
+        { t: 107, every: 2.6 },
       ],
+      rushAt: 90,
+      incidents: [{ t: 64, kind: 'rage' }, { t: 98, kind: 'inspect' }],
       bursts: [
         { t: 30, src: 'meeting', n: 3, msg: '【全员群】行政：{time} 周会结束，散会！' },
         { t: 78, src: 'meeting', n: 4, msg: '【全员群】行政：{time} 销售会结束，大家辛苦' },
       ],
       events: { n: 1, window: [45, 100], pool: ['printer', 'tea', 'p0'] },
+      news: [
+        { icon: 'fx_impact', text: '同事学会反甩了；锅快砸中你时按「甩」，也能弹回去' },
+        { icon: 'wok', text: '散会、打印机卡纸会喷锅，群里一预告就离远点' },
+        { icon: 'boss_chase', text: '下午老板会发火：派锅又快又多，视野也更大' },
+      ],
       // 教学横幅：title 黄色标签，icon [主图, 角标]（assets/px 里的名字），sub 小字，text 大字；*黄* !红! ~绿~ 是高亮
-      // 基本规则第 1 关已经教过，这里只讲新东西
-      hints: [
-        { t: 1, title: '反弹', icon: ['fx_impact'], sub: '同事开始会反甩了', text: '锅朝你飞来时按「*甩*」，能*弹回去*' },
-        { t: 26, title: '散会', icon: ['wok'], sub: '右上角群消息说散会', text: '会议室门口马上!喷锅!，*离远点*' },
-        { t: 50, title: '压垮', icon: ['player_crushed'], sub: '别一直攒着锅', text: '身上堆满 !12 口!，当场压垮' },
-        { t: 66, title: '小心', icon: ['fx_anger'], sub: '头上冒火的同事正冲你来', text: '离他*远点*' },
+      tips: [
+        { on: 'incoming', title: '反弹', icon: ['fx_impact'], sub: '同事的锅朝你飞来了', text: '快砸中时按「*甩*」，*弹回去*' },
       ],
     },
     {
       id: 3,
       name: '周三 · 开大会',
       theme: 'beach',       // 海滨度假
-      desc: '经理和小舅子都来了。小舅子接锅就塞给别人，别当着老板的面甩给他！',
+      desc: '经理一次丢两口！小舅子接锅就塞给别人，别当着老板的面甩他；他不占前三名额。',
       duration: 120,
       startPots: 2,
       potLife: 20,          // 2026-11-02 加难：24 → 20
@@ -205,42 +216,50 @@
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew'],
       nephewRanked: false, // 小舅子不占前三名额；以后周五设 true 就会占名额
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }],
-      ai: { aggr: 1.35, parry: 1.3, dodge: 1.2, sneak: 1.2, focus: 1 },  // 第 3 关同事更狠：追着领先的人甩、更会反甩、更会躲
+      ai: { aggr: 1.25, parry: 1.2, dodge: 1.15, sneak: 1.15, focus: 0.85 }, // 2026-11-03 改成爬升：开局比原来略松
+      aiEnd: { aggr: 1.7, parry: 1.6, dodge: 1.35, sneak: 1.35, focus: 1.6 }, // 下班前比原来狠
       leaderFocus: 0.35,
       pace: [
         { t: 3, every: 4.8 },
         { t: 30, every: 3.9 },
         { t: 70, every: 3.1 },
-        { t: 105, every: 1.8, toast: '17:00 下班前突击派活！' },
+        { t: 105, every: 1.8 },
       ],
+      rushAt: 90,
+      incidents: [{ t: 50, kind: 'inspect', who: 'director' }, { t: 84, kind: 'rage' }],
       bursts: [
         { t: 25, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 月度总结会结束，散会！' },
         { t: 60, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 总结会第二场结束' },
         { t: 95, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 安全培训结束，记得签到' },
       ],
       events: { n: 3, window: [30, 108], pool: ['printer', 'tea', 'p0'] },
-      hints: [
-        { t: 1, title: '新领导', icon: ['director_idle'], sub: '经理一次丢*两口*锅', text: '他也有自己的!视野扇形!' },
-        { t: 6, title: '小舅子', icon: ['nephew_normal'], sub: '接锅就随手塞给别人', text: '别!当着老板的面!甩给他' },
-        { t: 12, title: '背锅规则', icon: ['wok', 'ui_clock'], sub: '这关锅只有 !24 秒!期限', text: '别攒着，*快甩*' },
-        { t: 30, title: '名次', icon: ['ui_crown'], sub: '7 个人，小舅子不占名额', text: '其余人背锅最少的*前三名*下班' },
+      news: [
+        { icon: 'director_idle', text: '经理一次丢两口锅，他面前也有红扇形视野' },
+        { icon: 'nephew_normal', text: '小舅子接锅就塞给别人；当着老板甩他会被护短' },
+        { icon: 'director_chase', text: '经理会下来查岗：走到你跟前盯着，这时别甩' },
+      ],
+      tips: [
+        { on: 'nephewAim', title: '小舅子', icon: ['nephew_normal'], sub: '老板正看着他', text: '别!当着老板!甩他' },
       ],
     },
     {
       id: 4,
       name: '周四 · 老板画饼',
       theme: 'autumn',
-      desc: '老板开会画大饼，出纳跟着大家落井下石。吃饼多两口锅，换十秒鸡血，七人争前三！',
+      desc: '老板上午、下午各画一次饼。出纳跟风甩锅；小舅子不占名额，其余 7 人争前三。',
       duration: 120, startPots: 3, potLife: 20, skyChance: 0.3,  // 2026-11-02 加难：开局 2 → 3 口，期限 24 → 20
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew', 'cashier'],
       nephewRanked: false,
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }],
-      ai: { aggr: 1.4, parry: 1.3, dodge: 1.25, sneak: 1.2, focus: 1.2 },
+      ai: { aggr: 1.2, parry: 1.1, dodge: 1.15, sneak: 1.1, focus: 0.9 },
+      aiEnd: { aggr: 1.6, parry: 1.5, dodge: 1.35, sneak: 1.3, focus: 1.6 },
       leaderFocus: 0.4,
       pace: [
         { t: 3, every: 4.8 }, { t: 30, every: 3.9 }, { t: 70, every: 3.1 },
-        { t: 105, every: 1.8, toast: '17:00 下班前突击派活！' },
+        { t: 105, every: 1.8 },
       ],
+      rushAt: 90,
+      incidents: [{ t: 50, kind: 'inspect', who: 'director' }, { t: 86, kind: 'rage' }],
       // 09:00–18:00 对应 120 秒：22 秒约 10:39，74 秒约 14:33。
       pieMeetings: [{ t: 22, duration: 3.6, count: 4, life: 9 }, { t: 74, duration: 3.6, count: 4, life: 9 }],
       bursts: [
@@ -249,11 +268,13 @@
         { t: 98, src: 'meeting', n: 7, msg: '【全员群】行政：{time} 散会，下班前都交齐' },
       ],
       events: { n: 3, window: [35, 108], pool: ['printer', 'tea', 'p0'] },
-      hints: [
-        { t: 1, title: '出纳', icon: ['cashier_normal'], sub: '谁刚被甩中，她就跟着甩', text: '小心她!落井下石!' },
-        { t: 7, title: '画饼大会', icon: ['pie'], sub: '老板上午、下午各开一次会', text: '捡饼!多两口锅!，换~十秒鸡血~' },
-        { t: 14, title: '打鸡血', icon: ['fx_hype'], sub: '跑得~更快~，甩得~更远更宽~', text: '身上锅多、名次落后再去抢' },
-        { t: 45, title: '名次', icon: ['nephew_normal', 'ui_crown'], sub: '8 个人，小舅子不占名额', text: '其余 7 人争*前三*' },
+      news: [
+        { icon: 'cashier_normal', text: '新同事出纳：专挑刚被甩中的人，跟着落井下石' },
+        { icon: 'pie', text: '老板开会画饼：捡饼多两口锅，换十秒鸡血' },
+        { icon: 'fx_hype', text: '鸡血跑得快、甩得远；锅多、落后时再去抢' },
+      ],
+      tips: [
+        { on: 'pies', title: '画饼', icon: ['pie'], sub: '踩到饼自动吃', text: '!多两口锅!，换~十秒鸡血~' },
       ],
     },
     {
@@ -264,12 +285,15 @@
       passRank: 2, passStars: 3, nephewRanked: true,
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew', 'cashier'],
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }, { type: 'wife', route: 'wife' }],
-      ai: { aggr: 1.45, parry: 1.35, dodge: 1.3, sneak: 1.25, focus: 1.4 },
+      ai: { aggr: 1.25, parry: 1.15, dodge: 1.2, sneak: 1.15, focus: 1.1 },
+      aiEnd: { aggr: 1.65, parry: 1.55, dodge: 1.4, sneak: 1.35, focus: 1.8 },
       leaderFocus: 0.45,
       pace: [
         { t: 3, every: 4.4 }, { t: 30, every: 3.5 }, { t: 70, every: 2.8 },
-        { t: 105, every: 2, toast: '17:00 下班前突击派活！' },
+        { t: 105, every: 2 },
       ],
+      rushAt: 90,
+      incidents: [{ t: 48, kind: 'inspect', who: 'director' }, { t: 86, kind: 'rage' }],
       pieMeetings: [{ t: 22, duration: 3.6, count: 4, life: 9 }, { t: 74, duration: 3.6, count: 4, life: 9 }],
       bursts: [
         { t: 38, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 散会，账都对一遍' },
@@ -277,13 +301,14 @@
         { t: 98, src: 'meeting', n: 7, msg: '【全员群】行政：{time} 散会，下班前都交齐' },
       ],
       events: { n: 3, window: [35, 108], pool: ['printer', 'tea', 'p0'] },
-      hints: [
-        { t: 1, title: '下班名额', icon: ['nephew_normal', 'ui_crown'], sub: '今天只有 *2 个*名额，小舅子占 *1 个*', text: '把他*压垮*就~空出一个~' },
-        { t: 8, title: '老板娘', icon: ['wife_idle'], sub: '她专查同事里排名*第 1*的人', text: '领先的代价：!红线来了快躲!' },
-        { t: 15, title: '姐姐护短', icon: ['wife_chase'], sub: '当着她甩中小舅子，!背锅 +3!', text: '把他压垮，!姐姐会追你!' },
-        { t: 45, title: '画饼大会', icon: ['pie'], sub: '捡饼多 !2 口锅!，换~十秒鸡血~', text: '要下班，守住*前两名*' },
+      news: [
+        { icon: 'wife_idle', text: '老板娘专查同事里的第 1 名，瞄准红线一出就躲' },
+        { icon: 'wife_chase', text: '当着她甩中小舅子，背锅 +3；压垮他，姐姐会追你' },
+        { icon: 'pie', text: '画饼、散会、查岗、老板发火今天全都有' },
       ],
-      tips: [{ on: 'rankOut', title: '名次', icon: ['ui_crown'], sub: '你掉出前两名了', text: '把锅*甩给别人*，追回来' }],
+      tips: [
+        { on: 'nephewAim', title: '小舅子', icon: ['wife_chase'], sub: '他姐姐或老板正看着他', text: '当面甩他会被!护短!' },
+      ],
     },
   ];
 })();
