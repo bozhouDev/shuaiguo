@@ -6,7 +6,7 @@ function test(name, fn) { fn(); passed++; console.log('PASS ' + name); }
 // 统一摆到空过道，避免测试被随机巡逻和开局锅干扰。
 function fixture() {
   const env = setup(), { ctx } = env, t = ctx.TEST;
-  ctx.Math.random = () => 0.5;
+  ctx.E.random = () => 0.5;
   const s = t.init();
   s.agents.forEach((a, i) => { a.sn.segs = []; a.sn.x = 100 + i * 90; a.sn.y = 720; a.sn.angle = 0; });
   s.leaders.forEach((l) => { l.x = 640; l.y = 300; l.face = -Math.PI / 2; });
@@ -73,9 +73,9 @@ test('出纳优先三秒内被甩中的人，排除护盾、过期及领导派�
 });
 test('顺风低锅大多不抢，逆风多锅更愿意抢；小舅子也会抢', () => {
   const {ctx,t,s,p,boss}=fixture();s.pieBatch=1;s.pies=[{x:p.sn.x+100,y:p.sn.y,boss,expires:9}];
-  ctx.Math.random=()=>0.5;assert.equal(t.desiredPie(p),null);
+  ctx.E.random=()=>0.5;assert.equal(t.desiredPie(p),null);
   p.pieBatch=0;p.sn.segs=Array.from({length:4},()=>t.newPot(s.t));assert(t.desiredPie(p));
-  const n=s.bots.find(a=>a.key==='nephew');n.sn.x=p.sn.x;ctx.Math.random=()=>0.2;assert(t.desiredPie(n));
+  const n=s.bots.find(a=>a.key==='nephew');n.sn.x=p.sn.x;ctx.E.random=()=>0.2;assert(t.desiredPie(n));
 });
 test('结算零张不显示，吃饼显示数量，存档仍为v3', () => {
   const {ctx,t,p,storage}=fixture();let html='';ctx.E.showPanel=(value)=>{html=value};

@@ -1,0 +1,718 @@
+{
+  "version": 1,
+  "dt": 0.016666666666666666,
+  "intervalSteps": 30,
+  "emptyStorage": true,
+  "praiseExcluded": true,
+  "fullBytes": 7652232,
+  "bytes": 7652232,
+  "averageDuration": [
+    70,
+    120,
+    106.6208,
+    99.88,
+    103.6117
+  ],
+  "cases": [
+    {
+      "level": 0,
+      "seed": 1001,
+      "file": "level-0-seed-1001.json.gz",
+      "bytes": 26119,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1002,
+      "file": "level-0-seed-1002.json.gz",
+      "bytes": 26633,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1003,
+      "file": "level-0-seed-1003.json.gz",
+      "bytes": 26614,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1004,
+      "file": "level-0-seed-1004.json.gz",
+      "bytes": 26226,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1005,
+      "file": "level-0-seed-1005.json.gz",
+      "bytes": 26888,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1006,
+      "file": "level-0-seed-1006.json.gz",
+      "bytes": 28762,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1007,
+      "file": "level-0-seed-1007.json.gz",
+      "bytes": 26437,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1008,
+      "file": "level-0-seed-1008.json.gz",
+      "bytes": 27792,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1009,
+      "file": "level-0-seed-1009.json.gz",
+      "bytes": 26890,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1010,
+      "file": "level-0-seed-1010.json.gz",
+      "bytes": 27334,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1011,
+      "file": "level-0-seed-1011.json.gz",
+      "bytes": 26268,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1012,
+      "file": "level-0-seed-1012.json.gz",
+      "bytes": 26055,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1013,
+      "file": "level-0-seed-1013.json.gz",
+      "bytes": 25897,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1014,
+      "file": "level-0-seed-1014.json.gz",
+      "bytes": 27626,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1015,
+      "file": "level-0-seed-1015.json.gz",
+      "bytes": 28276,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1016,
+      "file": "level-0-seed-1016.json.gz",
+      "bytes": 26362,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1017,
+      "file": "level-0-seed-1017.json.gz",
+      "bytes": 27767,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1018,
+      "file": "level-0-seed-1018.json.gz",
+      "bytes": 24973,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1019,
+      "file": "level-0-seed-1019.json.gz",
+      "bytes": 27461,
+      "compact": false
+    },
+    {
+      "level": 0,
+      "seed": 1020,
+      "file": "level-0-seed-1020.json.gz",
+      "bytes": 25732,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1001,
+      "file": "level-1-seed-1001.json.gz",
+      "bytes": 49228,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1002,
+      "file": "level-1-seed-1002.json.gz",
+      "bytes": 49377,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1003,
+      "file": "level-1-seed-1003.json.gz",
+      "bytes": 48065,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1004,
+      "file": "level-1-seed-1004.json.gz",
+      "bytes": 48354,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1005,
+      "file": "level-1-seed-1005.json.gz",
+      "bytes": 52499,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1006,
+      "file": "level-1-seed-1006.json.gz",
+      "bytes": 48229,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1007,
+      "file": "level-1-seed-1007.json.gz",
+      "bytes": 51828,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1008,
+      "file": "level-1-seed-1008.json.gz",
+      "bytes": 49149,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1009,
+      "file": "level-1-seed-1009.json.gz",
+      "bytes": 52077,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1010,
+      "file": "level-1-seed-1010.json.gz",
+      "bytes": 49310,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1011,
+      "file": "level-1-seed-1011.json.gz",
+      "bytes": 45926,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1012,
+      "file": "level-1-seed-1012.json.gz",
+      "bytes": 49461,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1013,
+      "file": "level-1-seed-1013.json.gz",
+      "bytes": 49598,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1014,
+      "file": "level-1-seed-1014.json.gz",
+      "bytes": 49004,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1015,
+      "file": "level-1-seed-1015.json.gz",
+      "bytes": 47613,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1016,
+      "file": "level-1-seed-1016.json.gz",
+      "bytes": 47514,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1017,
+      "file": "level-1-seed-1017.json.gz",
+      "bytes": 51312,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1018,
+      "file": "level-1-seed-1018.json.gz",
+      "bytes": 50557,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1019,
+      "file": "level-1-seed-1019.json.gz",
+      "bytes": 49940,
+      "compact": false
+    },
+    {
+      "level": 1,
+      "seed": 1020,
+      "file": "level-1-seed-1020.json.gz",
+      "bytes": 44930,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1001,
+      "file": "level-2-seed-1001.json.gz",
+      "bytes": 103749,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1002,
+      "file": "level-2-seed-1002.json.gz",
+      "bytes": 99282,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1003,
+      "file": "level-2-seed-1003.json.gz",
+      "bytes": 99660,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1004,
+      "file": "level-2-seed-1004.json.gz",
+      "bytes": 25958,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1005,
+      "file": "level-2-seed-1005.json.gz",
+      "bytes": 104031,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1006,
+      "file": "level-2-seed-1006.json.gz",
+      "bytes": 101850,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1007,
+      "file": "level-2-seed-1007.json.gz",
+      "bytes": 97968,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1008,
+      "file": "level-2-seed-1008.json.gz",
+      "bytes": 99124,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1009,
+      "file": "level-2-seed-1009.json.gz",
+      "bytes": 99337,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1010,
+      "file": "level-2-seed-1010.json.gz",
+      "bytes": 53073,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1011,
+      "file": "level-2-seed-1011.json.gz",
+      "bytes": 105678,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1012,
+      "file": "level-2-seed-1012.json.gz",
+      "bytes": 101112,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1013,
+      "file": "level-2-seed-1013.json.gz",
+      "bytes": 103914,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1014,
+      "file": "level-2-seed-1014.json.gz",
+      "bytes": 44411,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1015,
+      "file": "level-2-seed-1015.json.gz",
+      "bytes": 101686,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1016,
+      "file": "level-2-seed-1016.json.gz",
+      "bytes": 101013,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1017,
+      "file": "level-2-seed-1017.json.gz",
+      "bytes": 97202,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1018,
+      "file": "level-2-seed-1018.json.gz",
+      "bytes": 95166,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1019,
+      "file": "level-2-seed-1019.json.gz",
+      "bytes": 117352,
+      "compact": false
+    },
+    {
+      "level": 2,
+      "seed": 1020,
+      "file": "level-2-seed-1020.json.gz",
+      "bytes": 51440,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1001,
+      "file": "level-3-seed-1001.json.gz",
+      "bytes": 122699,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1002,
+      "file": "level-3-seed-1002.json.gz",
+      "bytes": 120591,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1003,
+      "file": "level-3-seed-1003.json.gz",
+      "bytes": 114728,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1004,
+      "file": "level-3-seed-1004.json.gz",
+      "bytes": 115398,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1005,
+      "file": "level-3-seed-1005.json.gz",
+      "bytes": 116949,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1006,
+      "file": "level-3-seed-1006.json.gz",
+      "bytes": 113904,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1007,
+      "file": "level-3-seed-1007.json.gz",
+      "bytes": 25674,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1008,
+      "file": "level-3-seed-1008.json.gz",
+      "bytes": 30062,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1009,
+      "file": "level-3-seed-1009.json.gz",
+      "bytes": 116711,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1010,
+      "file": "level-3-seed-1010.json.gz",
+      "bytes": 119504,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1011,
+      "file": "level-3-seed-1011.json.gz",
+      "bytes": 49759,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1012,
+      "file": "level-3-seed-1012.json.gz",
+      "bytes": 97058,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1013,
+      "file": "level-3-seed-1013.json.gz",
+      "bytes": 53262,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1014,
+      "file": "level-3-seed-1014.json.gz",
+      "bytes": 121788,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1015,
+      "file": "level-3-seed-1015.json.gz",
+      "bytes": 120574,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1016,
+      "file": "level-3-seed-1016.json.gz",
+      "bytes": 116424,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1017,
+      "file": "level-3-seed-1017.json.gz",
+      "bytes": 114440,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1018,
+      "file": "level-3-seed-1018.json.gz",
+      "bytes": 117012,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1019,
+      "file": "level-3-seed-1019.json.gz",
+      "bytes": 66316,
+      "compact": false
+    },
+    {
+      "level": 3,
+      "seed": 1020,
+      "file": "level-3-seed-1020.json.gz",
+      "bytes": 92359,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1001,
+      "file": "level-4-seed-1001.json.gz",
+      "bytes": 79516,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1002,
+      "file": "level-4-seed-1002.json.gz",
+      "bytes": 131461,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1003,
+      "file": "level-4-seed-1003.json.gz",
+      "bytes": 131753,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1004,
+      "file": "level-4-seed-1004.json.gz",
+      "bytes": 141923,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1005,
+      "file": "level-4-seed-1005.json.gz",
+      "bytes": 142143,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1006,
+      "file": "level-4-seed-1006.json.gz",
+      "bytes": 141301,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1007,
+      "file": "level-4-seed-1007.json.gz",
+      "bytes": 150271,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1008,
+      "file": "level-4-seed-1008.json.gz",
+      "bytes": 38097,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1009,
+      "file": "level-4-seed-1009.json.gz",
+      "bytes": 136295,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1010,
+      "file": "level-4-seed-1010.json.gz",
+      "bytes": 139418,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1011,
+      "file": "level-4-seed-1011.json.gz",
+      "bytes": 140651,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1012,
+      "file": "level-4-seed-1012.json.gz",
+      "bytes": 134858,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1013,
+      "file": "level-4-seed-1013.json.gz",
+      "bytes": 111239,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1014,
+      "file": "level-4-seed-1014.json.gz",
+      "bytes": 104287,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1015,
+      "file": "level-4-seed-1015.json.gz",
+      "bytes": 42950,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1016,
+      "file": "level-4-seed-1016.json.gz",
+      "bytes": 131617,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1017,
+      "file": "level-4-seed-1017.json.gz",
+      "bytes": 134161,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1018,
+      "file": "level-4-seed-1018.json.gz",
+      "bytes": 65669,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1019,
+      "file": "level-4-seed-1019.json.gz",
+      "bytes": 146925,
+      "compact": false
+    },
+    {
+      "level": 4,
+      "seed": 1020,
+      "file": "level-4-seed-1020.json.gz",
+      "bytes": 139396,
+      "compact": false
+    }
+  ]
+}

@@ -685,7 +685,7 @@
         if (b === f.owner || b.crushed || (b.isPlayer && !auto) || f.rolled.has(b.id)) continue;
         if (incomingTTI(f, b) > parryWin(f)) continue;
         f.rolled.add(b.id);
-        if (b.parryLock <= 0 && Math.random() < parryChance(b) * Math.pow(0.8, f.bounces)) { parry(b, f); break; }
+        if (b.parryLock <= 0 && E.random() < parryChance(b) * Math.pow(0.8, f.bounces)) { parry(b, f); break; }
       }
 
       let victim = null;
@@ -946,10 +946,10 @@
     if (l.type === 'wife') return ranking().filter((a) => !a.crushed && a.key !== 'nephew').slice(0, 1);
     const count = l.cfg.count + (extra || 0);
     const cand = S.agents.filter((a) => !a.crushed && E.dist(a.sn.x, a.sn.y, l.x, l.y) < l.cfg.range)
-      .map((a) => ({ a, k: potsOf(a) + Math.random() * 0.9 }))
+      .map((a) => ({ a, k: potsOf(a) + E.random() * 0.9 }))
       .sort((x, y) => x.k - y.k);
     const P = S.player;
-    if (cand.some((c) => c.a === P) && Math.random() < (L.leaderFocus || 0)) {
+    if (cand.some((c) => c.a === P) && E.random() < (L.leaderFocus || 0)) {
       return [P].concat(cand.filter((c) => c.a !== P).slice(0, count - 1).map((c) => c.a));
     }
     return cand.slice(0, count).map((c) => c.a);
@@ -1021,7 +1021,7 @@
           l.throwCd = S.pace.every * l.cfg.everyMul * (mad ? RAGE_EVERY : 1) * E.rand(0.85, 1.15);
           l.targets = [];
           // 保护期内随机到天降锅也走普通瞄准派锅，保留原派锅节奏。发火时不丢天降锅，全部瞄准丢、一次多丢一口
-          if (!mad && l.type === 'boss' && Math.random() < (L.skyChance || 0) && !(S.buff === 'trip' && workT() < 30)) launchSky(S.player, l);
+          if (!mad && l.type === 'boss' && E.random() < (L.skyChance || 0) && !(S.buff === 'trip' && workT() < 30)) launchSky(S.player, l);
           else l.targets = pickTargets(l, mad ? 1 : 0);
           if (l.targets.length) {
             l.state = 'aim'; l.aimT = (l.cfg.aimTime ?? AIM_TIME) * (mad ? RAGE_AIM : 1);
@@ -1121,7 +1121,7 @@
       a.pieBatch = S.pieBatch;
       const behind = ranking().indexOf(a) >= passRank();
       const chance = potsOf(a) >= 4 || behind ? 0.85 : a.key === 'nephew' ? 0.3 : 0.12;
-      a.wantsPie = Math.random() < chance;
+      a.wantsPie = E.random() < chance;
     }
     if (!a.wantsPie) return null;
     return S.pies.filter((p) => p.expires > S.t && E.dist(a.sn.x, a.sn.y, p.x, p.y) < 650)
@@ -1528,7 +1528,7 @@
     if (b) fireThrow(a, b, index);
   }
   // 按人设谨慎程度忍住护短风险，连最莽的新同事也大多会忍一下。
-  const avoidsNephew = (a, b) => nephewGuardian(b) && Math.random() < Math.min(0.98, 0.6 + a.p.sneak * 0.38);
+  const avoidsNephew = (a, b) => nephewGuardian(b) && E.random() < Math.min(0.98, 0.6 + a.p.sneak * 0.38);
   // 机器人每隔 react 秒想一次：把各种「想去 / 想躲」的力加起来，得出想走的方向
   function think(a) {
     const me = a.sn, p = a.p, pots = potsOf(a);
@@ -1620,7 +1620,7 @@
     if (canFire(a)) {
       const b = pickAim(a);
       if (b && headDist(a, b) < p.throwR * (hyped(a) ? 200 / 150 : 1) && (rush || (pots >= p.seekMin && (a.lock[b.id] || 0) <= S.t)) &&
-        Math.random() < 0.45 + 0.55 * p.aggr * aiVal(a, 'aggr') && !(seenBy(a) && Math.random() < Math.min(1, p.sneak * aiVal(a, 'sneak'))) && !avoidsNephew(a, b)) fireThrow(a);
+        E.random() < 0.45 + 0.55 * p.aggr * aiVal(a, 'aggr') && !(seenBy(a) && E.random() < Math.min(1, p.sneak * aiVal(a, 'sneak'))) && !avoidsNephew(a, b)) fireThrow(a);
     }
   }
 
@@ -2088,7 +2088,7 @@
     ctx.fillStyle = '#1F2A44';
     ctx.fillRect(0, 0, st.w, st.h);
     ctx.save();
-    if (shake > 0) { ctx.translate(E.rand(-shake, shake), E.rand(-shake, shake)); shake *= 0.86; if (shake < 0.5) shake = 0; }
+    if (shake > 0) { ctx.translate(E.fxRand(-shake, shake), E.fxRand(-shake, shake)); shake *= 0.86; if (shake < 0.5) shake = 0; }
     ctx.translate(-camX, -camY);
 
     // 办公区地毯 + 各房间地面（像素地砖）
@@ -2908,14 +2908,16 @@
   });
 
   /* ---------------- 调试：纯 AI 对局模拟（平衡数值用） ---------------- */
-  // 在控制台运行 SG_DEBUG.simulate(关卡序号, 局数)：玩家也交给 AI，快速跑完多局，统计排名和锅数
+  // 在控制台运行 SG_DEBUG.simulate(关卡序号, 局数, 种子)：玩家也交给 AI，快速跑完多局，统计排名和锅数
   window.SG_DEBUG = {
-    simulate(levelIdx, runs) {
+    simulate(levelIdx, runs, seed) {
       const keepL = L, keepAuto = auto, keepS = S, keepMode = mode;
+      const keepRng = E.rngState(), keepSim = simulating;
       simulating = true;
       const keepMuted = E.muted;
       E.muted = true; // 模拟对局不出声
       try {
+      if (seed !== undefined) E.seed(seed); // 固定种子只在本次模拟内生效。
       L = LEVELS[levelIdx || 0]; auto = true;
       const out = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, avgBlame: {}, avgCaught: {}, avgBooms: 0, avgSkies: 0, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLaunched: 0, avgMiss: 0, avgParry: 0, avgLeaderHits: 0, avgCrushT: 0, passed: 0, passRate: 0, avgPiesEaten: 0, avgAllPiesEaten: 0, avgPieMeetings: 0, avgPiesSpawned: 0, avgNephewReceived: 0, nephewCrushed: 0, nephewProtected: 0 };
       for (let r = 0; r < out.runs; r++) {
@@ -2959,7 +2961,7 @@
       L = keepL; auto = keepAuto; S = keepS; mode = keepMode;
       floats.list = []; clearBanners();
       return out;
-      } finally { simulating = false; E.muted = keepMuted; L = keepL; auto = keepAuto; S = keepS; mode = keepMode; }
+      } finally { if (seed !== undefined) E.setRngState(keepRng); simulating = keepSim; E.muted = keepMuted; L = keepL; auto = keepAuto; S = keepS; mode = keepMode; }
     },
     // 素材验收：直接从游戏图集展示新角色各姿势和道具，返回后回大厅。
     previewAssets() {

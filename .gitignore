@@ -8,3 +8,4 @@ assets_pixel/sprites/
 assets_pixel/fonts_src/
 # 音频原始文件（约 30 MB，来源地址记在 assets_audio/sources.json，可重新下载或生成）
 assets_audio/src/
+port/tmp/

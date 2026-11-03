@@ -1,3 +1,83 @@
+## 2026-11-03 · 随机种子与黄金录像完成（按任务卡裁定）
+
+- **用户定的：** 执行 `port/tasks/P0-1-随机种子与黄金录像.md` 及末尾裁定；不改玩法、数值、画面、文案、存档格式；在 main 上完成，不提交、不推送、不部署，不创建 cocos。绘制随机独立；表扬贴纸属于画面层，不进入录像；录像使用空存档（老板默认叫“老板”）、托管玩家、`simulating=true`、`makeState(false)`。
+- **我定的细节（可改）：** mulberry32 的状态每次截成 uint32；显式种子模拟在 finally 恢复随机状态与原 simulating 标志，无种子继续消费当前流。录像每组新建 harness，固定 1/60 秒，每 30 步及结束时记录，结束恰逢采样点也另记 final；浮点四位，统一正负零，特殊数转字符串。对象引用用 agent id / leader 索引，Set 保存成员；快照包含任务卡全部字段、剩余日程、节奏与事件标志，不带表扬字段。事件记录接口调用意图，不执行音频和真实 DOM；不跑 finish、HUD、下班过场。verify 支持同步 `--adapter`、定向 level/seed 和临时 data 目录，用法均写在脚本头，无 README。
+- **改动文件：** `js/engine.js`、`js/game.js`、`tests/game-harness.cjs`、`tests/thursday.cjs`、`tests/random.cjs`、`tests/golden-tools.cjs`、`tests/golden/record.cjs`、`tests/golden/verify.cjs`、`tests/golden/manifest.json`、`tests/golden/balance-results.json`、`tests/golden/level-{0..4}-seed-{1001..1020}.json.gz`（100 个）、本文件。原有 `AGENTS.md`、`.claude/`、`port/` 修改原样保留；不改关卡、样式、素材或字体。
+- **偏差 / 修正：** 无玩法偏离。首版录像多记了蛇身轨迹，已收回任务卡所需字段后重录；最终 100 组均存完整快照及事件，无哈希降级。首次 verify 揭露 JSON 将 -0 写为 0 的误报，已规范零值并补回归，未改游戏状态或断言。此前“前置排查后停止”小节已由本节替换，没有保留两节。
+
+**Math.random 分类（左列为基线 HEAD 行号，箭头后为交付代码行号）：**
+
+| 位置 | 处理与理由 |
+|---|---|
+| engine.js:11 → 24 | rand 改 E.random，初始化和 update 共用 |
+| engine.js:13 → 26 | pick 改 E.random，锅标签等会进入状态 |
+| engine.js:29 → 42 | shuffle 改 E.random，日程及会议文本进入状态 |
+| game.js:688 | 改 E.random，AI 反甩概率 |
+| game.js:949 | 改 E.random，领导按锅数选人时的随机权重 |
+| game.js:952 | 改 E.random，领导点名玩家概率 |
+| game.js:1024 | 改 E.random，随机天降锅 |
+| game.js:1124 | 改 E.random，AI 抢饼意愿 |
+| game.js:1531 | 改 E.random，回避小舅子护短的决策 |
+| game.js:1623 第一处 | 改 E.random，AI 主动甩锅概率 |
+| game.js:1623 第二处 | 改 E.random，领导面前忍住不甩的概率 |
+| game.js:2876 | 保留 Math.random，只选择大厅点击主角后的台词，不进对局状态 |
+| engine.js:22（新增） | fxRand 内保留 Math.random，纯表现随机源 |
+| game.js:2091（原来两次 E.rand） | 两处均改 E.fxRand，只改变绘制平移，不消费种子状态 |
+
+全量追踪 draw 及绘制辅助函数、DOM、音频路径：除此震屏外，没有 E.rand / E.pick / E.shuffle 调用；`buildSchedule` 的文案、会议承诺和 `eatPie` 的气泡在 update / 初始化路径产生，继续走种子随机。交付代码只剩 engine.js:22、game.js:2876 两处 Math.random。
+
+**其他不确定因素排查（以下为交付代码行号）：**
+
+| 位置 | 结论 |
+|---|---|
+| engine.js:628 | 表扬退出定时器；按裁定排除整个表扬路径 |
+| engine.js:658 | toast 定时器只移除 DOM class，不改 S |
+| engine.js:670；game.js:2527–2547 | 假广告完成回调能复活、顶包、开新局；不在录像 / update 路径，按裁定不录 |
+| engine.js:951、1047 | 延迟合成音和 BGM 调度，只改音频状态，不改 S |
+| engine.js:680–687；game.js:3007–3022 | 正常 RAF 使用 performance.now / 帧时间来驱动 update；原型保持变步长，录像 / simulate 分别显式传 1/60、1/30，不改正式帧循环 |
+| engine.js:11 | Date.now 仅用于默认起种；录像和带种子的 simulate 在初始化对局前覆盖种子；update 调用链无 Date.now / performance.now |
+| game.js:187–206；engine.js:573–599 | 相机、画布 rect、DOM 占位影响表扬资格及 praiseAt / outSince；按裁定不进录像、不影响玩法 |
+| game.js:1151–1158、2086–2092、2253–2263 | st.w / st.h 与相机只用于绘制裁切、气泡和边缘指示，不参与命中、AI、排名 |
+| game.js:1751–1756、1769–1772 | DOM rect 仅放置横幅；横幅计时在主循环外于 update 后推进，录像沿用 simulate 的仅 update 口径。当前每关仅一条 tips，无按时间 hints，不改变本次局内结果或提示触发 |
+| game.js:226、237–245 | 自定义老板称呼来自存档 / 编辑输入框；录像每组空存档固定“老板”，不读取用户真实存档 |
+| game.js:1645–1666 | 输入来自键盘 / 摇杆状态；录像 auto=true，玩家走 AI 分支，不读人工输入 |
+| game.js:346、950、1073、1128、1145、1238、1682–1687 | 排日程、选目标、选饼、最近拾取者、喷锅、排名均为确定性比较器；平手依赖现代 JS 的稳定 sort 和现有数组顺序，随机权重提前在 map 中产生，没有在比较器里取随机数。TS 移植须保留平手顺序 |
+| engine.js:544、587、843；game.js:2180、2354 | 对象遍历 / 其余 sort 只做贴纸、音频资源、画人遮挡次序、SVG；不决定玩法。simulate 的统计对象按固定角色插入顺序累计，不反向影响 S |
+| game.js:188 | simulating 跳过 praise，按裁定排除 |
+| game.js:201 | simulating 清空 outSince 并跳过名次表扬，按裁定排除 |
+| game.js:476–480 | simulating 阻止成就写真实存档；nephewCrushed、护短追责、局内结果照常计算 |
+| game.js:2915–2916、2964 | simulate 入口开启 simulating，finally 恢复；harness 只在测试副本中设置同样标志，不加正式游戏钩子 |
+
+**验证命令和输出摘要：**
+
+- 基线：改代码前通过原 harness 加载未修改的 HEAD（`c2e6506af84ec9f9d0f54c4b8185fab28e1bb4a1`），各关调用 `ctx.SG_DEBUG.simulate(i, 200)`；`git show HEAD:js/{engine,game,levels}.js` 的原文件另外保存在 `/tmp/shuaiguo-p0-1/`。基线使用原生 Math.random，不假称可以用新种子复现旧批次。
+- 改后：`ctx.SG_DEBUG.simulate(i, 200, 20261103 + i)`，仍用原模拟步长 1/30；前后原始统计及种子保存在 `tests/golden/balance-results.json`。
+- `node --check js/*.js` 退出 0；另逐文件执行 `for f in js/*.js; do node --check "$f" || exit; done`，避免 Node 只检查第一个脚本；新增 / 修改 CJS 均逐文件语法检查；`git diff --check` 通过。
+- `node tests/thursday.cjs`：10 tests passed；只将固定随机替身从 ctx.Math.random 改到 ctx.E.random，断言不变。`node tests/friday.cjs`：排名/目标/视野/护短/追责及星级/路线/预警/证书/广告两组通过。
+- `node tests/random.cjs`：序列复现、零种子已知首值、状态读写、表现随机隔离、带种子模拟复现、正常与异常恢复、无种子推进全部通过；实现前先看到 E.seed 不存在的预期失败。
+- `node tests/golden-tools.cjs`：-0 / JSON 往返、字段 / 数组 / 缺失差异、完整 / 哈希比较、全部七种事件入口、对局禁用 Math.random、30 步采样与 final 通过。
+- `node tests/golden/record.cjs`：5 关 × 20 种子全部生成；最终两次连续 `node tests/golden/verify.cjs` 均输出 `PASS 100/100 组黄金录像完全一致（快照 + 事件 + 最终结果）`。只读核验不重录基准。
+- 比较器负测：仅修改 `/tmp/shuaiguo-p0-1/mismatch/` 录像副本的第一个玩家 x，再运行 `node tests/golden/verify.cjs --data /tmp/shuaiguo-p0-1/mismatch`，退出 1，准确输出 level=0、seed=1001、time=0.5、`$.snapshots[0].agents[0].x`、old=547.774、fresh=546.774；正式基准未动。
+- 补充同随机流对照：旧 HEAD 使用独立 mulberry32 流替换 Math.random，改后使用同一序列替换 E.random，各关 `simulate(i, 5)`，五关的所有统计字段逐项完全相同。这是同流契约检查，不代替前后各 200 局的原生随机统计。
+- Chromium / Playwright 375×812：`python3 -m http.server 18765 --bind 127.0.0.1` + `node /tmp/shuaiguo-p0-1/browser.cjs`；大厅 → 周一介绍 → auto 开局 → 暂停（验证 S.t 冻结）→ 继续 → 自然 18:00 结算（本次第 2 名）→ 返回大厅 → 周四介绍 → 新开局（8 人）；没有调时钟、改锅或强制结算。pageerror、console.error、console warning 均为 0。截图实际目检通过，记录及截图在 `/tmp/shuaiguo-p0-1/`。浏览器已在 finally 关闭，18765 服务已退出，确认端口无监听、本任务无 Chromium / agent-browser 残留；未操作用户浏览器、未建立 CUA 会话。
+
+**统计前后对比（每关前后各 200 局，名次数字为局数）：**
+
+| 关卡 | 过关率：前 → 后 | 名次 1..N：前 → 后 | 玩家压垮：前 → 后 |
+|---|---|---|---|
+| 周一 | 75.5% → 79.0% | 42/53/56/49 → 38/53/67/42 | 0 → 1 |
+| 周二 | 87.5% → 84.5% | 46/48/81/25 → 38/61/70/31 | 8 → 9 |
+| 周三 | 8.5% → 9.5% | 1/2/14/28/31/124 → 4/6/9/24/47/110 | 74 → 58 |
+| 周四 | 11.5% → 11.0% | 2/5/16/18/25/27/107 → 2/7/13/20/22/36/100 | 89 → 77 |
+| 周五 | 1.0% → 1.5% | 0/2/8/19/18/23/21/109 → 0/3/12/17/10/17/13/128 | 100 → 115 |
+
+过关率差均小于 0.87 个合并标准误。名次低频相邻档合并至每组期望数至少 5 后，χ²/自由度依次为 1.722/3、3.757/3、9.284/4、2.380/5、7.702/5，均未达到常用 5% 显著性阈值；本批未检出分布变化，不表示证明两种随机源的任意样本都相同，也不代表真人通关率。
+
+**录像与局长：** 100 个 gzip JSON 共 **7,652,232 字节**（7.30 MiB），低于十进制 8 MB 和 8 MiB；100 组全部完整，无哈希降级。共 20,096 份快照、82,365 条事件（sfx 17,953、toast 542、buzz 1,212、showMsg 618、showHint 60、floats 32,354、spawnFx 29,626；无表扬）。平均局长按跑到 S.over（包含提前压垮）计算：周一 **70.0000 秒**、周二 **120.0000 秒**、周三 **106.6208 秒**、周四 **99.8800 秒**、周五 **103.6117 秒**。
+
+- **已验证：** 种子接口、模拟隔离、全部原回归、两次完整录像复核、比较器正负测、前后统计、同流对照、375×812 指定完整流程与清理；简化检查修掉 harness 的重复模板替换和无用参数，没有弱化测试。
+- **未验证 / 边界：** 尚未接入 TS / Cocos，所以不宣称新旧引擎已对齐；真人手感与微信真机未测。表扬贴纸、实际音频播放成功、DOM 避让、广告、带教和下班过场不属于这批黄金录像，由画面层功能清单另验；正式原型仍按真实 dt 更新。截图和临时基线源文件位于 /tmp，不当作永久仓库资产；统计和黄金录像已落盘仓库。
+
 ## 2026-11-03 · 难度随时间爬升、临时事件、第一关提速、提示减量
 
 - **用户定的：** 玩着没有“差一点就赢”的感觉，整局太平；要越到下班越难（同事更急、更聪明），加合情合理的临时事件（如老板发火疯狂派锅）。选了“平滑爬升 + 临时事件”。第一关带教要快，教完缩短并在后段加难。提示太多：新东西放进关卡介绍页，局内每关只留 1 条，在新东西第一次出现时弹。

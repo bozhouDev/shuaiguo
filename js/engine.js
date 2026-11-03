@@ -7,10 +7,23 @@
   const E = {};
 
   /* ---------------- 小工具 ---------------- */
+  // mulberry32：状态始终保存为无符号 32 位整数，正常开页用当前时间起种。
+  let rng = Date.now() >>> 0;
+  E.seed = (n) => { rng = n >>> 0; };
+  E.rngState = () => rng;
+  E.setRngState = (s) => { rng = s >>> 0; };
+  E.random = function () {
+    rng = (rng + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(rng ^ (rng >>> 15), 1 | rng);
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  // 纯绘制、DOM 和声音专用，不消费对局随机序列。
+  E.fxRand = (a, b) => a + Math.random() * (b - a);
   // 区间随机数
-  E.rand = (a, b) => a + Math.random() * (b - a);
+  E.rand = (a, b) => a + E.random() * (b - a);
   // 从数组里随机取一个
-  E.pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  E.pick = (arr) => arr[Math.floor(E.random() * arr.length)];
   // 两点距离
   E.dist = (ax, ay, bx, by) => Math.hypot(ax - bx, ay - by);
   // 数值夹在 [a, b] 之间
@@ -26,7 +39,7 @@
   E.shuffle = function (arr) {
     const a = arr.slice();
     for (let i = a.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(E.random() * (i + 1));
       [a[i], a[j]] = [a[j], a[i]];
     }
     return a;
