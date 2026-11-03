@@ -20,6 +20,10 @@ export const PX_ICONS: Record<string,string[]> = {
   };
 export const LOBBY_LINES = ["这锅不是我的", "这个你来跟一下", "我就路过一下", "收到，马上甩", "你问经理去", "谁接的活谁负责"];
 
+// 调试交互参数不属于玩法数值；版本为源码版本，构建流程尚未注入产物时间。
+export const DEBUG_PANEL = {taps: 5, tapSeconds: 1.5, defaultRuns: 20, maxRuns: 200};
+export const DEBUG_BUILD = {version: '0.4.2-e', time: '尚未构建'};
+
 // 画面和字体裁剪共用此规则：图标由Sprite绘制，文本不借用系统emoji字体。
 export const LABEL_ICON_PATTERN = /\p{Extended_Pictographic}|[\u2300-\u23ff\u2600-\u27bf\u{1f000}-\u{1ffff}\u200d\u20e3\ufe0e\ufe0f\u{e0020}-\u{e007f}★☆▶]/gu;
 // 只返回显示副本，保留core事件、原始存档和玩家输入；选择符、连接符也一并去掉。

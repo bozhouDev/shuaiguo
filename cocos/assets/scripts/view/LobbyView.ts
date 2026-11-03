@@ -2,7 +2,8 @@ import {LEVELS} from '../core/levels';
 import {Progress} from '../core/types';
 import {TopAvoidance} from '../platform/Platform';
 import {ScreenPaint} from './ScreenPaint';
-import {LOBBY_LINES} from './ui-data';
+import {DEBUG_BUILD, DEBUG_PANEL, LOBBY_LINES} from './ui-data';
+import type {SimulationStats} from '../core/simulate';
 import {Box} from './UiPaint';
 // showLobby/pokeHero/updateLobby：按CSS的flex/min-content算尺寸，随机不碰玩法流。
 export class LobbyView {
@@ -21,12 +22,13 @@ export class LobbyView {
   // 横滑后就近吸附卡片中心，边缘夹紧，不触发选关。
   swipe(delta:number,snap=false):void {this.scroll=Math.max(0,Math.min(this.max,this.scroll-delta));if(snap){const w=this.strip!.w-32;this.scroll=this.days.map(d=>Math.max(0,Math.min(this.max,d.x+d.w/2-w/2))).sort((a,b)=>Math.abs(a-this.scroll)-Math.abs(b-this.scroll))[0];}}
   // 大厅主布局：真实CSS像素，底部菜单固定，人物区分配剩余高度。
-  draw(index:number,prog:Progress,real:number,avoid:TopAvoidance,reduce:boolean):void {
+  draw(index:number,prog:Progress,real:number,avoid:TopAvoidance,reduce:boolean,debug=false):void {
     const p=this.p,c=p.c,W=c.width,H=c.height,short=H<=720,narrow=W<=360;
     c.fillStyle='#C9D3DD';c.fillRect(0,0,W,H);const bg=c.assets.spr.lobby_bg;if(bg){const s=W/H>=2/3?H/bg.h:Math.max(W/bg.w,H/bg.h);p.image('lobby_bg',(W-bg.w*s)/2,0,bg.w*s,bg.h*s);}
     const col=Math.min(W,H*.666),left=(W-col)/2+16,width=col-32,mw=Math.min(360,width),mx=(W-mw)/2,top=avoid.top+10;
     const stars=LEVELS.reduce((n,lv)=>n+(prog.best[lv.id]?.stars||0),0),badgeText=`工牌 ${stars}/15`,badgeWidth=39+p.width(badgeText,15)+17;
     p.panel({x:left,y:top,w:badgeWidth,h:27.34});p.image('ui_badge',left+9,top+6,13,15);p.text(badgeText,left+27,top+5,15,'#FFF6D8');p.image('ui_star',left+badgeWidth-26,top+5,17,17);
+    if(debug)p.hit('debug-badge','工牌',{x:left,y:top,w:badgeWidth,h:27.34});
     const gx=avoid.capsule&&top<avoid.capsule.y+avoid.capsule.h&&top+27.34>avoid.capsule.y?Math.min(left+width-39.25,avoid.capsule.x-47):left+width-39.25;
     p.panel({x:gx,y:top,w:39.25,h:27.34});p.icon('gear',gx+11,top+5,17.25,'#FFF6D8');p.hit('settings','设置',{x:gx,y:top,w:39.25,h:27.34});
     const fs=narrow?46:short?Math.max(52,Math.min(70,W*.15)):Math.max(60,Math.min(88,W*.19)),ty=top+27.34+H*(short?.015:.035),tw=p.width('这锅你来背',fs)+fs*.02*6,tx=(W-tw)/2;
@@ -51,5 +53,42 @@ export class LobbyView {
     const name=`第 ${index+1} 关 · ${LEVELS[index].name}`,nw=p.width(name,15,'body-900'),line=(mw-nw-20)/2;c.fillStyle='rgba(31,42,68,.55)';c.fillRect(mx,nameY+10,line,3);c.fillRect(mx+mw-line,nameY+10,line,3);p.center(name,mx,nameY,mw,15);
     p.box({x:mx,y:goY,w:mw,h:goHeight},'#FFD84D',8);p.tracked('去上班',W/2-(p.width('去上班',short?28:34,'body-900')+(short?28:34)*.14*2)/2,goY+(goHeight-(short?28:34)*1.2)/2-2,short?28:34,(short?28:34)*.14,'#1F2A44','body-900');p.image('ui_badge',mx+22,goY+goHeight/2-24,44*(c.assets.spr.ui_badge?.w||1)/(c.assets.spr.ui_badge?.h||1),44);c.fillStyle='#1F2A44';c.beginPath();c.moveTo(mx+mw-43,goY+goHeight/2-14);c.lineTo(mx+mw-26,goY+goHeight/2-2);c.lineTo(mx+mw-43,goY+goHeight/2+10);c.fill();p.hit('go','去上班',{x:mx,y:goY,w:mw,h:goHeight});
     for(const [i,action,label,img] of [[0,'boss-name','老板名称','ui_crown'],[1,'rules','玩法','ui_book']] as const){const b={x:mx+i*(mw+12)/2,y:bottom-subHeight,w:(mw-12)/2,h:subHeight};p.box(b);const iw=24*(c.assets.spr[img]?.w||1)/(c.assets.spr[img]?.h||1),ww=iw+8+p.width(label,20,'body-900'),xx=b.x+(b.w-ww)/2;p.image(img,xx,b.y+13,iw,24);p.text(label,xx+iw+8,b.y+14,20,'#1F2A44','body-900');p.hit(action,label,b);}
+  }
+}
+
+// 暂留已有大厅文件，避免今晚新建脚本无法被编辑器导入；后续可独立拆分。
+export class LobbyDebug {
+  level = 0; auto = false; tutorial = false; seed = ''; runs = DEBUG_PANEL.defaultRuns;
+  busy = false; result: SimulationStats | null = null; summary = '';
+  private taps: number[] = [];
+  // 使用单调真实时间计算滑动窗口；离开大厅、后台及关闭开关时重置。
+  tap(now: number): boolean {this.taps = this.taps.filter(t => now - t <= DEBUG_PANEL.tapSeconds && now >= t); this.taps.push(now); if(this.taps.length < DEBUG_PANEL.taps)return false;this.resetTaps();return true;}
+  // 页面切换和后台通知都丢弃尚未完成的连点。
+  resetTaps(): void {this.taps = [];}
+  // 空种子使用时间起种；零是合法种子，不用真假值判断。
+  validSeed(): boolean {return this.seed === '' || /^\d+$/.test(this.seed) && Number(this.seed) <= 0xffffffff;}
+  // 沿用设置页的黄/灰胶囊开关，文字与命中区域一起绘制。
+  private toggle(p: ScreenPaint, action: string, label: string, b: Box, on: boolean): void {
+    const c=p.c,x=b.x+b.w-104,y=b.y;c.fillStyle=on?'#FFD84D':'#C3CEE0';c.strokeStyle='#1F2A44';c.lineWidth=3;
+    c.beginPath();c.moveTo(x+22,y);c.lineTo(x+82,y);c.arc(x+82,y+22,22,-Math.PI/2,Math.PI/2);c.lineTo(x+22,y+44);c.arc(x+22,y+22,22,Math.PI/2,Math.PI*1.5);c.closePath();c.fill();c.stroke();
+    c.fillStyle='#FFFFFF';c.beginPath();c.arc(x+(on?80:24),y+22,15,0,Math.PI*2);c.fill();c.stroke();
+    p.text(label,b.x,y+12,16,'#1F2A44','body-700');p.text(on?'开':'关',x+(on?12:62),y+11,18,'#1F2A44','body-900');p.hit(action,label,b);
+  }
+  // 复用外围像素卡片和滚动容器，不创建DOM或新素材。
+  draw(p: ScreenPaint, b: Box): number {
+    const x=b.x+20,w=b.w-40;let y=b.y+72;
+    p.heading('调试面板','gear',b,'close');
+    y+=p.paragraph(`版本 ${DEBUG_BUILD.version}\n构建时间：${DEBUG_BUILD.time}`,{x,y,w,h:0},12,'#5E6A84');y+=10;
+    p.text('选关',x,y,16,'#1F2A44','body-700');y+=26;
+    LEVELS.forEach((lv,i)=>{p.button('debug:level:'+i,`第${lv.id}关 · ${lv.name.split('·')[0].trim()}`,{x,y,w,h:40},this.level===i?'main':'ghost');y+=46;});
+    this.toggle(p,'debug:auto','auto 托管',{x,y,w,h:44},this.auto);y+=50;
+    this.toggle(p,'debug:tutorial','强制带教',{x,y,w,h:44},this.tutorial);y+=50;
+    y+=p.paragraph('强制带教会选第1关，并关闭托管',{x,y,w,h:0},12,'#5E6A84');y+=8;
+    p.button('debug:seed',`种子：${this.seed||'按当前时间'}`,{x,y,w,h:44},'ghost');y+=50;
+    p.button('debug:start','直接开局',{x,y,w,h:54});y+=62;
+    p.button('debug:runs',`模拟局数：${this.runs}`,{x,y,w,h:44},'ghost');y+=50;
+    if(this.busy){p.box({x,y,w,h:48},'#D5DAE3');p.center('模拟中…',x,y+14,w,18,'#5E6A84','body-700');}else p.button('debug:simulate','运行模拟',{x,y,w,h:48},'ghost');y+=56;
+    if(this.summary){y+=p.paragraph(this.summary,{x,y,w,h:0},13,'#1F2A44','body-700');y+=12;}
+    p.button('debug:clear','清空存档',{x,y,w,h:44},'ghost');p.text('清档需再次确认',x,y+49,12,'#E8504A','body-700');return y+78-b.y;
   }
 }

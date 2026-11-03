@@ -245,6 +245,63 @@
 
 ---
 
+### E · 隐藏调试面板
+
+- **用户定的：** 只执行任务卡 E；先读任务卡及指定前置文件。保持 main，原型冻结，不运行/操作 CocosCreator、不构建、不提交/推送；不新增 `cocos/assets` 文件，不改 A–D 功能。
+- **我定的细节（可改）：** 工牌使用单调真实时间的滑动窗口，1.5 秒内最近 5 次有效点击打开；离开大厅、打开其他面板、切后台重置。开关在 App 启动时只读一次，微信不逐帧调用同步接口。面板选关从 1 起显示，传给 core 的下标从 0 起；直接开局按原 `?level` 语义解锁所选关。auto 与强制带教互斥，强制带教自动选有教学的第 1 关。种子允许空值或 uint32（含 0）；模拟默认 20 局、可输入 1–200 局。清档只删除 `shuaiguo_v3`（进度/称呼/带教/成就），保留声音设置。
+- **实现边界 / 偏差：** 面板状态和绘制暂放已有 `LobbyView.ts`，动作和延迟模拟任务放已有 `AppView.ts`，避免新脚本今晚无法导入，之后可拆。模拟复用独立 `Match.simulate`，不会清掉活动对局横幅或消费其 RNG；32ms 后执行，先显示忙碌态，重复点击不重复排队，关闭/销毁取消尚未开始的任务。核心模拟本身仍为同步，200 局时的真机响应速度未验证。版本显示源码版本 `0.4.2-e`；当前构建链没有应用构建时间注入，且本轮禁止构建，因此时间字段如实显示“尚未构建”，没有把本机运行时间冒充构建时间。
+
+**改动文件与原因：**
+
+| 文件 | 改动 |
+|---|---|
+| `cocos/assets/scripts/platform/Platform.ts` | 补 `debugEnabled` / 指定键 `removeStorage` 平台边界 |
+| `cocos/assets/scripts/platform/WebPlatform.ts` | 仅 `?debug=1` 开启；清档使用 `localStorage.removeItem`，不调用全局 clear |
+| `cocos/assets/scripts/platform/WechatPlatform.ts` | 环境判断在平台层调用 `wx.getAccountInfoSync`，只放行 develop/trial；release、未知、接口缺失/异常关闭；清档按键调用 `wx.removeStorageSync`，不可用明确报失败 |
+| `cocos/assets/scripts/view/AppView.ts` | 工牌动作、debug 面板/数字输入/清档确认、直接开局、模拟摘要与取消清理；旧 URL 参数和 `SG_DEBUG` 同样受 debug 开关约束；复用原生单行 EditBox 与 Mask 滚动 |
+| `cocos/assets/scripts/view/LobbyView.ts` | debug 开启才登记工牌命中框；隐藏入口计数和面板绘制，开关沿用黄/灰胶囊样式，忙碌模拟按钮灰色不可点 |
+| `cocos/assets/scripts/view/PlayerStore.ts` | 删除本游戏进度键，返回成功/失败，保留设置 |
+| `cocos/assets/scripts/view/WorldView.ts` | 无 App 组织器的旧独立预览入口也要求 debug 才解析参数，避免旁路 |
+| `cocos/assets/scripts/view/ui-data.ts` | 调试手势/局数边界数据、源码版本与未构建状态 |
+| `cocos/tools/check-debug-panel.cjs` | 新增 Node 契约；内存转译，运行真实 App 动作、WorldView/Match 构造、存档与页面排版，只替换设备节点/资源初始化 |
+| `implementation-notes.md` | 在同一 P4-2 节追加 E，保留前四项记录 |
+
+**测试 / 检查（均从仓库根目录执行）：**
+
+| 命令 / 检查 | 输出 |
+|---|---|
+| `node cocos/tools/check-debug-panel.cjs`（先加测试、未实现） | 退出 1：`TypeError: web.debugEnabled is not a function`，确认测试抓住缺少门禁的初态 |
+| 同命令（完成后） | 9 组 PASS：平台门禁、真实 App 初始化禁参/禁全局、真实工牌 down/up 的 4/5 次与 1.5 秒边界/超时/后台重置、第五关直接开局与 seed1001 初态、auto/已完成带教互斥、数字校验、真实 simulate 逐字段一致与存档/活动局/RNG隔离、二次清档/取消/失败、关闭及销毁取消任务、三屏排版 |
+| `node tests/golden/verify.cjs --adapter cocos/tests/golden-adapter.cjs` | PASS 100/100，快照 + 事件 + 最终结果完全一致（空存档、默认称呼） |
+| `npm run test:core --prefix cocos` | tests 14 / pass 14 / fail 0；五关各 50 局统计逐字段一致 |
+| `npm run check:types --prefix cocos` | 退出 0，无类型错误；只执行 Node tsc，不启动编辑器 |
+| `node cocos/tools/check-peripheral.cjs` | 全部 PASS，A–C 与旧存档/广告/声音/教学/大厅契约不回退 |
+| `node cocos/tools/check-hud-layout.cjs` | PASS HUD 数字/矩形、四屏宽胶囊避让、横幅/toast、只读 RNG |
+| `node cocos/tools/check-label-icons.cjs` | PASS 30 组既有画面、最终 Label 5885 次图标字符 0；全部 view 固定字符串/模板与实际四 TTF cmap 图标字符 0 |
+| `node tests/check-port-protected.cjs` | PASS 416 个保护文件，内容变化 0，保护目录无增删 |
+| `for file in js/*.js cocos/tools/check-debug-panel.cjs; do node --check "$file" || exit; done`、`git diff --check` | 退出 0 |
+| Python 内联只读 `.meta` 审计 + `/tmp/shuaiguo-p4-2-e-before.json` SHA-256 对比 | PASS 240 个资产文件无增删；125 个 meta 字节不变，无缺失/孤立/星号 importer/重复 UUID（含 subMetas），TS importer 正确；仅上表 8 个现有 TS 变化，core/图片/图集/字体/音频未变 |
+| TypeScript AST 提取本项 view 字符串/模板片段 + 四 TTF cmap 核对 | 本项 254 个固定文案汉字均已覆盖，四字体缺字 0；新增缺字只出现在平台/源码注释，实际界面不新增字形，无需重裁冻结的原型字体 |
+
+**待刷新复拍：**
+
+1. 刷新并确认末次代码已编译后，375×812 / 375×667 / 360×780：大厅 → 工牌 1.5 秒五连点 → 面板；无 `debug=1` 时重复同样动作没有入口，旧 `level/auto/tut/seed` 参数及 `SG_DEBUG` 不生效。
+2. 五关直接开局，auto 开/关，已完成带教后的强制带教，种子留空/0/1001；核对暂停、结算、回大厅，控制台无错误。种子/局数首次及复用 EditBox、系统键盘、输入校验、卡片滚动/横竖屏重排和字体需实际复拍。
+3. 模拟 1/20/200 局摘要、忙碌态、关闭取消及长摘要滚动；Node 逐字段证明不写存档，不代表手机同步模拟耗时已验收。
+4. 清档取消保持原数据，确认后进度/称呼/带教/成就清空、声音设置保留，刷新页面后回读；存储禁用时应显示失败。
+5. 微信开发/体验/正式环境真机复验门禁（正式版完全不可达）、原生输入和清档 API；本轮只在平台接口边界模拟了真实 API 返回值，不称已完成微信验收。
+
+**发现但未改：**
+
+- 应用构建时间尚无产物元数据来源；字段现显示“尚未构建”，后续构建链需注入真实时间。源码版本号可改，不使用 Creator 的 3.8.8 冒充游戏版本。
+- 微信已有 `getStorage/setStorage`、安全区、广告/分享等仍为 P5 空壳；本轮只补本项要求的环境判断和按键删除，没有扩做完整平台适配。
+- 旧预览验收脚本里的 `?level/auto/freeze` 等现在需要一起附加 `debug=1`；未修改这些历史脚本，也未用 7456 旧代码作为本项通过证据。
+- A–D 功能、冻结原型/core，以及开工前 `AGENTS.md`、`.claude/rules/`、`.claude/skills/` 的内容保持原状。
+
+**清理：** 本轮 Node/Python 检查均已结束；没有创建浏览器、CUA、预览服务器或长驻助手，没有操作用户已有编辑器/服务。新增文件仅为 `cocos/tools/` 的 Node 契约，资产目录没有新增文件。未构建、提交、推送。
+
+---
+
 ## 2026-11-04 · P4-1 外围界面与声音（无人值守续做收尾，最终源码待刷新复验）
 
 - **用户定的：** 按任务卡末尾裁定继续：先采当前新预览的完整基线，再只改已有cocos/assets文件；7456未重编译也继续做Node检查并交付。保持main，不运行/操作CocosCreator、不构建、不改原型/core、不提交/推送/部署，不新增资产文件。

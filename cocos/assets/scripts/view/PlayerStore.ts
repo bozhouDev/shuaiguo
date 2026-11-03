@@ -9,6 +9,8 @@ export class PlayerStore {
   read(): Progress {try {return JSON.parse(this.platform.getStorage('shuaiguo_v3') || 'null') || {unlocked: 1, best: {}};} catch {return {unlocked: 1, best: {}};}}
   // 普通过关保存失败静默；名称编辑可根据返回值给原型提示。
   save(progress: Progress): boolean {try {this.platform.setStorage('shuaiguo_v3', JSON.stringify(progress)); return true;} catch {return false;}}
+  // 调试清档只移除进度键（含称呼、教学、成就），保留声音设置和其他应用数据。
+  clear(): boolean {try {this.platform.removeStorage('shuaiguo_v3'); return true;} catch {return false;}}
   // 三个开关立即写入，持久化被禁用时不影响本次设置。
   set(key: keyof Settings, on: boolean): void {this.settings[key] = !!on; try {this.platform.setStorage('shuaiguo_settings', JSON.stringify(this.settings));} catch { /* 原型同样忽略。 */ }}
 }

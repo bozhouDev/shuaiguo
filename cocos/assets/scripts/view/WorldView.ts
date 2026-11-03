@@ -38,7 +38,7 @@ export class WorldView {
   constructor(parent: Node, readonly restart: () => void, initial = true, readonly options?: WorldOptions) {
     this.assets = options?.assets || new WorldAssets();
     const platform = this.platform = options?.platform || (sys.platform === sys.Platform.WECHAT_GAME ? new WechatPlatform() : new WebPlatform());
-    const params = this.params = options?.params || (PREVIEW && platform.kind === 'web' && typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams());
+    const params = this.params = options?.params || (PREVIEW && platform.debugEnabled() && platform.kind === 'web' && typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams());
     const level = options?.level ?? (params.has('level') ? Math.min(4, Math.max(0, (Number(params.get('level')) || 1) - 1)) : 0);
     if (params.has('freeze')) this.freezeAt = Math.max(0, Math.floor(Number(params.get('freeze')) || 0));
     let progress: Progress;

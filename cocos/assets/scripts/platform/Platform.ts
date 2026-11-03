@@ -3,9 +3,11 @@ export interface TopAvoidance {top: number; capsule?: {x: number; y: number; w: 
 // 平台边界先定接口；存储、广告、分享、震动、云开发留给后续任务。
 export interface Platform {
   readonly kind: 'web' | 'wechat';
+  debugEnabled(): boolean;
   topAvoidance(): TopAvoidance;
   getStorage(key: string): string | null;
   setStorage(key: string, value: string): void;
+  removeStorage(key: string): void;
   showRewardedAd(onTick?: (remaining: number | null) => void): Promise<boolean>;
   share(): void;
   vibrate(ms: number): void;

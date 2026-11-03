@@ -3,12 +3,16 @@ import type { Platform, TopAvoidance } from './Platform';
 // 网页存档沿用原型键名；广告、分享等仍留给后续任务。
 export class WebPlatform implements Platform {
   readonly kind = 'web';
+  // 网页必须显式带debug=1；没有地址环境时保持关闭。
+  debugEnabled(): boolean {return typeof location !== 'undefined' && new URLSearchParams(location.search).get('debug') === '1';}
   // 网页没有胶囊，和原型一样从0开始布局。
   topAvoidance(): TopAvoidance { return {top: 0}; }
   // 未接入时返回无数据。
   getStorage(key: string): string | null { try { return localStorage.getItem(key); } catch { return null; } }
   // 写入异常交给调用方：普通进度静默，名称编辑显示原型的失败提示。
   setStorage(key: string, value: string): void { localStorage.setItem(key, value); }
+  // 仅删除指定游戏键，异常交给清档界面显示。
+  removeStorage(key: string): void {localStorage.removeItem(key);}
   private ads = new Map<ReturnType<typeof setTimeout>, () => void>();
   // 网页忠实fakeAd：3/2/1各650ms，结束才发奖；销毁时取消，不发奖励。
   showRewardedAd(onTick?: (remaining: number | null) => void): Promise<boolean> {
