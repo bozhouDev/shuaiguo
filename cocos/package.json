@@ -8,7 +8,7 @@
     "version": "3.8.8"
   },
   "scripts": {
-    "test:core": "node --experimental-strip-types --test tests/*.test.mjs",
+    "test:core": "node --experimental-strip-types --import ./tests/register-core.mjs --test tests/*.test.mjs",
     "fonts:setup": "python3 -m venv .venv && .venv/bin/python -m pip install --no-cache-dir -r tools/requirements.txt",
     "fonts:subset": ".venv/bin/python tools/subset-fonts.py",
     "check:build": "node tools/check-build.mjs",
@@ -19,7 +19,8 @@
     "check:web": "node tools/check-web.mjs",
     "check:preview": "node tools/check-web.mjs http://localhost:7456/?scene=3b08c73f-d17c-4dfc-a45e-854ddae97b2f editor-preview",
     "report:size": "node tools/package-size.mjs",
-    "check:types": "node /Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/node_modules/typescript/bin/tsc --project tsconfig.json --pretty false"
+    "check:types": "node /Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/node_modules/typescript/bin/tsc --project tsconfig.json --pretty false --lib esnext,dom",
+    "test:golden": "node --experimental-strip-types ../tests/golden/verify.cjs --adapter ./tests/golden-adapter.cjs"
   },
   "version": "3.8.8"
 }

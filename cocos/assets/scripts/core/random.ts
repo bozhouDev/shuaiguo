@@ -7,6 +7,12 @@ export class Mulberry32 {
     this.state = seed >>> 0;
   }
 
+  // 读取随机流状态，供录像和多局隔离验证。
+  getState(): number { return this.state; }
+
+  // 恢复无符号 32 位随机状态。
+  setState(state: number): void { this.state = state >>> 0; }
+
   // 每次加法都截为 uint32，保持原型的溢出行为和调用顺序。
   next(): number {
     this.state = (this.state + 0x6D2B79F5) >>> 0;

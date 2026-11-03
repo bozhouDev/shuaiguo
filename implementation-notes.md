@@ -1,3 +1,90 @@
+## 2026-11-03 · P2-1 玩法逻辑忠实翻译（黄金录像 100/100 一致）
+
+- **用户定的：** 完整阅读 `port/tasks/P2-1-玩法逻辑翻译.md` 及其全部前置源文件，按原型忠实翻译，不调数值、不修原型问题。只改 core、测试入口、package 命令和本节；保持 main。Cocos 编辑器已开，不运行 CocosCreator，不触碰 view / platform / 场景 / 素材，不提交、不推送、不部署。
+- **我定的细节（可改）：** 每局一个 `Match`，持有 `S/L/E/auto/simulating/mode/shake/横幅计时/输入/存档副本`；同一对局的方法按系统拆文件，构造时绑定回调，保留原型传入 `makeLeader/tutNext/raging` 的调用方式。常量和关卡数据保持数值、字段、数组顺序。纯计算与表现事件分离，事件统一为 `{t, kind, args}`；每次调用的省略参数和时机保持不变。
+- **偏差 / 结构适配：** 无玩法或黄金录像契约偏差。Cocos 的类型检查器拒绝 `.ts` 导入后缀，因此 core 沿用无后缀导入；Node 23 测试入口只做路径解析补全，仍由原生 `--experimental-strip-types` 擦除类型，没有编译产物、数值修正或比对放宽。`check:types` 增加 `--lib esnext,dom`，仅补原型已用的标准库声明，不关闭 strict。没有修改 `tests/golden/verify.cjs`、`record.cjs`、harness。未启动浏览器、开发服务器或第二个 Cocos 进程。
+- **已验证：** 编辑器自动生成的 14 个新 TS `.meta` 均保留；core 共 15 个 `.meta` 的 importer 全为 typescript，UUID 无重复。TS 和原型各 100/100 黄金录像完全一致；核心测试 4/4（原有随机序列 5000 项、完整地图/关卡数据、多局交错完整状态及事件、结算进度与原型对照及进度隔离）；严格类型检查通过；原型所有 JS 语法检查通过；diff 空白检查通过。原型及黄金录像 415 个文件 SHA256 全部未变。额外对 106 个翻译函数做函数体结构核对：擦除类型、还原实例/常量引用及等价布尔数值转换后，差异 0。
+- **未验证：** 未运行 Cocos、构建、浏览器视觉或真机；本轮没有把 core 接到画面层。黄金录像不覆盖带教、手动输入、结算分支和收尾表现；本轮仅对一局结算的进度结果做原型对照，其余仍按任务卡留待 P2-2 补专项测试。表扬贴纸仍由画面层实现，core 只发出 `praise(kind)` 意图。
+
+**文件结构与原型对应：** 所有 core 文件均在 `cocos/assets/scripts/core/`，单文件最长不足 500 行。
+
+| 文件 | 对应原型内容 |
+|---|---|
+| `random.ts` | engine 的 mulberry32；沿用既有算法，增加读写本局状态 |
+| `engine.ts` | engine 的 rand / pick / shuffle / dist / clamp / angDiff / pollKeys / Snake / Floats / pushOut / collide；sfx / toast / buzz / bgm 改为事件 |
+| `types.ts` | OFFICE、LEVELS、Agent、Pot、Leader、State、带教、进度、输入与事件的类型描述；不增加状态字段 |
+| `levels.ts` | `js/levels.js` 的 OFFICE、LEVELS（含工位生成循环），原样数据 |
+| `config.ts` | game 的手感常量、PERSONAS、LEADER_TYPES、EVENTS、INCIDENT_MSGS、BUFFS、PIE_PROMISES、STEER_OFFSETS 等 |
+| `state.ts` | 工具、总账、时钟、称呼清理、makeAgent / giveStartPots / makeLeader / makeState / incidentLeader / buildSchedule |
+| `pots.ts` | 锅接收、飞行、瞄准、视野、甩锅、反甩、护短、压垮、归责和到期爆炸 |
+| `navigation.ts` | NAV 网格构造（每局单独创建） |
+| `leaders.ts` | navIdx / navFree / navPt / navClear / findPath / walkTo；领导巡逻、追责、瞄准、派锅、带教走位、视野朝向、碰撞派锅 |
+| `schedule.ts` | 鸡血与出纳跟风、画饼会议和吃饼、updateSchedule / startFinale / burst / startEvent / startIncident |
+| `tips.ts` | TIP_CHECKS 条件（每局独立闭包） |
+| `tutorial-steps.ts` | TUT_STEPS 全部步骤（每局独立闭包），DOM 操作改为画面事件 |
+| `tutorial.ts` | coachLocked / agentByKey / tutLater / tutNext / tutEvent / updateTutorial / tutCanFire / startWork |
+| `agents.ts` | 避障、甩锅目标、小舅子塞锅、think / updateAgent / ranking / starsOfRank / update / diagnose |
+| `match.ts` | 原型闭包状态、表现出口、showCoach / showHint / showMsg / updateBanners、输入清理、finish 纯计算（calculateResult）、startClosing / updateClosing / updateClosingNotice 的纯计算与事件 |
+| `cocos/tests/golden-adapter.cjs` | 独立运行 TS core；snapshot / normalize 按 record.cjs 原样映射；只记录旧录像的七类事件 |
+| `cocos/tests/register-core.cjs`、`.mjs` | Node 中只补全 core 相对导入的 `.ts` 路径，不加载 Cocos 或原型 |
+| `cocos/tests/match.test.mjs` | 关卡/地图一致性、多局隔离、进度计算对照与隔离；保留原有 random.test.mjs |
+| `cocos/package.json` | 增加 test:golden；test:core 预载路径解析；check:types 补标准库声明 |
+
+**验收门槛的命令与输出（仓库根目录）：**
+
+```text
+node tests/golden/verify.cjs --adapter cocos/tests/golden-adapter.cjs
+PASS 100/100 组黄金录像完全一致（快照 + 事件 + 最终结果）
+
+node tests/golden/verify.cjs
+PASS 100/100 组黄金录像完全一致（快照 + 事件 + 最终结果）
+
+npm run test:core --prefix cocos
+tests 4 / pass 4 / fail 0
+
+npm run check:types --prefix cocos
+退出 0，无类型错误
+
+node --check js/*.js
+for file in js/*.js; do node --check "$file" || exit; done
+git diff --check
+均退出 0
+
+python3 /tmp/shuaiguo-p2-check-protected.py
+SHA256（开工前记录，与收尾逐文件重算比较）
+js/ + index.html + css/ + assets/ + tests/golden/*.gz + tests/golden/manifest.json
+415 个文件，变化 0；受保护目录无增删
+```
+
+Node 23 仅有其自带的 ExperimentalWarning（类型擦除），不是测试失败。`npm run test:golden --prefix cocos` 也提供同一验收入口。
+
+**调试过程中修正过的不一致：**
+
+- 首次定向跑关卡 0 / 种子 1001 即 PASS 1/1；随后全部 100 组一次通过。没有关卡 / 种子 / 快照字段 / 事件参数层面的失败或修正，也没有改适配器去修数值。
+- 在第一次可运行版本之前，整理翻译工具的标识符分类：排除单字母 `S/L`、包含 `P0_*` 常量、将 `E` 绑定本局；最终没有全局对局变量。类型检查阶段补可擦除的类型断言和回调类型；布尔相减显式写 `Number(boolean)`，与 JS 减法的隐式转换等价。
+- 加载检查最初报告 `.ts` 导入后缀不被 Cocos 类型检查器接受，改为工程原有无后缀导入和测试专用路径补全；没有改运行逻辑。独立函数体审计工具起初用了错误的 sourceFile 打印字面量，修正审计工具后 106/106 一致，未因此更改 core 数值或逻辑。
+
+**发现但未改（待 Claude / 泊舟裁定，不将可疑行为直接定性为 Bug）：**
+
+1. `js/game.js:358–359`：先 newPot 再检查 a.crushed，已经出局仍会多消耗一次抽标签的随机数；必须保留这个顺序。
+2. `js/game.js:1497`、`:1584`：pickDumpTarget 有“保留已有目标”分支，但普通 think 在调用它前先清空 a.target，通常不会走到这个保留分支。
+3. `js/game.js:1724`：玩家压垮只写 S.over，不像同事一样标记 a.crushed / crushedAt；finish 单独强制末名，ranking() 的玩家位置仍可能不同。两个字段口径均照搬。
+4. `js/game.js:138`、`:324`（以及原型其他提示）：急件 / 画饼群消息写死“老板”，自定义称呼不生效；移植计划 §9 已列为后续画面文案修正，本轮未改。
+5. `js/game.js:1769`、`:3017`：横幅计时在外层帧循环推进，黄金录像不调用它，首次提示后的 hintTimer 会保持正值。不是录像错误；适配器忠实使用已裁定的 update-only 口径。
+6. `js/game.js:2149`的 draw() 会调用 pickAim() 更新 aimTgt，真实绘制与纯 update 录像的状态来源不同；本轮不混入绘制调用，P3 接画面时应注意保留原调用职责。
+
+**core 与原型结构不同的地方及行为理由：**
+
+1. 原型闭包变量改成 Match 字段，随机数由该局 Engine / Mulberry32 持有；数组、对象、Set、排序比较器和遍历顺序保持原样。跨局交错测试与单跑的完整状态及事件严格一致。
+2. 原型函数拆成方法对象，在 Match 构造时逐个绑定；`this.fn` 代替闭包 fn，函数当回调传递时仍访问同一局。TIP_CHECKS / TUT_STEPS / NAV 每局创建，不共享活动状态。
+3. E.Snake 内的无状态数学工具改用模块函数；rand / pick / shuffle 经本局随机流。运算表达式和交换顺序相同，随机序列与黄金录像已验证。
+4. 原型表现调用改为事件；spawnFx / Floats 仍维护其原列表，shake 的每次赋值发事件。新增 bgm、praise、shake、教学按钮/焦点/指针清理、横幅和结算事件不进入旧录像七类契约；过滤仅发生在测试适配器，生产 core 仍全部发出。
+5. DOM 教学控制改成输入对象重置与按钮等事件，画面按钮调用 startWork；原 document.hidden 改成 updateClosing 的 hidden 入参。update、横幅计时、Floats 计时、倒计时通知、closing 计时仍为独立入口，调用节奏由画面层控制，黄金录像只调 update。
+6. 平台存档访问改成构造时传入 JSON 进度副本、loadProgress / saveProgress 的内存副本和 progress 事件；沿用原型 JSON 序列化语义。calculateResult 返回原型 finish 的排名、星数、总账、最佳记录、解锁、复盘和分享数据计算；finish 发反馈事件，画面层消费，core 不触碰平台存储。
+7. 为 strict 补充字段类型、非空断言和 callback 类型；这些均擦除。排名中 boolean 相减显式用 Number 转换，其结果和原型隐式转换相同。golden-adapter 的快照打包函数不改比对规则，verify / record / harness / 录像保持不变。
+
+---
+
 ## 2026-11-03 · Cocos 工程骨架按裁定 2 收尾（编辑器预览通过，微信 CLI 被服务端口阻塞）
 
 - **用户定的：** 按任务卡末尾「裁定 2」改为编辑器构建；保持现有 Cocos 工程打开，绝不运行 `CocosCreator --build`、不启动第二个 Cocos、不打编辑器补丁。日常使用 7456 浏览器预览；基于泊舟已构建的 `wechatgame-001` 验证。仍在 main，不改原型，不搬玩法或全部素材，不接云 / 广告 / 分享，不提交、不推送、不部署。
