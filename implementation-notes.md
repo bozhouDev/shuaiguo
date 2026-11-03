@@ -122,6 +122,44 @@
 
 **清理：** 本项只运行短时 Node/Python 检查，无浏览器、CUA、开发服务器或常驻助手；未触碰用户已有编辑器/服务。没有新增 `cocos/assets` 文件，没有构建、提交、推送。
 
+### C · 小舅子成就分享卡使用本人躺平图
+
+- **用户定的：** 只执行任务卡 C；先读任务卡及全部前置文件。保持 main，不运行 CocosCreator、不构建、不提交/推送，冻结原型，不新增 `cocos/assets` 文件。
+- **我定的细节（可改）：** 仅将隐藏成就配图中的 `tester_flat` 换成已有 `nephew_flat`，保留原来的 contain 矩形、标题、文案及末关证书优先级。没有新增文字，无需重裁字体。
+- **偏差：** 无。已确认 `atlas-data.ts` 的 `atlas/nephew` 登记 `nephew_flat: [0,696,230,116]`，对应 PNG 已在 `cocos/assets/resources/atlas/nephew.png`，切片在图集边界内。
+
+**改动文件与原因：**
+
+- `cocos/assets/scripts/view/ShareView.ts`：隐藏成就分享卡改用小舅子本人的躺平素材。
+- `cocos/tools/check-peripheral.cjs`：检查图集登记、PNG 文件和切片边界；通过真实 core 加锅触发小舅子压垮，从 `ShareView.draw()` 到真实 `ScreenPaint.contain/image()`，在最终绘图边界核对素材。覆盖周三/周五、小舅子压垮/未压垮、到点/玩家压垮共 8 种组合；输赢成就卡用本人，普通战报与末关证书保持原分支。
+- `implementation-notes.md`：在现有 P4-2 节追加 C，保留 A/B 记录。
+
+**测试 / 检查（命令均从仓库根目录执行）：**
+
+| 命令 / 检查 | 输出 |
+|---|---|
+| `node cocos/tools/check-peripheral.cjs`（先加断言，未修生产代码） | 退出 1：`小舅子隐藏成就分享卡必须绘制 nephew_flat`，实际为 `boss_chase + tester_flat`，期望为 `boss_chase + nephew_flat` |
+| 同命令（替换素材后） | 退出 0；`PASS nephew_flat图集/PNG切片有效；小舅子压垮输赢卡绘制本人，普通战报及末关证书优先级不变`；A/B 及原有外围契约均 PASS |
+| `node tests/golden/verify.cjs --adapter cocos/tests/golden-adapter.cjs` | PASS 100/100，快照、事件、最终结果完全一致 |
+| `npm run test:core --prefix cocos` | tests 14 / pass 14 / fail 0，含五关各 50 局模拟统计逐字段比较 |
+| `npm run check:types --prefix cocos` | 退出 0，无类型错误，仅 Node 执行 tsc |
+| `node tests/check-port-protected.cjs` | PASS 416 个保护文件，内容变化 0，保护目录无增删 |
+| `for file in js/*.js cocos/tools/check-peripheral.cjs; do node --check "$file" || exit; done` | 退出 0 |
+| Python 内联只读 `.meta` 审计 + 开工前 SHA-256 对比 | PASS 125 个 meta，无缺失/孤立/星号 importer/重复 UUID，TS importer 正确；240 个资产文件无增删，仅 `ShareView.ts` 变化，core/meta/图集/音频/字体字节未变 |
+
+**待刷新复拍：**
+
+1. 确认编辑器已刷新最终源码后，压垮小舅子并分别进入胜/负结算 → 分享预览，复拍躺平人物的大金链子、墨绿上衣及完整显示效果。
+2. 未压垮时复拍普通输赢卡；末关通关且压垮小舅子时仍应显示证书。Node 绘图契约不等于 Cocos 栅格截图或微信真机验收，本项未使用 7456 旧预览作证明。
+
+**发现但未改：**
+
+- 冻结原型 `js/game.js` 的同一成就卡仍引用 `tester_flat`，按本卡冻结要求保留。
+- 界面 emoji 和隐藏调试面板留给 D/E；真实微信分享接口留给 P5。
+- 开工前已有的 `AGENTS.md`、`.claude/rules/`、`.claude/skills/` 保留，未触碰。
+
+**清理：** 未创建浏览器、CUA、预览服务器或常驻助手，未操作用户编辑器及已有服务；本项仅运行 Node/Python 检查。
+
 ---
 
 ## 2026-11-04 · P4-1 外围界面与声音（无人值守续做收尾，最终源码待刷新复验）

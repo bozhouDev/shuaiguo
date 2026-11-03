@@ -104,6 +104,30 @@ function load(file){file=path.resolve(file);if(!file.endsWith('.ts'))file+='.ts'
  // 真实字体与图集尺寸计算大厅，对照浏览器采得的CSS矩形；不替代栅格截图。
  const {ScreenPaint}=load('cocos/assets/scripts/view/ScreenPaint'),{LobbyView}=load('cocos/assets/scripts/view/LobbyView'),{ATLAS}=load('cocos/assets/scripts/view/atlas-data');
  const spr=Object.fromEntries(ATLAS.sheets.flatMap(s=>Object.entries(s.frames).map(([name,r])=>[name,{w:r[2],h:r[3]}]))),surface=new Proxy({width:375,height:812,assets:{spr}},{get:(o,k)=>k in o?o[k]:()=>{}}),paint=new ScreenPaint(surface),lobby=new LobbyView(paint);
+ // 隐藏成就必须有已导入的真实图集切片，且矩形没有越过PNG边界。
+ const nephewSheet=ATLAS.sheets.find(s=>s.frames.nephew_flat);
+ assert.ok(nephewSheet,'图集必须登记 nephew_flat');
+ const nephewRect=nephewSheet.frames.nephew_flat,nephewPng=fs.readFileSync(path.join('cocos/assets/resources',nephewSheet.file+'.png'));
+ assert.deepEqual(nephewPng.subarray(0,8),Buffer.from([137,80,78,71,13,10,26,10]));
+ const [nx,ny,nw,nh]=nephewRect;
+ assert.ok(nx>=0&&ny>=0&&nw>0&&nh>0&&nx+nw<=nephewPng.readUInt32BE(16)&&ny+nh<=nephewPng.readUInt32BE(20),'nephew_flat 必须是PNG内的有效切片');
+ // 真实core压垮小舅子后，从分享预览入口记录最终绘图；不替换contain/image实现。
+ const images=[],spriteNames=new Map(Object.entries(spr).map(([name,pic])=>[pic,name]));
+ const shareSurface=new Proxy({width:375,height:812,assets:{spr},drawImage(pic){images.push(spriteNames.get(pic));}},{get:(o,k)=>k in o?o[k]:()=>{}}),shareView=new ShareView(new ScreenPaint(shareSurface));
+ const {MAX_POTS}=load('cocos/assets/scripts/core/config');
+ for(const level of [2,4])for(const crushed of [false,true]){
+  const m=new Match({level,seed:1001}),nephew=m.S.agents.find(a=>a.key==='nephew');
+  if(crushed)m.addPots(nephew,MAX_POTS,nephew.sn.x,nephew.sn.y);
+  for(const reason of ['time','crushed']){
+   const info=m.calculateResult(reason).shareInfo;assert.equal(info.nephewCrushed,crushed);
+   assert.equal(info.kind,reason==='crushed'?'blame':level===4?'cert':'brag');
+   images.length=0;shareView.draw(info,{x:0,y:0,w:320,h:600});
+   if(crushed&&info.kind!=='cert')assert.deepEqual(images,['boss_chase','nephew_flat'],'小舅子隐藏成就分享卡必须绘制 nephew_flat');
+   else {assert.ok(!images.includes('nephew_flat'),'普通战报/末关证书不应显示隐藏成就人物');assert.ok(images.includes(info.kind==='cert'?'ui_badge':'player_win'));}
+   assert.ok(!images.includes('tester_flat'),'分享预览不应误用业务员躺平图');
+  }
+ }
+ console.log('PASS nephew_flat图集/PNG切片有效；小舅子压垮输赢卡绘制本人，普通战报及末关证书优先级不变');
  for(const [width,height,goY,dayY,cardWidth] of [[375,812,655.203125,520.015625,101.609375],[375,667,527.40625,396.40625,101.609375],[360,780,623.203125,492.203125,95.28125]]){surface.width=width;surface.height=height;paint.actions=[];lobby.select(0);lobby.draw(0,{unlocked:1,best:{}},0,{top:0},true);const go=paint.actions.find(a=>a.action==='go'),day=paint.actions.find(a=>a.action==='pick:0');assert.ok(Math.abs(go.y-goY)<.1);assert.ok(Math.abs(day.y-dayY)<.1);assert.ok(Math.abs(day.w-cardWidth)<.1);}
  surface.width=375;surface.height=812;paint.actions=[];lobby.draw(0,{unlocked:1,best:{}},0,{top:44,capsule:{x:281,y:50,w:87,h:32}},true);const gear=paint.actions.find(a=>a.action==='settings');assert.ok(gear.x+gear.w<=281&&gear.y>=44);
  console.log('PASS 三种屏宽大厅去上班/日期矩形与原型DOM相差小于0.1px，齿轮避让假胶囊');
