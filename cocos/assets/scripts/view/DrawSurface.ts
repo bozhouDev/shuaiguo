@@ -1,10 +1,11 @@
 import {Color, Graphics, Label, Layers, Mask, Node, Sprite, UITransform} from 'cc';
 import {WorldAssets, Picture} from './WorldAssets';
+import {UI_METRICS} from './ui-metrics';
 
 type Matrix = [number, number, number, number, number, number];
 type Point = {x: number; y: number};
 type Clip = {x: number; y: number; w: number; h: number} | {cx: number; cy: number; r: number};
-interface Style {matrix: Matrix; alpha: number; fill: string; stroke: string; width: number; font: string; clip?: Clip; dash: number[]}
+interface Style {matrix: Matrix; alpha: number; fill: string; stroke: string; width: number; font: string; clip?: Clip; group?: Node; dash: number[]}
 interface Entry {node: Node; graphic?: Graphics; sprite?: Sprite; label?: Label; mask?: Mask; child?: Node}
 
 // 原型坐标（左上为原点、Y 向下）到 Cocos 节点的轻量绘制门面；不用 DOM 或 Canvas 纹理。
@@ -15,8 +16,8 @@ export class DrawSurface {
   private paths: Point[][] = [];
   private closed = new Set<Point[]>();
   private path: Point[] = [];
-  private pools: Record<string, Entry[]> = {g: [], s: [], l: [], m: []};
-  private used: Record<string, number> = {g: 0, s: 0, l: 0, m: 0};
+  private pools: Record<string, Entry[]> = {g: [], s: [], l: [], m: [], r: []};
+  private used: Record<string, number> = {g: 0, s: 0, l: 0, m: 0, r: 0};
   private order = 0;
   private activeGraphic: Graphics | null = null;
   private strokeTextValue: {s: string; x: number; y: number; color: string; width: number} | null = null;
@@ -31,6 +32,8 @@ export class DrawSurface {
   begin(): void { this.state = this.initial(); this.stack = []; this.order = 0; this.activeGraphic = null; for (const key in this.used) this.used[key] = 0; }
   // 仅隐藏多余节点，不每帧销毁。
   end(): void { for (const key in this.pools) for (let i = this.used[key]; i < this.pools[key].length; i++) this.pools[key][i].node.active = false; }
+  // 将外部浮层插入当前绘制顺序，后续遮罩/提示继续在其上方绘制。
+  insertLayer(node:Node):void {this.activeGraphic=null;node.setSiblingIndex(this.order++);}
   // 用于验收节点池是否在预热后稳定。
   stats(): Record<string, number> { return Object.fromEntries(Object.entries(this.pools).map(([key, values]) => [key, values.length])); }
   get fillStyle(): string { return this.state.fill; } set fillStyle(v: string) { this.state.fill = v; }
@@ -40,7 +43,7 @@ export class DrawSurface {
   get font(): string { return this.state.font; } set font(v: string) { this.state.font = v; }
   // 保存和恢复画笔及仿射变换；不触碰 core。
   save(): void { this.stack.push({...this.state, matrix: [...this.state.matrix], dash: [...this.state.dash]}); }
-  restore(): void { this.state = this.stack.pop()!; }
+  restore(): void { const group=this.state.group;this.state = this.stack.pop()!;if(group!==this.state.group)this.activeGraphic=null; }
   translate(x: number, y: number): void { const m = this.state.matrix; m[4] += m[0] * x + m[2] * y; m[5] += m[1] * x + m[3] * y; }
   rotate(a: number): void { const m = this.state.matrix, [a0, b, c, d] = m, cs = Math.cos(a), sn = Math.sin(a); m[0] = a0 * cs + c * sn; m[1] = b * cs + d * sn; m[2] = c * cs - a0 * sn; m[3] = d * cs - b * sn; }
   scale(x: number, y: number): void { const m = this.state.matrix; m[0] *= x; m[1] *= x; m[2] *= y; m[3] *= y; }
@@ -66,6 +69,7 @@ export class DrawSurface {
         e.label.overflow = Label.Overflow.NONE; e.label.enableWrapText = false;
         e.label.horizontalAlign = Label.HorizontalAlign.CENTER; e.label.verticalAlign = Label.VerticalAlign.CENTER;
       }
+      if(kind==='r'){e.mask=node.addComponent(Mask);e.mask.type=Mask.Type.GRAPHICS_RECT;e.child=new Node('RectContent');e.child.layer=Layers.Enum.UI_2D;node.addChild(e.child);}
       if (kind === 'm') {
         e.mask = node.addComponent(Mask); e.mask.type = Mask.Type.GRAPHICS_ELLIPSE;
         e.child = new Node('ClippedSprite'); e.child.layer = Layers.Enum.UI_2D; e.child.addComponent(UITransform); node.addChild(e.child);
@@ -74,6 +78,7 @@ export class DrawSurface {
       if (e.sprite) { e.sprite.sizeMode = Sprite.SizeMode.CUSTOM; e.sprite.trim = false; }
       this.pools[kind][i] = e;
     }
+    const parent=this.state.group||this.root;if(e.node.parent!==parent)parent.addChild(e.node);
     e.node.active = true; e.node.setSiblingIndex(this.order++);
     return e;
   }
@@ -98,7 +103,7 @@ export class DrawSurface {
   clip(): void {
     const p = this.paths[0]; if (!p?.length) return;
     const xs = p.map(q => q.x), ys = p.map(q => q.y), x = Math.min(...xs), y = Math.min(...ys), w = Math.max(...xs) - x, h = Math.max(...ys) - y;
-    this.state.clip = p.length === 4 ? {x, y, w, h} : {cx: x + w / 2, cy: y + h / 2, r: w / 2};
+    if(p.length===4){const e=this.take('r');e.node.setPosition(x+w/2,-y-h/2);e.node.getComponent(UITransform)!.setContentSize(w,h);e.child!.setPosition(-x-w/2,y+h/2);this.state.group=e.child;this.activeGraphic=null;}else this.state.clip={cx:x+w/2,cy:y+h/2,r:w/2};
   }
   setLineDash(dash: number[]): void { this.state.dash = dash; }
   // 填充路径；Graphics 颜色变化会记录到顶点数据，允许一个节点包含多色地板。
@@ -161,7 +166,10 @@ export class DrawSurface {
     if (label.fontSize !== size) { label.fontSize = size; label.lineHeight = size * 1.2; }
     // 世界文字遵照ctx.font：快乐体，领导名牌额外加粗；为后续画面保留700/900的明确选择。
     const font = /900|body-900/.test(this.font) ? this.assets.body900 : /700|body-700/.test(this.font) ? this.assets.body700 : /body-400/.test(this.font) ? this.assets.body400 : this.assets.title;
-    if (label.font !== font) label.font = font;
+    const key=/900|body-900/.test(this.font)?'body-900':/700|body-700/.test(this.font)?'body-700':/body-400/.test(this.font)?'body-400':'title';
+    // 用户自定义称呼可能超出子集；整段回退系统字，避免方块和空名牌。
+    const fallback=[...s].some(ch=>!UI_METRICS[key]?.[ch]&&ch!=='\n');
+    if(fallback){label.font=null;label.fontFamily='sans-serif';label.useSystemFont=true;}else{if(label.font!==font)label.font=font;label.useSystemFont=false;}
     label.isBold = /bold/.test(this.font);
     if (label.string !== s) label.string = s;
     label.color = this.color(this.fillStyle); label.enableOutline = !!outline;

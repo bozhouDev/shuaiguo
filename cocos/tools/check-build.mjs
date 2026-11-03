@@ -20,16 +20,19 @@ async function checkMetas(dir) {
 }
 await checkMetas(path.join(root, 'assets'));
 const main = JSON.parse(await readFile(path.join(output, 'assets/main/config.json'), 'utf8'));
-const resources = JSON.parse(await readFile(path.join(output, 'assets/resources/config.json'), 'utf8'));
+let resources;try{resources=JSON.parse(await readFile(path.join(output,'subpackages/resources/config.json'),'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;resources=JSON.parse(await readFile(path.join(output,'assets/resources/config.json'),'utf8'));}
 assert.ok(Object.hasOwn(main.scenes, 'db://assets/scenes/Boot.scene'), '缺少 Boot 场景');
-for (const name of ['title', 'body-700', 'body-900', 'ui_click', 'fx/pot-cartoon-pow-bd83d9f0']) {
+for (const name of ['title', 'body-400', 'body-700', 'body-900', 'ui_click', 'fx/pot-cartoon-pow-bd83d9f0']) {
   assert.ok(Object.values(resources.paths).some((entry) => entry[0] === name), `资源缺失：${name}`);
 }
-assert.equal(Object.values(resources.paths).filter(entry => /^atlas\//.test(entry[0]) && !entry[0].endsWith('/texture') && !entry[0].endsWith('/spriteFrame')).length, 14, '缺少14张图集');
+assert.equal(Object.values(resources.paths).filter(entry => /^atlas\//.test(entry[0]) && !entry[0].endsWith('/texture') && !entry[0].endsWith('/spriteFrame')).length, 15, '缺少15张图集（含大厅背景）');
+for(const kind of ['calm','parry','rankup'])assert.ok(Object.values(resources.paths).some(entry=>entry[0]===`ui/praise-${kind}`),`缺少${kind}贴纸`);
+let audio;try{audio=JSON.parse(await readFile(path.join(output,'subpackages/audio/config.json'),'utf8'));}catch(error){if(error.code!=='ENOENT')throw error;audio=JSON.parse(await readFile(path.join(output,'assets/audio/config.json'),'utf8'));}
+assert.equal(Object.values(audio.paths).length,41,'音频Bundle应有41个采样');
 if (path.basename(output).startsWith('wechatgame')) {
   const config = JSON.parse(await readFile(path.join(output, 'project.config.json'), 'utf8'));
   assert.equal(config.appid, 'wx15e416b0643d90af', '微信包 AppID 不符');
   assert.equal(config.compileType, 'game', '必须为小游戏工程');
 }
 // 压缩后函数名可能消失，运行证据交给浏览器和开发者工具检查。
-console.log(`PASS ${output}：meta 健康，Boot 场景、14张图集、爆炸帧、三款字体、音效齐全，平台配置通过`);
+console.log(`PASS ${output}：meta 健康，Boot 场景、15张图集、爆炸帧、四款字体、音效齐全，平台配置通过`);

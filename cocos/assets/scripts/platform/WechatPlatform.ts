@@ -10,9 +10,9 @@ export class WechatPlatform implements Platform {
   // 后续接微信本地存储，键名沿用原型。
   setStorage(_key: string, _value: string): void {}
   // 未接入广告时明确不可用。
-  async showRewardedAd(): Promise<boolean> { return false; }
+  async showRewardedAd(_onTick?: (remaining: number | null) => void): Promise<boolean> { return false; }
   // 分享功能留给平台任务。
   share(): void {}
   // 震动功能留给平台任务。
-  vibrate(): void {}
+  vibrate(_ms: number): void {}
 }

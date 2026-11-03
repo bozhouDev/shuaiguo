@@ -46,7 +46,7 @@ if __name__ == '__main__':
                build('NotoSansSC-VF.ttf', 'body-400.ttf', text, 400),
                build('NotoSansSC-VF.ttf', 'body-700.ttf', text, 700),
                build('NotoSansSC-VF.ttf', 'body-900.ttf', text, 900)]
-    dest = ROOT.parent / 'port/tmp/p3-2'
+    dest = ROOT.parent / 'port/tmp/p4-1'
     dest.mkdir(parents=True, exist_ok=True)
     (dest / 'fonts.json').write_text(json.dumps({'sources': [str(p.relative_to(ROOT.parent)) for p in files],
                                                'characters': len(text), 'fonts': reports}, ensure_ascii=False, indent=2))

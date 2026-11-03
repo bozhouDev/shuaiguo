@@ -25,9 +25,10 @@ export class HudView {
     const buttons = [...(m.S.tut && m.mode === 'play' ? [{id: 'skip', text: '跳过教学', action: 'skip'}] : []), {id: 'settings', text: '', action: 'settings'}, {id: 'pause', text: '', icon: 'ui_pause', action: 'pause'}];
     const iconSize = fs * 1.15, barWidth = narrow ? 40 : 64;
     // 原型 inline img 后保留HTML空格；bar 使用 content-box（总宽+4）。
+    // 带教隐藏排名时保留原型的比例数字宽度，避免等宽数字多占11px挤走跳过键。
     // 窄屏#hud .chip的14px优先于#btnSkip的13px；只有设置按钮预留图标宽度。
     const textSize = (e: typeof entries[number]) => e.id === 'skip' && !narrow ? 13 : fs;
-    const width = (e: typeof entries[number]) => 4 + pad * 2 + this.p.width(e.text, textSize(e), 'title', true) + (e.icon ? iconSize * (c.assets.spr[e.icon]?.w / c.assets.spr[e.icon]?.h || 1) + (e.action ? 0 : 3) : e.id === 'settings' ? iconSize : 0) + (e.bar ? barWidth + 8 : 0);
+    const width = (e: typeof entries[number]) => 4 + pad * 2 + this.p.width(e.text, textSize(e), 'title', !hide) + (e.icon ? iconSize * (c.assets.spr[e.icon]?.w / c.assets.spr[e.icon]?.h || 1) + (e.action ? 0 : 3) : e.id === 'settings' ? iconSize : 0) + (e.bar ? barWidth + 8 : 0);
     const height = fs * 1.15 + 10, rightWidth = buttons.reduce((s, e) => s + width(e), 0) + (buttons.length - 1) * 6;
     let x = 12, y = avoid.top + 10;
     this.actions = []; this.boxes = {};
@@ -43,13 +44,14 @@ export class HudView {
       let xx = b.x + 2 + pad;
       if (e.icon) {const pic = c.assets.spr[e.icon], iw = iconSize * (pic?.w / pic?.h || 1); this.p.image(e.icon, xx, b.y + (height - iconSize) / 2, iw, iconSize); xx += iw + 3;}
       if (e.id === 'settings') this.gear(xx, b.y + (height - iconSize) / 2, iconSize);
-      else this.p.text(e.text, xx, b.y + (height - textSize(e) * 1.2) / 2, textSize(e), e.hot ? '#FFFFFF' : e.buff ? '#1F2A44' : '#FFF6D8', 'title', true);
+      else this.p.text(e.text, xx, b.y + (height - textSize(e) * 1.2) / 2, textSize(e), e.hot ? '#FFFFFF' : e.buff ? '#1F2A44' : '#FFF6D8', 'title', !hide);
       if (e.bar) {const bx = b.x + b.w - pad - barWidth - 6, by = b.y + (height - 13) / 2; c.fillStyle = '#0F1628'; c.fillRect(bx, by, barWidth + 4, 13); c.fillStyle = '#11192D'; c.fillRect(bx + 2, by + 2, barWidth, 9); c.fillStyle = '#E8504A'; c.fillRect(bx + 2, by + 2, barWidth * Math.min(1, n / MAX_POTS), 9);}
       if (e.action) this.actions.push({...b, action: e.action, disabled: m.mode === 'closing'});
       c.restore();
     };
     for (const e of entries) {const ww = width(e); reserve(ww); draw(e, {x, y, w: ww, h: height}); x += ww + gap;}
-    reserve(rightWidth); x = edge() - rightWidth;
+    // 两组相邻边框按像素栅格允许2px取整余量；避免字体hmtx与DOM像素舍入将整组挤下。
+    reserve(rightWidth - (hide ? 2 : 0)); x = edge() - rightWidth;
     for (const e of buttons) {const ww = width(e); draw(e, {x, y, w: ww, h: height}); x += ww + 6;}
     this.bottom = y + height;
   }

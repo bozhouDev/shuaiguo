@@ -31,7 +31,9 @@ async function page(kind,level=0,freeze=0,auto=true) {
   await p.addStyleTag({content:'#hud,#ui,#msg,#hint,#coachHand,#closingNotice,.praise-item,#lobby,#toast{display:none!important}'});
   if(freeze)await p.evaluate(n=>TEST.step(n),freeze);
  } else {
-  await p.goto(`${preview}&level=${level}&seed=1001${auto?'&auto=1':''}${freeze===null?'':`&freeze=${freeze}`}`);
+  await p.goto(`${preview}&level=${level+1}&seed=1001${auto?'&auto=1':''}${freeze===null?'':`&freeze=${freeze}`}`);
+  await p.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.app?.ready);
+  await p.evaluate(async()=>{const a=cc.director.getScene().getChildByName('Canvas').getChildByName('Boot').getComponent('Boot').app;await a.startGame();if(a.params.has('freeze'))a.frozen=true;});
   await p.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.world?.ready);
   await p.evaluate(async()=>{const cc=await System.import('cc');cc.profiler.hideStats();await document.fonts.ready;});
   await p.addStyleTag({content:'#__vconsole{display:none!important}'});
@@ -198,12 +200,12 @@ async function fonts() {
   return result;
  },{old,get,reference});
  assert.equal(result.originalTitleOldMatchesReference,true);assert.equal(result.originalTitleNewMatchesReference,true);assert.equal(result.oldExtendedMatchesReference,false);assert.equal(result.newExtendedMatchesReference,true);assert.equal(result.nearest,true);assert.equal(result.cropIdentity.differentSources,true);assert.equal(result.cropIdentity.sameSourceReused,true);
- const high=await browser.newPage({...options,deviceScaleFactor:3});await high.goto(preview+'&freeze=0');await high.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.world?.ready);
+ const high=await browser.newPage({...options,deviceScaleFactor:3});await high.goto(preview+'&level=1&freeze=0');await high.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.app?.ready);await high.evaluate(async()=>{const a=cc.director.getScene().getChildByName('Canvas').getChildByName('Boot').getComponent('Boot').app;await a.startGame();a.frozen=true;});await high.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.world?.ready);
  result.highDpr=await high.evaluate(()=>({device:devicePixelRatio,effective:cc.view.getDevicePixelRatio(),canvasWidth:document.getElementById('GameCanvas').width,canvasHeight:document.getElementById('GameCanvas').height}));assert.equal(result.highDpr.device,3);assert.equal(result.highDpr.effective,2);assert.equal(result.highDpr.canvasWidth,750);await high.close();
  // 内存中模拟正式包PREVIEW=false分支；不是正式构建的替代证据。
  const release=await browser.newPage(options);let replaced=false;
  await release.route('**/scripting/x/chunks/**/*.js',async route=>{const response=await route.fetch();let source=await response.text();if(source.includes('var params = PREVIEW && platform.kind')){source=source.replace('var params = PREVIEW && platform.kind','var params = false && platform.kind');replaced=true;}await route.fulfill({response,body:source});});
- await release.goto(preview+'&level=4&seed=1001&auto=1&freeze=120');await release.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.world?.ready);
+ await release.goto(preview+'&level=4&seed=1001&auto=1&freeze=120');await release.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.app?.ready);await release.evaluate(async()=>{const a=cc.director.getScene().getChildByName('Canvas').getChildByName('Boot').getComponent('Boot').app;await a.startGame();a.frozen=true;});await release.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.world?.ready);
  result.releaseBranch=await release.evaluate(get=>{const w=(0,eval)(`(${get})`)();return {level:w.match.L.id-1,auto:w.match.auto,frozen:w.frozen};},get);assert.equal(replaced,true);assert.deepEqual(result.releaseBranch,{level:0,auto:false,frozen:false});await release.close();
  await fs.writeFile(path.join(out,'font-reference-proof.json'),JSON.stringify(result,null,2));await p.close();console.log('PASS fonts original/new title pixel-equal frozen reference, missing-title glyphs fixed; all nearest');
 }

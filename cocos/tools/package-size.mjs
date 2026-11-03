@@ -1,30 +1,13 @@
-import { readdir, readFile, stat } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
+// 只读已有包；资源可位于assets或微信subpackages，不触发构建。
+import {readdir,readFile,stat} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-
-const project = fileURLToPath(new URL('../', import.meta.url));
-const root = path.resolve(project, process.argv[2] || 'build/wechatgame-001');
-const main = JSON.parse(await readFile(path.join(root, 'assets/main/config.json'), 'utf8'));
-if (!Object.hasOwn(main.scenes, 'db://assets/scenes/Boot.scene')) throw new Error('构建产物缺少 Boot 场景，不能作为有效主包统计');
-// 按磁盘原始字节统计；当前没有远程包或分包，整个目录均作为主包上界。
-async function bytes(dir) {
-  let sum = 0;
-  for (const name of await readdir(dir)) {
-    const target = path.join(dir, name);
-    const info = await stat(target);
-    sum += info.isDirectory() ? await bytes(target) : info.size;
-  }
-  return sum;
-}
-const total = await bytes(root);
-const engine = await bytes(path.join(root, 'cocos-js'));
-const assets = await bytes(path.join(root, 'assets/resources'));
-const builtin = await bytes(path.join(root, 'assets/internal'));
-// 列出一级目录，方便下次编辑器构建后比较；不是微信上传压缩包的计费或审核体积。
-const entries = {};
-for (const name of await readdir(root)) {
-  const target = path.join(root, name);
-  const info = await stat(target);
-  entries[name] = info.isDirectory() ? await bytes(target) : info.size;
-}
-console.log(JSON.stringify({ directory: root, basis: '未压缩目录字节；无分包时作为主包上界，微信上传体积待开发者工具验证', unit: 'bytes', total, engine, validationAssets: assets, builtinAssets: builtin, adaptersSceneAndOther: total - engine - assets - builtin, MiB: total / 1024 ** 2, withinTask4MiBBudget: total <= 4 * 1024 ** 2, entries }, null, 2));
+const project=fileURLToPath(new URL('../',import.meta.url)),root=path.resolve(project,process.argv[2]||'build/wechatgame-001');
+const main=JSON.parse(await readFile(path.join(root,'assets/main/config.json'),'utf8'));
+if(!Object.hasOwn(main.scenes,'db://assets/scenes/Boot.scene'))throw new Error('构建产物缺少Boot场景');
+// 未压缩目录字节只作估算依据，不能冒充本轮新包或微信上传体积。
+async function bytes(dir){let sum=0;for(const entry of await readdir(dir,{withFileTypes:true})){const file=path.join(dir,entry.name);sum+=entry.isDirectory()?await bytes(file):(await stat(file)).size;}return sum;}
+const total=await bytes(root),subpackages={};
+try{for(const entry of await readdir(path.join(root,'subpackages'),{withFileTypes:true}))if(entry.isDirectory())subpackages[entry.name]=await bytes(path.join(root,'subpackages',entry.name));}catch(error){if(error.code!=='ENOENT')throw error;}
+const subBytes=Object.values(subpackages).reduce((a,b)=>a+b,0),engine=await bytes(path.join(root,'cocos-js'));
+console.log(JSON.stringify({directory:root,basis:'只读已有构建，未压缩目录字节；修改后未构建，上传体积未验证',builtFileMtime:(await stat(path.join(root,'game.js'))).mtime.toISOString(),unit:'bytes',total,main:total-subBytes,subpackages,engine,mainWithin4MiB:total-subBytes<=4*1024**2},null,2));

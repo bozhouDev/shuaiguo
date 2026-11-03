@@ -1,6 +1,7 @@
 // 由 tools/import-world-assets.mjs 从 js/atlas.js 生成；矩形坐标以左上角为原点。
 export const ATLAS: {sheets: {file: string; frames: Record<string, [number, number, number, number]>}[]} = {
   "sheets": [
+    {"file":"atlas/lobby","frames":{"lobby_bg":[0,0,512,768]}},
     {
       "file": "atlas/boss",
       "frames": {

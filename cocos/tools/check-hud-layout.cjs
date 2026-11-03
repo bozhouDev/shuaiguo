@@ -27,6 +27,7 @@ for(const width of [360,375,414,768]) {surface.width=width;const capsule={x:widt
 assert.equal(m.E.rngState(),initialRng,'只读绘制不得消费玩法RNG');surface.width=375;
 const coach=new Match({seed:1001,level:0,tutorial:true});hud.draw(coach,1,{top:0});
 assert.ok(Math.abs(hud.boxes.skip.w-(18+p.width('跳过教学',14,'title')))<.01,'窄屏跳过教学用14px，不能额外预留图标宽度');
+assert.equal(hud.boxes.skip.y,hud.boxes.clock.y,'375px带教的跳过教学必须和时钟同一行');
 surface.width=768;hud.draw(coach,1,{top:0});assert.ok(Math.abs(hud.boxes.skip.w-(22+p.width('跳过教学',13,'title')))<.01,'宽屏跳过教学用13px');surface.width=375;
 const messages=new MessageView(p);messages.event('showHint',[{title:'教学',icon:['veteran_tea'],sub:'老周',text:'我是老周，今天带你。按住*左下摇杆*，走到*黄圈*。'}],0);messages.draw(1,67.1875,false);assert.equal(messages.hintBox.w,343);assert.equal(messages.hintBox.y,97.1875);
 const toastLabels=[];surface.fillText=(text)=>toastLabels.push(text);

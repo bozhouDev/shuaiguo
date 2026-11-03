@@ -19,7 +19,9 @@ async function open(kind,level=0,extra='',width=375,tutorial=false){
   await p.evaluate(async({level,tutorial,extra})=>{await document.fonts.ready;E.sfx=E.bgm=E.praise=()=>{};TEST.boot(level,1001,!tutorial,tutorial,new URLSearchParams(extra).get('buff'));},{level,tutorial,extra});
  }else{
   if(extra.includes('saved'))await p.addInitScript(()=>localStorage.setItem('shuaiguo_v3',JSON.stringify({unlocked:1,best:{},tutDone:true})));
-  await p.goto(`http://localhost:7456/?scene=3b08c73f-d17c-4dfc-a45e-854ddae97b2f&level=${level}&seed=1001&freeze=0${tutorial?(extra.startsWith('entry')?'':'&tut=1'):'&auto=1'}&${extra}`);
+  await p.goto(`http://localhost:7456/?scene=3b08c73f-d17c-4dfc-a45e-854ddae97b2f&level=${level+1}&seed=1001&freeze=0${tutorial?(extra.startsWith('entry')?'':'&tut=1'):'&auto=1'}&${extra}`);
+  await p.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.app?.ready);
+  await p.evaluate(async()=>{const a=cc.director.getScene().getChildByName('Canvas').getChildByName('Boot').getComponent('Boot').app;await a.startGame();a.frozen=true;});
   await p.waitForFunction(()=>window.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.world?.ready);
   await p.evaluate(async()=>{const cc=await System.import('cc');cc.profiler.hideStats();await document.fonts.ready;});await p.addStyleTag({content:'#__vconsole{display:none!important}'});
   const fresh=await p.evaluate(get=>{const w=(0,eval)(`(${get})`)();return{clock:w.ui.hud.boxes.clock.w,skip:w.ui.hud.boxes.skip?.w,expectedSkip:18+w.ui.p.width('跳过教学',14,'title'),lines:w.ui.p.wrap([{text:'甲乙18:00前三',color:'#fff'}],70,17,'body-900').map(l=>l.map(r=>r.text).join(''))};},get.toString());

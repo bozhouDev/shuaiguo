@@ -6,7 +6,8 @@ export interface Platform {
   topAvoidance(): TopAvoidance;
   getStorage(key: string): string | null;
   setStorage(key: string, value: string): void;
-  showRewardedAd(): Promise<boolean>;
+  showRewardedAd(onTick?: (remaining: number | null) => void): Promise<boolean>;
   share(): void;
-  vibrate(): void;
+  vibrate(ms: number): void;
+  dispose?(): void;
 }
