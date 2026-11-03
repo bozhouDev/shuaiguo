@@ -1,6 +1,13 @@
 import {Color, Graphics, Label, Layers, Mask, Node, Sprite, UITransform} from 'cc';
 import {WorldAssets, Picture} from './WorldAssets';
 import {UI_METRICS} from './ui-metrics';
+import {displayText} from './ui-data';
+
+// EditBox先更新自己的Label再发文字事件；只在自建输入Label上过滤，避免输入瞬间借用emoji字体。
+export function guardLabelText(label: Label): void {
+  const property = Object.getOwnPropertyDescriptor(Label.prototype, 'string')!;
+  Object.defineProperty(label, 'string', {configurable: true, get() {return property.get!.call(this);}, set(value: string) {property.set!.call(this, displayText(value));}});
+}
 
 type Matrix = [number, number, number, number, number, number];
 type Point = {x: number; y: number};
@@ -156,10 +163,12 @@ export class DrawSurface {
   width = 375; height = 812; cull = true;
   // 字体宽度取 TTF cmap/hmtx 的预生成数据，不依赖网页 Canvas 测量。
   metrics: Record<string, number> = {};
-  measureText(text: string): {width: number} { const size = Number(this.font.match(/([\d.]+)px/)?.[1] || 16); return {width: [...text].reduce((n, ch) => n + (this.metrics[ch] ?? 1), 0) * size}; }
+  measureText(text: string): {width: number} { const size = Number(this.font.match(/([\d.]+)px/)?.[1] || 16); return {width: [...displayText(text)].reduce((n, ch) => n + (this.metrics[ch] ?? 1), 0) * size}; }
   strokeText(s: string, x: number, y: number): void { this.strokeTextValue = {s, x, y, color: this.strokeStyle, width: this.lineWidth}; }
   // 同内容/字号不重复写 Label；倒计时输入是 ceil 秒，只在整秒改变时重建文字纹理。
   fillText(s: string, x: number, y: number): void {
+    // 最终Label边界兜底，必须在缺字/系统字体回退判断之前处理动态称呼和飘字。
+    s = displayText(s);
     const p = this.at(x, y); if (this.cull && (p.x < -300 || p.y < -100 || p.x > this.width + 300 || p.y > this.height + 100)) { this.strokeTextValue = null; return; }
     this.activeGraphic = null; const e = this.take('l'), label = e.label!;
     const size = Number(this.font.match(/([\d.]+)px/)?.[1] || 16), outline = this.strokeTextValue;

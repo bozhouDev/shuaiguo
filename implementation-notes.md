@@ -160,6 +160,89 @@
 
 **清理：** 未创建浏览器、CUA、预览服务器或常驻助手，未操作用户编辑器及已有服务；本项仅运行 Node/Python 检查。
 
+
+### D · emoji 换像素图标
+
+- **用户定的：** 只执行任务卡 D；先读任务卡、AGENTS.md、DESIGN.md、计划 §9、功能清单 §19/§22、P4-1 记录及 `cocos/assets/scripts/`。保持 main，不运行 CocosCreator、不构建、不提交/推送；原型冻结，core 事件文本不改，不新建 `cocos/assets` 文件，不出新图。
+- **我定的细节（可改）：** 现成图集按下表复用；奶茶和播放三角暂用纯文字。最终 Label 之前去掉 emoji、变体选择符、ZWJ、旗帜/肤色、键帽附记、字符星星和播放三角；只处理显示副本，不改原始称呼/存档/core 事件。宽度和换行使用同一副本，避免去图标后留空位。输入框自建 Label 的 string setter 也做过滤（3.8.8 的 EditBox 会先写 Label 再发文字事件，因此不能只等 TEXT_CHANGED）。
+- **偏差：** 无新增图片或资产；按卡片允许的纯文字排版降级处理没有合适图标的场景。Node 检查只证明源码/排版/节点赋值契约，不代表刷新后的 Cocos 栅格截图或真机效果。
+
+**先行盘点与替换（原型行号以本轮冻结源码为准）：**
+
+| Cocos 出现位置 | 原型出处 | 原来的字符 / 当前处理 |
+|---|---|---|
+| `MessageView.draw` 的下午茶群消息 | `js/game.js:137` EVENTS.tea | 🧋：渲染副本去掉末尾图标和空格，保留“下午茶到了，茶水间自取”；core 原文与收到的 message 不改 |
+| `WorldPainter.draw` 茶水间高亮标签 | `js/game.js:2106` | 🧋 下午茶：纯文字“下午茶”，保留绿字和茶水间高亮 |
+| `WorldPainter.drawDueTag` 头顶最急锅倒计时 | `js/game.js:1829` | ⏰N：`ui_clock` Sprite + 独立数字 Label，数字的黄/红告警语义不变 |
+| `WorldPainter.draw` 屏外急件持有者 | `js/game.js:2260` | 🔥：完整 `wok` 图集锅图，保留红色圆圈和指向箭头，与局内急件共用锅图素材 |
+| `SpriteTools.edgeHint` 字符分支 / 缺图兜底 | `js/engine.js:275` | 原型的 ❓ 兜底：Cocos 原有字符串分支仅用于 🔥，本轮删除字符入口；未知精灵复用 `ui_warning`，不调用 emoji 字体 |
+| `AppView.modal('rules')` 截止时间 | `js/game.js:2702` | ⏰：`ui_clock` |
+| 同上，摇杆与甩锅 | `js/game.js:2703` | 🕹️：`ui_wok` |
+| 同上，领导视野 | `js/game.js:2704` | 👀：`ui_warning` |
+| 同上，18:00 总账 | `js/game.js:2705` | 🧾：`ui_book` |
+| 同上，天降锅 | `js/game.js:2709` | ☄️：`wok_flying` |
+| 同上，反甩与急件 | `js/game.js:2710` | 🛡️：`fx_impact`（沿用反甩命中的反馈素材） |
+| 同上，12 口压垮 | `js/game.js:2711` | 💥：`ui_warning` |
+| `IntroView.draw` 关卡页签与最好成绩行 | `js/game.js:2745/2762` | ★：按实际星数绘制 `ui_star`，前后文字按图集比例一起居中 |
+| 大厅 / 结算 / 普通分享卡星级 | 大厅日历、`js/game.js:2485` 结算星级等 | 已经用 `ui_star` / `ui_star_empty`，保留；原型 alt 的 ★☆ 不会传到 Cocos Label |
+| `IntroView.draw` 开始按钮 | `js/game.js:2764` | ▶：纯文字“开始上班”，按钮命中框/动作不变 |
+| `ScreenPaint.button` 广告前缀 | `css/style.css:63/665` | ▶ 广告 ·：纯文字“广告 · ”，保留广告标识及红色前缀 |
+| `core/config.ts` 领导类别 emoji 字段 | `js/game.js:129/131` | 🤵 / 👔：没有显示调用，保持 core 原始字段；画面领导本来就用像素人物 |
+| 自定义称呼带入名牌、群消息、教学、飘字、分享、名称输入 Label | 原型称呼编辑允许 Unicode（`cleanBossName`） | 对显示副本过滤；如“王总🧋”显示“王总”，原始输入与存档值不变 |
+
+**改动文件与原因：**
+
+| 文件 | 变更 |
+|---|---|
+| `cocos/assets/scripts/view/AppView.ts` | 玩法列表从 emoji 前缀改为图集 icon/text；自建 EditBox Label 接入过滤 |
+| `cocos/assets/scripts/view/WorldPainter.ts` | 头顶像素闹钟、纯文字下午茶、屏外急件锅图 |
+| `cocos/assets/scripts/view/SpriteTools.ts` | 移除边缘提示字符串图标入口，缺图复用像素警告图 |
+| `cocos/assets/scripts/view/IntroView.ts` | 页签/最好成绩字符星改 Sprite，开始按钮移除三角 |
+| `cocos/assets/scripts/view/ScreenPaint.ts` | 广告前缀移除三角；星级绘制支持仅画已获星数（原默认三槽不变） |
+| `cocos/assets/scripts/view/ui-data.ts` | 统一显示字符过滤规则，字体裁剪复用 |
+| `cocos/assets/scripts/view/DrawSurface.ts` | 最终 Label 写入与世界测宽先过滤，再判断字体回退；提供输入 Label 的过滤边界 |
+| `cocos/assets/scripts/view/UiPaint.ts` | 测宽、换行、文字渲染统一使用纯文本显示副本 |
+| `cocos/assets/scripts/view/MessageView.ts` | 群消息在解析标题、测宽和换行前移除 emoji，不修改原始 message |
+| `cocos/tools/subset-fonts.py` | 不再补入 emoji，读取画面层同一正则过滤全部字体输入；本项字体报告写入 `port/tmp/p4-2-d/fonts.json` |
+| `cocos/assets/resources/{title,body-400,body-700,body-900}.ttf` | 重裁四份已有字体；总计 1,184,212 B，比本轮开始增加 5,512 B（现有“全文源码含注释”采字策略带来的新增说明用字），cmap 图标字符为 0，源码汉字缺字 0 |
+| `cocos/assets/scripts/view/ui-metrics.ts`、`visual-data.ts` | 重生成四字体字宽与世界标题字宽；保留字符字宽逐项不变，HEADS 完全不变 |
+| `cocos/tools/check-label-icons.cjs` | 新增 Node 检查，真实页面/排版/DrawSurface 在最终 Label setter 处拒绝 emoji，另扫描全部 view 字符串/模板片段、实际 TTF cmap、图集 PNG 切片；没有新增 Cocos 资产文件 |
+| `implementation-notes.md` | 在既有 P4-2 节追加本项，保留 A/B/C 及 P4-1 记录 |
+
+**测试 / 检查（命令均从仓库根目录执行）：**
+
+| 命令 / 检查 | 输出 |
+|---|---|
+| `node cocos/tools/check-label-icons.cjs`（先加检查，未修生产代码） | 退出 1：`最终Label仍含图标字符：下午茶到了，茶水间自取 🧋`，确认检查抓住旧问题 |
+| 同命令（修复并重裁字体后） | 退出 0；30 组（五关 × 三屏 × 两种称呼）真实页面/世界绘制；最终 Label 赋值扫描 5,885 次，图标字符 0；加载卡、输入框首次/复用、群消息/教学/toast/飘字/HUD/倒计时均覆盖；四 TTF 实际 cmap 图标字符 0；view 源码固定字符串/模板片段无 emoji |
+| `node cocos/tools/check-peripheral.cjs` | 全部 PASS；A/B/C 音效、称呼、分享图及旧存档/广告/声音/教学/大厅契约不回退 |
+| `node cocos/tools/check-hud-layout.cjs` | PASS 等宽数字、6 个矩形、四屏宽胶囊避让、横幅/toast、只读 RNG |
+| `npm run test:core --prefix cocos` | tests 14 / pass 14 / fail 0，含五关各 50 局统计逐字段比较 |
+| `npm run test:golden --prefix cocos` | PASS 100/100，快照 + 事件 + 最终结果完全一致（空存档、默认“老板”） |
+| `npm run check:types --prefix cocos` | 退出 0，无类型错误；仅 Node 运行 tsc，没有启动 CocosCreator |
+| `node tests/check-port-protected.cjs` | PASS 416 个保护文件，内容变化 0，保护目录无增删 |
+| `npm run fonts:subset --prefix cocos` | 四份字体 `missingChinese` 均为空；只重写已有 TTF |
+| `cocos/.venv/bin/python cocos/tools/ui-metrics.py`、`cocos/.venv/bin/python cocos/tools/world-metrics.py` | 字宽 1224 / 1227 / 1227 / 1227，头像 225；与 HEAD 对比保留字宽无变化、HEADS 不变 |
+| Python 内联只读 `.meta` 审计 + `/tmp/shuaiguo-p4-2-d-before.json` 开工前 SHA-256 对比 | PASS 240 个资产文件无增删；125 个 meta 字节不变、无缺失/孤立/星号 importer/重复 UUID（含 subMetas），TS importer 正确；core、图片、图集、音频均无字节变化 |
+| `for file in js/*.js cocos/tools/check-label-icons.cjs; do node --check "$file" || exit; done`、`git diff --check` | 退出 0 |
+
+**待刷新复拍：**
+
+1. 明天刷新脚本及四份字体后，375×812 / 375×667 / 360×780 复拍大厅 → 关卡介绍 → 开局 → 暂停/结算 → 大厅，确认字体加载/控制台与原有交互。
+2. 群消息下午茶末尾没有 emoji、空行或残留占位；茶水间纯文字与高亮；头顶闹钟数字在 9/5/2 秒时不重叠。
+3. 屏外急件的红圈锅图、正常领导/同事头像和饼提示、缺图警告；四项基本玩法及后三项高级玩法的图标尺寸、正文换行、滚动与按钮。
+4. 介绍页 1/2/3 星、未通关及旧存档最好成绩行，开始按钮/广告前缀；大厅/结算/分享的原有实星空星仍正常。
+5. 默认/“王总”及带 emoji 的称呼，在名牌、消息、结算分享、名称输入框的首次打开/复用/输入期间没有系统 emoji Label。输入框过滤采用当前 3.8.8 accessor 契约，需在刷新后的引擎与微信真机核验；系统键盘自身的候选/原生输入区域不属于 Cocos Label 扫描。
+
+**发现但未改 / 建议补画：**
+
+- 建议补画独立奶茶图标；可选补画摇杆、视野眼睛、账单、反甩护盾、播放按钮专用小图标。目前按上表复用或用纯文字，等待泊舟决定风格后走既定出图流程，本项没有生图。
+- core 保留 `EVENTS.tea.msg` 的 🧋 和未使用的领导 🤵/👔；冻结原型继续保留全部原 emoji/字符星。保留不是遗漏：黄金录像事件文本必须逐字一致。
+- 介绍底板自带的像素图形、已有 Sprite 星星、Graphics 箭头/闪光本来不是字体 emoji，保持不变。
+- 隐藏调试面板 E、真实微信接口 P5、其他 A/B/C 事项不在本轮变更范围。原有 `AGENTS.md` 和 `.claude/rules/`、`.claude/skills/` 工作内容未触碰。
+
+**清理：** 本轮只运行已结束的 Node/Python 命令；没有创建浏览器、CUA、预览服务器、常驻助手，未运行/操作用户 CocosCreator 或已有预览服务；未提交、推送、部署。
+
 ---
 
 ## 2026-11-04 · P4-1 外围界面与声音（无人值守续做收尾，最终源码待刷新复验）

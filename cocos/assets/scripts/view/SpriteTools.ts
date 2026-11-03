@@ -35,7 +35,7 @@ export class SpriteTools {
     ctx.globalAlpha = inp.down ? .75 : .35; ctx.fillStyle = '#FFFDF5'; ctx.beginPath(); ctx.arc(inp.down ? inp.x : c.x, inp.down ? inp.y : c.y, 22, 0, Math.PI * 2); ctx.fill(); ctx.restore();
   }
   // 屏外头像、箭头和怒气徽标；圆形 Mask 与原型 clip 对应。
-  edgeHint(ctx: DrawSurface, st: {w?: number; h?: number; width: number; height: number}, sx: number, sy: number, icon: string | {sprite: string; whole?: boolean}, color: string, badge?: string | null): void {
+  edgeHint(ctx: DrawSurface, st: {w?: number; h?: number; width: number; height: number}, sx: number, sy: number, icon: {sprite: string; whole?: boolean}, color: string, badge?: string | null): void {
     const width = st.width, height = st.height, top = 70, R = 21;
     if (sx > 0 && sx < width && sy > top && sy < height) return;
     const cx = width / 2, cy = (height + top) / 2, a = Math.atan2(sy - cy, sx - cx);
@@ -44,18 +44,17 @@ export class SpriteTools {
     ctx.save(); ctx.fillStyle = color; ctx.translate(x, y); ctx.save(); ctx.rotate(a);
     ctx.beginPath(); ctx.moveTo(R + 11, 0); ctx.lineTo(R - 2, -9); ctx.lineTo(R - 2, 9); ctx.closePath(); ctx.fill(); ctx.restore();
     ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.fill();
-    const s = typeof icon === 'string' ? null : this.spr[icon.sprite];
-    if (s && typeof icon !== 'string') {
+    // 未知图标沿用现有警告像素图；不退回系统问号emoji。
+    if (!this.spr[icon.sprite]) icon = {sprite: 'ui_warning', whole: true};
+    const s = this.spr[icon.sprite];
+    if (s) {
       ctx.fillStyle = '#FFF8E7'; ctx.beginPath(); ctx.arc(0, 0, R - 3, 0, Math.PI * 2); ctx.fill(); ctx.save(); ctx.clip();
-      const head = this.assets.headCrop(icon.sprite, HEADS), size = icon.whole ? Math.max(s.w, s.h) : head!.size;
+      const head = icon.whole ? null : this.assets.headCrop(icon.sprite, HEADS), size = icon.whole ? Math.max(s.w, s.h) : head!.size;
       const d = (R - 3) * (icon.whole ? 1.6 : 2.15);
       // 道具按原比例整张居中，不对透明范围以外的像素取样。
       if (icon.whole) this.drawSprite(ctx, icon.sprite, 0, 0, d * s.w / size);
       else ctx.drawImage(s, head!.sx, 0, size, size, -d / 2, -d / 2 + 2, d, d);
       ctx.restore();
-    } else if (typeof icon === 'string') {
-      // 本卡按原型保留既有 emoji，像素图标替换由 P4 裁定单列。
-      ctx.font = '18px title'; ctx.fillStyle = color; ctx.fillText(icon, 0, 1);
     }
     ctx.restore(); if (badge) this.drawSprite(ctx, badge, x + R * .75, y - R * .75, 20);
   }

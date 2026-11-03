@@ -78,7 +78,8 @@ export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: Draw
     if (a.crushed || !m.potsOf(a)) return;
     const left = m.urgentLeft(a);
     if (left >= DUE_WARN) return;
-    E.label(ctx, `⏰${Math.max(0, Math.ceil(left))}`, a.sn.x + 30, a.sn.y - 46, 13, '#FFFDF5', left < DUE_DANGER ? '#E8504A' : '#C98A00');
+    E.drawSprite(ctx, 'ui_clock', a.sn.x + 20, a.sn.y - 46, 14);
+    E.label(ctx, String(Math.max(0, Math.ceil(left))), a.sn.x + 36, a.sn.y - 46, 13, '#FFFDF5', left < DUE_DANGER ? '#E8504A' : '#C98A00');
   }
   // 画某人背着的锅（从尾到头）：快到点的锅底下发黄光 / 红光，红了还冒烟；玩家自己的锅标剩余秒数
   function drawTail(a: Agent, time: number) {
@@ -351,7 +352,8 @@ export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: Draw
     if (m.S.tea > 0) {
       ctx.fillStyle = `rgba(47,158,107,${0.18 + 0.1 * Math.sin(time * 6)})`;
       ctx.fillRect(0, 1216, 300, 224);
-      E.label(ctx, '🧋 下午茶', OFFICE.tea.x, OFFICE.tea.y - 60, 18, '#2F9E6B');
+      // 尚无独立奶茶像素图，保留绿字提示与茶水间高亮，不用系统图标。
+      E.label(ctx, '下午茶', OFFICE.tea.x, OFFICE.tea.y - 60, 18, '#2F9E6B');
     }
     ctx.restore(); ctx.end(); ctx = dynamic;
     propsLayer.root.setPosition(-camX + offsetX, camY - offsetY);
@@ -497,7 +499,7 @@ export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: Draw
       const color = hunting ? '#E8504A' : m.canThrowTo(P, b) ? '#2F9E6B' : '#9AA6C4';
       E.edgeHint(ctx, st, b.sn.x - camX, b.sn.y - camY, { sprite: `${b.p.sprite}_normal` }, color, hunting ? 'fx_anger' : null);
     }
-    for (const b of m.S.bots) if (!b.crushed && m.holdsHot(b)) E.edgeHint(ctx, st, b.sn.x - camX, b.sn.y - camY, '🔥', '#E8504A');
+    for (const b of m.S.bots) if (!b.crushed && m.holdsHot(b)) E.edgeHint(ctx, st, b.sn.x - camX, b.sn.y - camY, {sprite: 'wok', whole: true}, '#E8504A');
     // 地上有饼时只指最近的一张，黄圈表示「可选的主动操作」，吃不吃由玩家自己定
     const pie = m.S.pies.reduce<Pie | null>((best, p) => !best || E.dist(P.sn.x, P.sn.y, p.x, p.y) < E.dist(P.sn.x, P.sn.y, best.x, best.y) ? p : best, null);
     if (pie) E.edgeHint(ctx, st, pie.x - camX, pie.y - camY, { sprite: 'pie', whole: true }, '#FFD84D');

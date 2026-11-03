@@ -20,5 +20,10 @@ export const PX_ICONS: Record<string,string[]> = {
   };
 export const LOBBY_LINES = ["这锅不是我的", "这个你来跟一下", "我就路过一下", "收到，马上甩", "你问经理去", "谁接的活谁负责"];
 
+// 画面和字体裁剪共用此规则：图标由Sprite绘制，文本不借用系统emoji字体。
+export const LABEL_ICON_PATTERN = /\p{Extended_Pictographic}|[\u2300-\u23ff\u2600-\u27bf\u{1f000}-\u{1ffff}\u200d\u20e3\ufe0e\ufe0f\u{e0020}-\u{e007f}★☆▶]/gu;
+// 只返回显示副本，保留core事件、原始存档和玩家输入；选择符、连接符也一并去掉。
+export function displayText(text: string): string {return text.replace(LABEL_ICON_PATTERN, '');}
+
 // CSS cubic-bezier按横轴反解，复用在贴纸和结算的真实秒动画。
 export function uiEase(t:number,x1:number,y1:number,x2:number,y2:number):number {if(t<=0)return 0;if(t>=1)return 1;let lo=0,hi=1;for(let i=0;i<18;i++){const u=(lo+hi)/2,x=3*(1-u)**2*u*x1+3*(1-u)*u*u*x2+u**3;if(x<t)lo=u;else hi=u;}const u=(lo+hi)/2;return 3*(1-u)**2*u*y1+3*(1-u)*u*u*y2+u**3;}

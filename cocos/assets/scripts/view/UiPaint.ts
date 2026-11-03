@@ -1,5 +1,6 @@
 import {DrawSurface} from './DrawSurface';
 import {UI_METRICS} from './ui-metrics';
+import {displayText} from './ui-data';
 // 字体表固定，预先计算数字占位，避免HUD每帧逐字反复建数组。
 const DIGIT_WIDTH = Object.fromEntries(Object.entries(UI_METRICS).map(([font, metrics]) => [font, Math.max(...'0123456789'.split('').map(d => metrics[d]))]));
 export interface Box {x: number; y: number; w: number; h: number}
@@ -10,10 +11,11 @@ export class UiPaint {
   // 用源字体 hmtx 算字宽；快乐体无tnum，数字按最宽数字占位，避免挤字或时钟跳宽。
   width(text: string, size: number, font = 'title', tabular = false): number {
     const metrics = UI_METRICS[font] || UI_METRICS.title;
-    return [...text].reduce((n, ch) => n + (tabular && /\d/.test(ch) ? DIGIT_WIDTH[font] ?? DIGIT_WIDTH.title : metrics[ch] ?? 1), 0) * size;
+    return [...displayText(text)].reduce((n, ch) => n + (tabular && /\d/.test(ch) ? DIGIT_WIDTH[font] ?? DIGIT_WIDTH.title : metrics[ch] ?? 1), 0) * size;
   }
   // 以左上角为坐标写字，Label 仅在显示内容变化时改 string（DrawSurface 池）。
   text(text: string, x: number, y: number, size: number, color: string, font = 'title', tabular = false, stroke?: string): void {
+    text = displayText(text);
     const c = this.c; c.font = `${size}px ${font}`; c.fillStyle = color;
     if (tabular) {for (const run of text.match(/\d|[^\d]+/g) || []) {const w = this.width(run, size, font, true); this.text(run, x + (w - this.width(run, size, font)) / 2, y, size, color, font, false, stroke); x += w;} return;}
     if (stroke) {c.strokeStyle = stroke; c.lineWidth = 4; c.strokeText(text, x + this.width(text, size, font) / 2, y + size * .6);}
@@ -49,7 +51,7 @@ export class UiPaint {
   // 按CSS正常断行：连续数字/时间整体换行，中文句末标点不落行首；保留跨高亮段的颜色。
   wrap(runs: Run[], width: number, size: number, font: string): Run[][] {
     const tokens: Run[][] = []; let previous = '';
-    for (const run of runs) for (const ch of run.text) {
+    for (const run of runs) for (const ch of displayText(run.text)) {
       const join = tokens.length && ch !== '\n' && previous !== '\n' &&
         (/[，。、：；！？）〉》」』】”’]/.test(ch) || /[（〈《「『【“‘]/.test(previous) || /[A-Za-z0-9.:+/-]/.test(ch) && /[A-Za-z0-9.:+/-]/.test(previous));
       if (!join) tokens.push([]);

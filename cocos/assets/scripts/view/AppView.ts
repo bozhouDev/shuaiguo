@@ -8,7 +8,7 @@ import {WebPlatform} from '../platform/WebPlatform';
 import {WechatPlatform} from '../platform/WechatPlatform';
 import {WorldView} from './WorldView';
 import {WorldAssets} from './WorldAssets';
-import {DrawSurface} from './DrawSurface';
+import {DrawSurface, guardLabelText} from './DrawSurface';
 import {ScreenPaint, ScreenAction} from './ScreenPaint';
 import {LobbyView} from './LobbyView';
 import {IntroView} from './IntroView';
@@ -117,7 +117,7 @@ export class AppView {
   // 名称EditBox用纯文本；长度按Unicode检查后调用core清理函数，存储失败保留输入。
   private saveName(): void {const value=this.edit?.string||'',m=this.world?.match||new Match({seed:0,progress:this.store.read()});if([...value.trim()].length>6){this.toast('最多 6 个字',1500);return;}const prog=this.store.read();prog.bossName=m.cleanBossName(value);if(!this.store.save(prog)){this.toast('保存失败，请重试',1500);return;}this.showLobby();}
   // Cocos EditBox负责系统键盘，网页不另造HTML输入框；允许超过6字后显示原型校验提示。
-  private ensureEdit(): void {if(this.edit)return;if(this.cachedEdit){this.edit=this.cachedEdit;this.cachedEdit=null;this.edit.string=this.store.read().bossName||'老板';this.edit.node.active=true;this.positionEdit();this.edit.focus();return;}const n=this.node('BossNameEditBox',this.root);n.active=false;const edit=n.addComponent(EditBox),labelNode=this.node('Text',n),label=labelNode.addComponent(Label);label.useSystemFont=true;label.fontSize=18;label.color=new Color('#1F2A44');label.horizontalAlign=Label.HorizontalAlign.LEFT;labelNode.getComponent(UITransform)!.setContentSize(260,40);edit.textLabel=label;edit.inputMode=EditBox.InputMode.SINGLE_LINE;edit.returnType=EditBox.KeyboardReturnType.DONE;edit.maxLength=-1;edit.string=this.store.read().bossName||'老板';this.edit=edit;this.positionEdit();n.on(EditBox.EventType.EDITING_DID_BEGAN,()=>{if(this.platform.kind==='web')queueMicrotask(()=>{if(!this.alive||this.edit!==edit)return;const field=document.activeElement;if(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement)field.select();});});n.active=true;edit.focus();}
+  private ensureEdit(): void {if(this.edit)return;if(this.cachedEdit){this.edit=this.cachedEdit;this.cachedEdit=null;this.edit.string=this.store.read().bossName||'老板';this.edit.node.active=true;this.positionEdit();this.edit.focus();return;}const n=this.node('BossNameEditBox',this.root);n.active=false;const edit=n.addComponent(EditBox),labelNode=this.node('Text',n),label=labelNode.addComponent(Label);guardLabelText(label);label.useSystemFont=true;label.fontSize=18;label.color=new Color('#1F2A44');label.horizontalAlign=Label.HorizontalAlign.LEFT;labelNode.getComponent(UITransform)!.setContentSize(260,40);edit.textLabel=label;edit.inputMode=EditBox.InputMode.SINGLE_LINE;edit.returnType=EditBox.KeyboardReturnType.DONE;edit.maxLength=-1;edit.string=this.store.read().bossName||'老板';this.edit=edit;this.positionEdit();n.on(EditBox.EventType.EDITING_DID_BEGAN,()=>{if(this.platform.kind==='web')queueMicrotask(()=>{if(!this.alive||this.edit!==edit)return;const field=document.activeElement;if(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement)field.select();});});n.active=true;edit.focus();}
   private positionEdit(): void {if(!this.edit)return;const w=Math.min(340,this.surface.width-32),h=this.heights.boss||300,y=(this.surface.height-Math.min(h,(this.surface.height-32)*.92))/2;this.edit.node.setPosition(this.surface.width/2,-(y+140-this.scroll));this.edit.node.getComponent(UITransform)!.setContentSize(w-40,48);}
   // 复用同一EditBox：Cocos安卓键盘有延迟scrollIntoView，立即销毁会读到空DOM。
   private removeEdit(): void {if(this.edit){this.edit.blur();this.edit.node.active=false;this.cachedEdit=this.edit;this.edit=null;}}
@@ -135,7 +135,25 @@ export class AppView {
     else if(kind==='pause'){p.heading('休息一下','pause',b);p.center('本局已暂停',x+20,b.y+72,w-40,15,'#5E6A84','body-700');p.contain('wok',{x:x+w/2-70,y:b.y+106,w:140,h:108});p.rays({x:x+w/2-55,y:b.y+106,w:110,h:108},true);p.text('甩锅',x+w/2-8,b.y+164,15,'#1F2A44','body-900');p.button('resume','继续游戏',{x:x+20,y:b.y+221,w:w-40,h:68});p.button('retry','重新开始',{x:x+20,y:b.y+299,w:w-40,h:56},'ghost');p.button('menu','返回首页',{x:x+20,y:b.y+366,w:w-40,h:32},'link');total=420;}
     else if(kind==='settings'){p.heading('游戏设置','gear',b,'close');(['music','sfx','vibrate'] as const).forEach((key,i)=>{const yy=b.y+81+i*62,on=this.store.settings[key];p.icon(['music','sound','vibrate'][i],x+28,yy+6,32);p.text(['音乐','音效','震动'][i],x+78,yy+11,20,'#1F2A44','body-700');const tx=x+w-136;c.fillStyle=on?'#FFD84D':'#C3CEE0';c.strokeStyle='#1F2A44';c.lineWidth=3;c.beginPath();c.moveTo(tx+22,yy);c.lineTo(tx+86,yy);c.arc(tx+86,yy+22,22,-Math.PI/2,Math.PI/2);c.lineTo(tx+22,yy+44);c.arc(tx+22,yy+22,22,Math.PI/2,Math.PI*1.5);c.closePath();c.fill();c.stroke();c.fillStyle='#FFFFFF';c.beginPath();c.arc(tx+(on?84:24),yy+22,15,0,Math.PI*2);c.fill();c.stroke();p.text(on?'开':'关',tx+(on?14:66),yy+10,20,'#1F2A44','body-900');p.hit('toggle:'+key,key,{x:tx,y:yy,w:108,h:44});});c.fillStyle='#D3DBE8';c.fillRect(x+20,b.y+273,w-40,3);p.button('close','完成',{x:x+20,y:b.y+292,w:w-40,h:62});total=368;}
     else if(kind==='boss'){p.heading('老板名称','',b);p.text('给老板起个称呼',x+20,b.y+80,16,'#1F2A44','body-400');c.fillStyle='#FFFDF5';c.fillRect(x+20,b.y+116,w-40,48);c.strokeStyle='#1F2A44';c.lineWidth=2;c.strokeRect(x+20,b.y+116,w-40,48);p.text('最多 6 个字，留空恢复“老板”',x+20,b.y+179,13,'#5E6A84','body-400');p.button('save','保存称呼',{x:x+20,y:b.y+212,w:w-40,h:62});p.button('cancel','取消',{x:x+20,y:b.y+286,w:w-40,h:32},'link');total=340;this.positionEdit();}
-    else if(kind==='rules'){const lv=LEVELS[this.selected],leaders=lv.leaders.map(d=>d.type==='boss'?this.rulesBossName:LEADER_TYPES[d.type].name).join('、'),rules=[`⏰ 每口锅都有截止时间（${lv.potLife||30} 秒），甩来甩去不重置；到点在谁身上，谁背锅`,'🕹️ 左下角摇杆控制方向，右下角「甩」把最急的那口锅扔出去',`👀 ${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅`,'🧾 18:00 算总账：炸了的锅一口算 1，身上没甩掉的锅一口算 ½'];if(!lv.basic)rules.push(`☄️ 天降锅只砸你，躲不掉；${leaders}的普通锅看到红线就躲`,'🛡️ 锅朝你飞来时按「甩」能弹回去；急件只有 10 秒，炸了背锅 +3','💥 身上堆满 12 口锅当场压垮，直接失败');c.fillStyle='#E8504A';c.fillRect(x+20,b.y+14,48,20);p.text('玩法',x+28,b.y+17,12,'#FFFFFF','body-400');p.text('怎么甩锅',x+20,b.y+35,34,'#1F2A44');let yy=b.y+80;yy+=p.paragraph(`背锅越少，排名越前；进${lv.passRank===2?'前两名':'前三'}准点下班`,{x:x+20,y:yy,w:w-40,h:0},13,'#5E6A84','body-900');yy+=14;for(const text of rules){const chars=[...text],emoji=chars.shift()!;if(chars[0]==='️')chars.shift();const body=chars.join('').trim();p.text(emoji,x+20,yy,14,'#1F2A44','body-900');yy+=p.paragraph(body,{x:x+52,y:yy,w:w-72,h:0},14,'#1F2A44','body-900');yy+=8;}p.button('close','知道了',{x:x+20,y:yy+8,w:w-40,h:68});total=yy-b.y+98;}
+    else if(kind==='rules'){
+      const lv=LEVELS[this.selected],leaders=lv.leaders.map(d=>d.type==='boss'?this.rulesBossName:LEADER_TYPES[d.type].name).join('、');
+      // 只复用已导入图集；摇杆、视野、账单与反甩没有专用小图，用锅/警告/书/撞击反馈表达。
+      const rules=[
+        {icon:'ui_clock',text:`每口锅都有截止时间（${lv.potLife||30} 秒），甩来甩去不重置；到点在谁身上，谁背锅`},
+        {icon:'ui_wok',text:'左下角摇杆控制方向，右下角「甩」把最急的那口锅扔出去'},
+        {icon:'ui_warning',text:`${leaders}面前的红色扇形是视野，在里面甩锅会被抓现行：锅不走，还要背锅`},
+        {icon:'ui_book',text:'18:00 算总账：炸了的锅一口算 1，身上没甩掉的锅一口算 ½'},
+      ];
+      if(!lv.basic)rules.push(
+        {icon:'wok_flying',text:`天降锅只砸你，躲不掉；${leaders}的普通锅看到红线就躲`},
+        {icon:'fx_impact',text:'锅朝你飞来时按「甩」能弹回去；急件只有 10 秒，炸了背锅 +3'},
+        {icon:'ui_warning',text:'身上堆满 12 口锅当场压垮，直接失败'},
+      );
+      c.fillStyle='#E8504A';c.fillRect(x+20,b.y+14,48,20);p.text('玩法',x+28,b.y+17,12,'#FFFFFF','body-400');p.text('怎么甩锅',x+20,b.y+35,34,'#1F2A44');let yy=b.y+80;
+      yy+=p.paragraph(`背锅越少，排名越前；进${lv.passRank===2?'前两名':'前三'}准点下班`,{x:x+20,y:yy,w:w-40,h:0},13,'#5E6A84','body-900');yy+=14;
+      for(const row of rules){p.contain(row.icon,{x:x+20,y:yy,w:22,h:22});yy+=p.paragraph(row.text,{x:x+52,y:yy,w:w-72,h:0},14,'#1F2A44','body-900');yy+=8;}
+      p.button('close','知道了',{x:x+20,y:yy+8,w:w-40,h:68});total=yy-b.y+98;
+    }
     else if(kind==='assets'){p.heading('新同事素材','',b);const names=Object.keys(this.assets.spr).filter(n=>/^(nephew_|cashier_|pie$|fx_hype$)/.test(n));names.forEach((name,i)=>{const xx=x+20+i%3*90,yy=b.y+80+Math.floor(i/3)*94;p.contain(name,{x:xx,y:yy,w:80,h:64});p.text(name,xx,yy+66,9,'#1F2A44','body-400');});total=110+Math.ceil(names.length/3)*94;p.button('back','返回大厅',{x:x+20,y:b.y+total-24,w:w-40,h:50},'ghost');total+=50;}
     this.heights[kind]=total||content;c.end();this.actions.push(...p.actions.filter(a=>a.y+a.h>=y&&a.y<=y+h));
   }

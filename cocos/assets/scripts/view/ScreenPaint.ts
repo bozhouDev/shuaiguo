@@ -31,7 +31,7 @@ export class ScreenPaint extends UiPaint {
   button(action: string, label: string, b: Box, style: 'main'|'ghost'|'link'|'ad'|'share' = 'main', icon?: string): void {
     const link = style === 'link', fs = link ? 16 : style === 'main' ? 22 : style === 'ad' ? 17 : style === 'share' ? 16 : 18;
     if (!link) {this.box(b, style === 'main' ? '#FFD84D' : style === 'share' && action === 'share-blame' ? '#2F9E6B' : '#FFF8E6', style === 'share' ? 6 : 8);}
-    const prefix = style === 'ad' || action === 'buff' ? '▶ 广告 · ' : '', w = this.width(label, fs, link ? 'body-700' : 'body-900'), pw = this.width(prefix, fs * .8, 'body-900'), iw = icon ? 28 : 0, x = b.x + (b.w - w - pw - iw) / 2, y = b.y + (b.h - fs * 1.2) / 2;
+    const prefix = style === 'ad' || action === 'buff' ? '广告 · ' : '', w = this.width(label, fs, link ? 'body-700' : 'body-900'), pw = this.width(prefix, fs * .8, 'body-900'), iw = icon ? 28 : 0, x = b.x + (b.w - w - pw - iw) / 2, y = b.y + (b.h - fs * 1.2) / 2;
     if (icon) this.icon(icon, x, b.y + (b.h - 20) / 2, 20,style==='share'&&action==='share-blame'?'#FFFFFF':'#1F2A44');
     if (prefix) this.text(prefix, x + iw, y + fs * .15, fs * .8, '#E8504A', 'body-900');
     this.text(label, x + iw + pw, y, fs, style==='share'&&action==='share-blame'?'#FFFFFF':link ? '#5E6A84' : '#1F2A44', link ? 'body-700' : 'body-900'); this.hit(action, label, b);
@@ -41,5 +41,5 @@ export class ScreenPaint extends UiPaint {
   // 主体两侧各三道黄色放射线，尺寸照CSS。
   rays(b: Box, leftOnly = false): void {for (const side of leftOnly ? [-1] : [-1, 1]) for (let i = 0; i < 3; i++) {this.c.save(); const x = side < 0 ? b.x - (i === 1 ? 30 : 22) : b.x + b.w + (i === 1 ? 24 : 16); this.c.translate(x, b.y + b.h * [.18,.46,.74][i]); this.c.rotate((i - 1) * side * Math.PI / 5); this.c.fillStyle = '#C98A00'; this.c.fillRect(-2,-2,18,10); this.c.fillStyle = '#FFD84D'; this.c.fillRect(0,0,14,6); this.c.restore();}}
   // 同图集星星，保持空星/实星的比例。
-  stars(n: number, x: number, y: number, size = 20, gap = 3): void {for (let i = 0; i < 3; i++) {const name=i<n?'ui_star':'ui_star_empty',pic=this.c.assets.spr[name]||{w:96,h:93};this.image(name,x,y,size*pic.w/pic.h,size);x+=size*pic.w/pic.h+gap;}}
+  stars(n: number, x: number, y: number, size = 20, gap = 3, slots = 3): void {for (let i = 0; i < slots; i++) {const name=i<n?'ui_star':'ui_star_empty',pic=this.c.assets.spr[name]||{w:96,h:93};this.image(name,x,y,size*pic.w/pic.h,size);x+=size*pic.w/pic.h+gap;}}
 }

@@ -1,5 +1,6 @@
 import {Hint} from '../core/types';
 import {UiPaint, Box} from './UiPaint';
+import {displayText} from './ui-data';
 // 对应 showHint/showMsg/placeBanners/E.toast：停留由core对局秒控制，CSS过渡用真实时间。
 export class MessageView {
   hint: Hint | null = null; message = ''; coachButton = '';
@@ -36,7 +37,8 @@ export class MessageView {
       c.restore();
     }
     if (!closing && this.message && (this.msgOn || real - this.msgChange < .25)) {
-      const match = this.message.match(/^(【[^】]+】)([^：]+)：(.*)$/), header = match ? `${match[1]} ${match[2]}` : '', text = match ? match[3] : this.message;
+      // 群消息先取纯文字显示副本再拆行，移除末尾图标留下的空格；原始事件不改。
+      const visible = displayText(this.message).trimEnd(), match = visible.match(/^(【[^】]+】)([^：]+)：(.*)$/), header = match ? `${match[1]} ${match[2]}` : '', text = match ? match[3] : visible;
       const max = Math.min(260, c.width - 160), content = Math.min(max, Math.max(this.p.width(header, 11, 'body-700'), this.p.width(text, 13, 'body-400')));
       const lines = this.p.wrap([{text, color: '#1F2A44'}], content, 13, 'body-400'), heads = header ? this.p.wrap([{text: header, color: '#2F9E6B'}], content, 11, 'body-700') : [];
       const b = {x: c.width - 12 - content - 24, y: this.hintOn && this.hintBox ? this.hintBox.y + this.hintBox.h + 10 : hudBottom + 8, w: content + 24, h: 16 + lines.length * 18.85 + heads.length * 15.95}; this.msgBox = b;
