@@ -1,0 +1,15 @@
+{
+  "__version__": "1.0.4",
+  "builder": {
+    "options": {
+      "wechatgame": {
+        "orientation": "portrait",
+        "appid": "wx15e416b0643d90af",
+        "buildOpenDataContextTemplate": "",
+        "separateEngine": false,
+        "highPerformanceMode": false,
+        "__version__": "1.0.4"
+      }
+    }
+  }
+}

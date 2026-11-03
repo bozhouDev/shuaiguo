@@ -1,3 +1,86 @@
+## 2026-11-03 · Cocos 工程骨架按裁定 2 收尾（编辑器预览通过，微信 CLI 被服务端口阻塞）
+
+- **用户定的：** 按任务卡末尾「裁定 2」改为编辑器构建；保持现有 Cocos 工程打开，绝不运行 `CocosCreator --build`、不启动第二个 Cocos、不打编辑器补丁。日常使用 7456 浏览器预览；基于泊舟已构建的 `wechatgame-001` 验证。仍在 main，不改原型，不搬玩法或全部素材，不接云 / 广告 / 分享，不提交、不推送、不部署。
+- **我定的细节（可改）：** 删除 `build:wechat`、`build:web` 及会启动 Cocos、清缓存的 `tools/build.mjs`，避免误用；以只读 `check:build` 检查每次编辑器出包。保留先前的三层 TS、唯一 Boot、375×812 固定宽度、70 高角色和 TTF 字体子集。角色选择原型单张 PNG 直接导入，便于后续按清单批量搬运，图集打包另定；运行时 min/mag 都为 NEAREST、mipmap 关闭。
+- **本轮改动：** `cocos/package.json`、`tools/check-build.mjs`（新增）、`tools/build.mjs`（删除）、`tools/check-web.mjs`、`tools/wechat.mjs`、`tools/package-size.mjs`、`settings/v2/packages/engine.json`、`settings/v2/packages/wechatgame.json`（新增）及本节。同步本机忽略文件 `profiles/v2/packages/wechatgame.json` 的 AppID 和当前任务选项；现有包 `build/wechatgame-001/project.config.json` 确认并保存为目标 AppID。原先的 `.gitignore`、AGENTS、`.claude/`、移植计划和任务卡全部保留，本轮不改；未操作 Git 索引。
+- **偏差 / 阻塞：** 微信 CLI 的 `islogin` 前置检查就返回服务端口关闭（shell 退出 246），按任务卡停止该分支，未运行打开、编译、预览；没有本轮二维码、模拟器截图或手机验收，不把旧图当新证据。7456 默认预览编辑器当前空场景，显式用 `?scene=3b08c73f-d17c-4dfc-a45e-854ddae97b2f` 指向 Boot；桌面工具栏会占 48px，验证改用 Android 移动浏览器上下文，使预览按自身机制全屏，游戏可见区域实测为 375×812，没有修改游戏适配逻辑。
+- **已验证：** 现有包 Boot / 角色 / 两款字体 / 音效及 AppID 清单通过；PNG / MP3 与原型 SHA256 一致；mulberry32 共 5000 项一致；类型、JS/MJS 语法和 diff 空白检查通过；17 个 meta 前后 SHA256 全部一致，Importer 均健康，场景及 Boot 脚本 UUID 未改；assets 下无多余 JS。预览中角色高 70，min/mag 最近邻，title_LABEL / body_LABEL 均 loaded，字体资源为 TTF、非系统字体，四角节点位置正确，点击日志出现，非静音 PCM 音源 duration=0.351104s、peak=0.937767、AudioContext=running，控制台错误 0（有 headless WebGL ReadPixels 性能警告）。
+- **未验证：** 微信开发者工具编译 / 二维码 / 模拟器画面、真实扬声器听感、手机安全区；共享 AppID 设置被下次编辑器构建实际采用，以及引擎裁剪后的产物和体积；发布用 web-mobile 包。本轮截图是编辑器预览，不能替代网页发布包、微信包或真机验收。P1 完整门槛尚未通过，不进入 P2。
+
+**需要泊舟手动操作：**
+
+1. 微信开发者工具 → 设置 → 安全设置 → 开启「服务端口」（一次性开关；CLI 可能随后要求登录，当前尚未走到登录验证）。本轮遵守任务卡没有代开。开启后才能继续 `open:wechat` / `preview:wechat`，没有让泊舟重建 Cocos 来绕过此阻塞。
+2. 下次出包仍由泊舟在当前 Cocos 的「构建发布」面板点「构建」。先重新打开构建面板 / 项目设置，确认 AppID 为 `wx15e416b0643d90af` 且功能裁剪已读到文件设置；编辑器当前预览日志仍含旧模块，文件改动不能证明其内存配置已刷新。若面板仍是旧值，关闭并重新打开当前工程后再确认（本轮没有重启）。分别构建微信与 web-mobile 后运行下列验包命令；不再要求 CLI 各连续三次。
+3. 获得本轮新二维码后由泊舟手机扫码，确认画面、音效听感和安全区。上述后两项是每次版本验收，不能承诺一次点击以后再也不需要人工构建 / 真机验收。
+
+**工程结构（沿用骨架，新增验包与共享微信设置）：**
+
+```text
+cocos/
+  assets/scenes/Boot.scene (+ meta)
+  assets/scripts/Boot.ts
+  assets/scripts/core/random.ts
+  assets/scripts/view/SmokeView.ts
+  assets/scripts/platform/{Platform,WebPlatform,WechatPlatform}.ts
+  assets/resources/{player_normal.png,title.ttf,body.ttf,ui_click.mp3} (+ meta)
+  settings/v2/packages/{project,engine,builder,wechatgame,...}.json
+  build-config/{wechatgame,web-mobile}.json  # 旧构建配置作参考，不是编辑器当前任务
+  .creator/default-meta.json、.gitignore、package.json、tsconfig.json
+  tests/random.test.mjs
+  tools/{check-build,check-web,wechat,package-size}.mjs
+  tools/subset-fonts.py、tools/requirements.txt
+  build/wechatgame-001/                    # 本机产物，不入库
+```
+
+首轮工程由安装目录 `Contents/Resources/templates/empty-2d` 模板复制，唯一 Canvas + Boot，所有可见节点及相机由代码创建。core 不 import cc，只用可擦除 TS；平台层仍只有接口与空壳。缓存、profiles、build、venv 等继续忽略；素材 meta 和 settings 入库。站酷快乐体 title.ttf 2192 字节、思源黑体粗 body.ttf 3136 字节，本轮未增加文案、不重新裁字；正式建议从所有静态文案抽取字符后生成 TTF，动态昵称所需字另定覆盖/回退方案，不能把本次小子集当完整字体。大标题如固定不变可另评估位图字，暂不实施。
+
+**AppID 与引擎设置：**
+
+- 共享配置：`settings/v2/packages/wechatgame.json` 的 `builder.options.wechatgame.appid`。同时同步本机 `profiles` 的同项及当前 `taskOptionsMap`，避免本机旧测试号覆盖共享值。`build-config/wechatgame.json` 的 AppID 原本就正确，但编辑器已有任务不会自动导入它。现有产物 AppID、compileType=game 已通过只读验包；是否下次自动带入仍待编辑器构建确认。
+- 新关闭：2D 物理总开关及各实现、Spine 总开关与 3.8/4.2、DragonBones、2D 粒子、Video、WebView、TiledMap；同时移除 includeModules 对应项。原已关闭的 3D、骨骼动画、3D 物理、3D 粒子、地形、光照探针、XR、后处理等保持关闭。此游戏碰撞会由纯 TS 计算，不需要 Box2D。
+- 保留：base、WebGL / WebGL2、2d（含 Sprite / Label）、Graphics、UI、音频、animation、tween；保守保留 affine-transform、RichText、Mask、intersection-2d、profiler、custom-pipeline。后面可能用到群聊富文本、裁切、几何相交及调试；渲染管线和后端依赖拿不准时不换。没有编译或承诺裁剪后的节省量。
+- 分离引擎建议：本阶段保持 `separateEngine=false`，先拿到裁剪包。不要直接采用“插件不计主包”的前提：[Cocos 3.8 官方说明](https://docs.cocos.com/creator/3.8/manual/zh/editor/publish/wechatgame-plugin.html) 当前 Q&A 写的是引擎代码仍计入首包；共享缓存可以减少重复下载，并要求内置引擎、非调试构建。是否符合微信当前上传口径、3.8.8 版本插件可用性以及本 AppID 授权，应以开发者工具和真机的实测为准。以后可单独构建插件版比较，不把它作为当前主包超限的解决保证。功能裁剪设置依据 [Cocos 项目设置](https://docs.cocos.com/creator/3.8/manual/zh/editor/project/index.html)，仍须新包回归。
+
+**命令、输出与证据：**
+
+所有命令从仓库根目录执行；本轮没有创建 HTTP 服务、安装包、上传或构建。
+
+| 步骤 | 命令 | 本轮结果 |
+|---|---|---|
+| 核心对照 | `npm run test:core --prefix cocos` | `tests 1 / pass 1 / fail 0`；5 个种子各 1000 项逐项等于真实 harness 加载的原型 E.random；`port/tmp/test-core-ruling2.log` |
+| 类型 | `npm run check:types --prefix cocos` | 退出 0；`typecheck-ruling2.log` |
+| 现有包验收 | `npm run check:build --prefix cocos -- build/wechatgame-001` | PASS，meta、Boot、四种资源及 AppID / compileType；`build-check-ruling2.log` |
+| 体积 | `npm run report:size --prefix cocos -- build/wechatgame-001` | 成功，支持换目录；`package-size-ruling2.log` |
+| 浏览器预览 | `PLAYWRIGHT_MODULE=/tmp/shuaiguo-browser-check/node_modules/playwright/index.mjs npm run check:preview --prefix cocos` | PASS 375×812、日志与非静音音源、错误 0；`editor-preview.log` / `editor-preview-check.json` |
+| 微信前置 | `/Applications/wechatwebdevtools.app/Contents/MacOS/cli islogin` | 服务端口关闭，退出 246；摘录 `wechat-cli-blocker.txt` |
+| 微信恢复后 | `npm run open:wechat --prefix cocos -- build/wechatgame-001`；`npm run preview:wechat --prefix cocos -- build/wechatgame-001` | **未执行**；后者预期写 `port/tmp/preview-qr.png`；结束用 `close:wechat` 只关这个工程 |
+| 网页发布包以后 | 泊舟编辑器构建后：`npm run check:build --prefix cocos -- build/web-mobile` | **未执行**；`serve:web` 与 `check:web -- http://127.0.0.1:18765/ web-mobile` 仍可供新发布包验收，用完关闭服务 |
+| 语法 / 空白 | `node --check js/*.js`；逐文件 `for f in js/*.js cocos/tools/*.mjs; do node --check "$f" || exit; done`；`git diff --check` | 通过；原型文件无 diff |
+
+本轮为配置和本机工具调整，未新写镜像实现的单元测试；已有随机测试保持不变，工具以真实产物、预览和 JSON 统计验证。限定脚本的简化检查完成：未引入通用扫描抽象，保留中文关键逻辑及平台限制注释；小包的几次只读目录扫描没有值得扩大改动的性能成本。
+
+**截图与清理：**
+
+- `port/tmp/editor-preview.png`：本轮 375×812 编辑器预览，目检像素边缘清晰、两款中文字体字形生效。包含编辑器默认的 FPS / vConsole 调试浮层，右下角标记有遮挡；四角节点位置另有 runtime 记录，不据此宣称手机安全区通过。
+- 微信模拟器截图、`preview-qr.png`：本轮未生成。旧 `web-mobile.png` / `web-check.json` 不作为本轮证据。默认空场景与桌面工具栏失败检查分别保留为 `editor-preview-empty-scene*`、`editor-preview-toolbar*`，未隐藏失败。
+- Playwright 在 finally 中退出；已确认没有本轮 headless 浏览器或测试 Node 残留，18765 未监听。CUA 会话已 reset，未操作构建按钮、未退出用户编辑器，现有 7456 服务保留。两个原有 Cocos 主程序 PID 31496 / 31548 在本轮前后均未变，分别为启动器与工程子进程，没有新增 Cocos。meta 前后哈希见 `meta-ruling2-before.json` / `meta-ruling2-after.json`，17/17 一致。
+
+**现有微信包体报告与分包建议（仅建议，不实施）：**
+
+目录 `cocos/build/wechatgame-001/`，当前无分包和远程包。以下按磁盘未压缩文件字节汇总，含开发工具配置文件，作为主包上界，不能当作微信上传后的准确压缩包大小或审核结论。
+
+| 分类 | 字节 | MiB | 占目录 |
+|---|---:|---:|---:|
+| 总计 | 2,991,973 | 2.853368 | 100% |
+| cocos-js 引擎 | 2,602,083 | 2.481540 | 86.97% |
+| 验证素材 resources（含导入数据） | 19,139 | 0.018252 | 0.64% |
+| 内置素材 internal | 171,511 | 0.163566 | 5.73% |
+| 适配、场景、脚本及其他 | 199,240 | 0.190010 | 6.66% |
+
+现有包低于任务卡 4 MiB 预算约 1.147 MiB；正式全部素材不能据此保证装得下。原始验证素材 PNG=7986、title.ttf=2192、body.ttf=3136、MP3=3449 字节。引擎单文件 `_virtual_cc-DSsdqisG.js` 为 2,366,556 字节；Spine wasm 205,175 字节及桥接脚本仍在旧包内，只作为下次裁剪的对照，不能提前从总量里扣除。
+
+主包建议保留 Boot / 加载页、核心代码、首屏图标和少量必需 TTF / 点击音效；办公室地图、角色动作和各关特有图片按公共包 + 关卡 Asset Bundle / 微信子包加载，避免主场景直接引用把依赖重新拉回主包。短音效可在相关子包，BGM / 长音频优先独立音频包；确实超总量或启动下载预算时再评估微信云存储与缓存 / 离线降级，本阶段不接云、不上传。不实施分包或远程迁移。
+
 ## 2026-11-03 · 随机种子与黄金录像完成（按任务卡裁定）
 
 - **用户定的：** 执行 `port/tasks/P0-1-随机种子与黄金录像.md` 及末尾裁定；不改玩法、数值、画面、文案、存档格式；在 main 上完成，不提交、不推送、不部署，不创建 cocos。绘制随机独立；表扬贴纸属于画面层，不进入录像；录像使用空存档（老板默认叫“老板”）、托管玩家、`simulating=true`、`makeState(false)`。

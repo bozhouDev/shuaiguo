@@ -1,0 +1,25 @@
+{
+  "name": "shuaiguo-cocos",
+  "uuid": "361e8331-d06c-48f4-b741-e98474b32027",
+  "private": true,
+  "description": "出包由泊舟在已打开的编辑器中构建；已移除 CLI 构建入口，避免 3.8.8 importer 竞态及并发写坏 meta。日常使用 check:preview。",
+  "type": "module",
+  "creator": {
+    "version": "3.8.8"
+  },
+  "scripts": {
+    "test:core": "node --experimental-strip-types --test tests/*.test.mjs",
+    "fonts:setup": "python3 -m venv .venv && .venv/bin/python -m pip install --no-cache-dir -r tools/requirements.txt",
+    "fonts:subset": ".venv/bin/python tools/subset-fonts.py",
+    "check:build": "node tools/check-build.mjs",
+    "open:wechat": "node tools/wechat.mjs open",
+    "preview:wechat": "node tools/wechat.mjs preview",
+    "close:wechat": "node tools/wechat.mjs close",
+    "serve:web": "python3 -m http.server 18765 --bind 127.0.0.1 --directory build/web-mobile",
+    "check:web": "node tools/check-web.mjs",
+    "check:preview": "node tools/check-web.mjs http://localhost:7456/?scene=3b08c73f-d17c-4dfc-a45e-854ddae97b2f editor-preview",
+    "report:size": "node tools/package-size.mjs",
+    "check:types": "node /Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/node_modules/typescript/bin/tsc --project tsconfig.json --pretty false"
+  },
+  "version": "3.8.8"
+}

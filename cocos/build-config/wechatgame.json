@@ -1,0 +1,26 @@
+{
+  "name": "shuaiguo",
+  "platform": "wechatgame",
+  "buildPath": "project://build",
+  "outputName": "wechatgame",
+  "debug": false,
+  "sourceMaps": false,
+  "md5Cache": false,
+  "startScene": "3b08c73f-d17c-4dfc-a45e-854ddae97b2f",
+  "scenes": [
+    {
+      "url": "db://assets/scenes/Boot.scene",
+      "uuid": "3b08c73f-d17c-4dfc-a45e-854ddae97b2f"
+    }
+  ],
+  "useSplashScreen": false,
+  "engineModulesConfigKey": "defaultConfig",
+  "packages": {
+    "wechatgame": {
+      "appid": "wx15e416b0643d90af",
+      "orientation": "portrait",
+      "separateEngine": false,
+      "buildOpenDataContextTemplate": false
+    }
+  }
+}

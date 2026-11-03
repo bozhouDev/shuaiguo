@@ -1,0 +1,27 @@
+{
+  "name": "shuaiguo",
+  "platform": "web-mobile",
+  "buildPath": "project://build",
+  "outputName": "web-mobile",
+  "debug": false,
+  "sourceMaps": false,
+  "md5Cache": false,
+  "startScene": "3b08c73f-d17c-4dfc-a45e-854ddae97b2f",
+  "scenes": [
+    {
+      "url": "db://assets/scenes/Boot.scene",
+      "uuid": "3b08c73f-d17c-4dfc-a45e-854ddae97b2f"
+    }
+  ],
+  "useSplashScreen": false,
+  "engineModulesConfigKey": "defaultConfig",
+  "packages": {
+    "web-mobile": {
+      "resolution": {
+        "designWidth": 375,
+        "designHeight": 812
+      },
+      "orientation": "portrait"
+    }
+  }
+}
