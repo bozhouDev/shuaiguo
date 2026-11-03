@@ -42,7 +42,7 @@ export const potsLogic = {
     this.S.flying.push({ src: 'sky', phase: 'sky', t: C.SKY_TIME, warn0: C.SKY_TIME, x: target.sn.x, y: target.sn.y, target, hot: false, a: 0, spin: 0, life: C.POT_LIFE, label: this.E.pick(OFFICE.potLabels) });
     this.S.spawned++; this.S.skies++;
     if (target.isPlayer) {
-      this.floats.add(`${from ? from.name : '老板'}：这个你来`, target.sn.x, target.sn.y - 60, '#E8504A');
+      this.floats.add(`${from ? from.name : this.bossName()}：这个你来`, target.sn.x, target.sn.y - 60, '#E8504A');
       this.E.sfx('skyWarn');
     }
   },
@@ -336,7 +336,7 @@ export const potsLogic = {
     this.S.arcs.push({ x0: f.x, y0: f.y, to: () => this.tailPos(a), t: 0, dur: 0.25, label: f.label });
     a.misses++;
     if (a.isPlayer) {
-      this.floats.add(why === 'wife' ? '老板娘护短，锅弹回来' : why === 'nephew' ? '老板护短，锅弹回来' : why === 'shield' ? '他刚接锅，弹开了' : '甩空了！锅弹回来', a.sn.x, a.sn.y - 40, '#E8504A');
+      this.floats.add(why === 'wife' ? '老板娘护短，锅弹回来' : why === 'nephew' ? `${this.bossName()}护短，锅弹回来` : why === 'shield' ? '他刚接锅，弹开了' : '甩空了！锅弹回来', a.sn.x, a.sn.y - 40, '#E8504A');
       this.E.sfx('miss');
     }
   },

@@ -5,7 +5,7 @@ import {Result} from './ResultView';
 export class ShareView {
   constructor(readonly p: ScreenPaint) {}
   // 原型的标题优先级：末关证书大于隐藏成就；分享不发奖励。
-  title(info: Result['shareInfo']): string {if(info.nephewCrushed&&info.kind!=='cert')return '今天我把老板小舅子压垮了';if(info.kind==='blame')return info.crushed?'我被锅压垮了，剩下这口急件你来背':`我背了 ${info.blames} 次锅被留下加班，这口锅甩给你了`;if(info.kind==='brag')return `我${info.day}第 ${info.rank} 名准点下班，你能活到几点？`;return info.revived||info.rescued?'我拿到了「关系户」证书，领导罩着就是不一样':'「凭本事下班」证书到手，一个广告都没看';}
+  title(info: Result['shareInfo']): string {if(info.nephewCrushed&&info.kind!=='cert')return info.nephewReport;if(info.kind==='blame')return info.crushed?'我被锅压垮了，剩下这口急件你来背':`我背了 ${info.blames} 次锅被留下加班，这口锅甩给你了`;if(info.kind==='brag')return `我${info.day}第 ${info.rank} 名准点下班，你能活到几点？`;return info.revived||info.rescued?'我拿到了「关系户」证书，领导罩着就是不一样':'「凭本事下班」证书到手，一个广告都没看';}
   // 配图内部按原型220×176像素画，外层任意等比缩放。
   picture(info: Result['shareInfo'], b: Box): void {
     const p=this.p,c=p.c;c.save();c.translate(b.x,b.y);c.scale(b.w/220,b.h/176);

@@ -8,12 +8,19 @@ const { normalize } = require('../../tests/golden/record.cjs');
 // 仅移除 VM 原型身份，不改变字段和值。
 const plain = (v) => JSON.parse(JSON.stringify(v));
 // 真实 finish 的 oracle 除原字段外，验证画面中的广告资格与彩蛋、证书决定。
-function compare(a, b, reason) {
+function compare(a, b, reason, namedReports) {
   a.m.finish(reason);
   const r = a.m.lastResult,
     actual = b.m.finish(reason);
   const { epilogue, ads, ...base } = actual;
-  assert.deepEqual(summary(base), summary(r));
+  const expected = summary(r);
+  // 只有明确提供自定义称呼的夹具允许两段报告变化，其余字段仍严格对照冻结原型。
+  if (namedReports) {
+    const { pieReport, nephewReport } = namedReports;
+    Object.assign(expected, { pieReport, nephewReport });
+    Object.assign(expected.shareInfo, { pieReport, nephewReport });
+  }
+  assert.deepEqual(summary(base), expected);
   assert.deepEqual(b.stored(), a.stored());
   assert.equal(epilogue, a.html().includes('我们是大小周，明天照常上班') ? '我们是大小周，明天照常上班' : '');
   assert.equal(ads.revive, a.html().includes('data-act="revive"'));
@@ -75,7 +82,10 @@ test('旧存档按blames比较、新存档按debt比较，星级和解锁分支�
         s.player.sn.segs = [{ label: '旧账', due: 100, hot: false }];
         s.player.piesEaten = 2;
       }
-      compare(a, b, 'time');
+      compare(a, b, 'time', {
+        pieReport: '今天吃了张老板 2 张饼',
+        nephewReport: level >= 2 ? '张老板小舅子今天背锅 0 次，第一个下班' : ''
+      });
     }
 });
 test('复盘各来源及平分优先级、成就持久化与模拟隔离一致', () => {

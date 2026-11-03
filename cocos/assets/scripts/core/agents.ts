@@ -291,7 +291,7 @@ export const agentsLogic = {
       if (scores[id] > best) { buff = id; best = scores[id]; }
     }
     const reasons: Record<string, { img: string; html: string }> = {
-      trip: { img: 'player_panic', html: `复盘：老板的天降锅砸了你 <b>${h.sky}</b> 口，躲都躲不掉。` },
+      trip: { img: 'player_panic', html: `复盘：${this.bossName()}的天降锅砸了你 <b>${h.sky}</b> 口，躲都躲不掉。` },
       gold: { img: 'boss_aim', html: `复盘：你当着领导甩锅，被抓现行 <b>${P.caught}</b> 次，每次白背 1 次锅。` },
       news: { img: 'printer', html: `复盘：散会、打印机卡纸喷出来的锅，砸了你 <b>${h.burst}</b> 口。` },
       legs: { img: 'pm_angry', html: `复盘：同事和领导朝你扔的锅，你被砸中 <b>${scores.legs}</b> 口。` },

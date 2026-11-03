@@ -147,7 +147,7 @@ export const stateLogic = {
     }
     // 画饼会议只给老板：固定提前 2.5 秒通知，消息增益不改变这个节拍。
     for (const meeting of this.L.pieMeetings || []) {
-      list.push({ t: meeting.t - 2.5, act: 'msg', text: '【全员群】老板：大家停一下，开个三分钟短会。' });
+      list.push({ t: meeting.t - 2.5, act: 'msg', text: `【全员群】${this.bossName()}：大家停一下，开个三分钟短会。` });
       list.push({ t: meeting.t, act: 'pieMeeting', meeting });
     }
     // 随机事件：从池子里抽 n 个不重复的，把时间窗切成 n 段，每段里随机一个时刻
@@ -157,7 +157,7 @@ export const stateLogic = {
       const span = (ev.window[1] - ev.window[0]) / kinds.length;
       kinds.forEach((kind, i) => {
         const t = ev.window[0] + span * i + this.E.rand(0.15, 0.85) * span;
-        list.push({ t: t - early, act: 'msg', text: C.EVENTS[kind].msg });
+        list.push({ t: t - early, act: 'msg', text: this.bossText(C.EVENTS[kind].msg) });
         list.push({ t: t + 2, act: 'event', kind });
       });
     }
@@ -165,7 +165,8 @@ export const stateLogic = {
     for (const inc of this.L.incidents || []) {
       const who = this.incidentLeader(inc);
       if (!who) continue;
-      const text = this.E.shuffle(C.INCIDENT_MSGS[inc.kind].slice())[0].replace('{boss}', this.bossName()).replace('{who}', C.LEADER_TYPES[who.type].name === '老板' ? this.bossName() : C.LEADER_TYPES[who.type].name);
+      // 与其余称呼出口一致，回调替换不把用户输入里的 $& 当作替换语法。
+      const text = this.E.shuffle(C.INCIDENT_MSGS[inc.kind].slice())[0].replace('{boss}', () => this.bossName()).replace('{who}', () => who.type === 'boss' ? this.bossName() : C.LEADER_TYPES[who.type].name);
       list.push({ t: inc.t - 2 - early, act: 'msg', text });
       list.push({ t: inc.t, act: 'incident', inc });
     }

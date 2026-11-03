@@ -66,6 +66,41 @@ function load(file){file=path.resolve(file);if(!file.endsWith('.ts'))file+='.ts'
  const sounds=[];AppView.prototype.action.call({...host,panel:'boss',audio:{unlock(){},sfx(n){sounds.push(n);}},closePanel(){this.panel='';}},'cancel');assert.deepEqual(sounds,['click']);
  console.log('PASS 老板名称取消按钮音效与原型一致');
 
+ // 自定义称呼从真实core事件一直验到绘字边界；默认称呼保留原型逐字文案。
+ const {MessageView}=load('cocos/assets/scripts/view/MessageView'),{IntroView}=load('cocos/assets/scripts/view/IntroView'),{ResultView}=load('cocos/assets/scripts/view/ResultView'),{ShareView}=load('cocos/assets/scripts/view/ShareView');
+ const {EVENTS,LEADER_TYPES}=load('cocos/assets/scripts/core/config'),{LEVELS}=load('cocos/assets/scripts/core/levels');
+ // 绘图设备仅记录最终文字；真实排版、换行和页面函数照常执行。
+ function textPaint(){const texts=[],surface=new Proxy({width:375,height:812,assets:{spr:{}},fillText(text){texts.push(text);}},{get:(o,k)=>k in o?o[k]:()=>{}}),{ScreenPaint}=load('cocos/assets/scripts/view/ScreenPaint');return {p:new ScreenPaint(surface),texts};}
+ for(const name of ['老板','王总','王老板$&']){
+  const events=[],progress={unlocked:5,best:{},tutDone:true,bossName:name},named=new Match({level:3,seed:1001,progress,onEvent:e=>events.push(e)});
+  const expected=[`【全员群】${name}：大家停一下，开个三分钟短会。`,`【工作群】${name}：@所有人 大客户急件，今天必须交，谁来跟一下？`];
+  const messages=named.S.schedule.filter(it=>it.act==='msg').map(it=>it.text);
+  assert.ok(named.S.schedule.find(it=>it.act==='msg'&&it.t===84).text.startsWith(`【工作群】${name}：`),'发火预告也应逐字保留自定义称呼');
+  for(const text of expected){assert.ok(messages.includes(text),`群消息应使用称呼：${text}`);named.showMsg(text);const {p,texts}=textPaint(),view=new MessageView(p);view.event('showMsg',[text],0);view.draw(1,70,false);assert.ok(texts.join('').includes(name));}
+  named.launchSky(named.S.player);named.launchSky(named.S.player,named.S.leaders.find(l=>l.type==='director'));
+  const pot=named.newPot(0),thrown={owner:named.S.player,pot,label:pot.label,x:100,y:700};
+  named.missThrow({...thrown},'nephew');named.missThrow({...thrown},'wife');named.startFinale(LEVELS[0].finale);
+  const floats=events.filter(e=>e.kind==='floats').map(e=>e.args[0]);
+  for(const text of [`${name}：这个你来`,`${name}护短，锅弹回来`,`${name}：下班前这几个你分一下`,'经理：这个你来','老板娘护短，锅弹回来'])assert.ok(floats.includes(text),`飘字应逐字匹配：${text}`);
+  named.S.player.hitsBy.sky=4;
+  assert.equal(named.diagnose(named.S.player).html,`复盘：${name}的天降锅砸了你 <b>4</b> 口，躲都躲不掉。`);
+  named.S.player.piesEaten=2;
+  for(const crushed of [false,true]){named.S.nephewCrushed=crushed;const result=named.calculateResult('time'),{p,texts}=textPaint();assert.equal(result.pieReport,`今天吃了${name} 2 张饼`);assert.equal(result.nephewReport,crushed?`今天我把${name}小舅子压垮了`:`${name}小舅子今天背锅 0 次，第一个下班`);new ResultView(p).draw(named,result,{x:0,y:0,w:340,h:600});assert.ok(texts.includes(`${name}小舅子`));const share=new ShareView(p);if(crushed){const info={...result.shareInfo,kind:'brag'};assert.equal(share.title(info),`今天我把${name}小舅子压垮了`);texts.length=0;share.draw(info,{x:0,y:0,w:320,h:600});assert.ok(texts.join('').includes(name));}}
+  const friday=new Match({level:4,seed:1001,progress}),ranked=textPaint();new ResultView(ranked.p).draw(friday,friday.calculateResult('time'),{x:0,y:0,w:340,h:600});assert.ok(ranked.texts.includes(`${name}小舅子`),'周五参与排名的关系称呼也应生效');
+  // 教学与条件提示都走真实文本出口；不改全局LEVELS，也不重复替换含“老板”的称呼。
+  const coach=new Match({level:0,seed:1001,tutorial:true,progress,onEvent:e=>events.push(e)});coach.tutNext();coach.showHint(LEVELS[0].tips[0]);
+  assert.ok(events.some(e=>e.kind==='showHint'&&e.args[0].text===`站好，!${name}点名了!。`));
+  assert.ok(events.some(e=>e.kind==='showHint'&&e.args[0].sub===`你站在${name}的!红扇形!里`));
+  for(const level of [0,1,2,3,4]){const m=new Match({level,seed:1001,progress}),{p,texts}=textPaint();new IntroView(p).draw(m,progress);const joined=texts.join('');if(level!==4)assert.ok(joined.includes(name));if(name==='王总')assert.doesNotMatch(joined.replace(m.L.name,'').replaceAll('老板娘',''),/老板/);}
+  // 大厅尚无world时，玩法弹窗也必须读取存档中的称呼；其他领导类别保持原名。
+  const {p,texts}=textPaint(),surface=p.c,pane={surface,p,mask:{active:false,setPosition(){},getComponent(){return {setContentSize(){}};}},root:{setPosition(){}}};
+  const rulesHost={panes:[pane],surface,paint:p,heights:{},scroll:0,selected:4,real:0,panelAt:0,panel:'rules',store:{read:()=>progress},actions:[],praise:{clear(){}},removeEdit(){}};
+  AppView.prototype.open.call(rulesHost,'rules');AppView.prototype.modal.call(rulesHost,'rules');assert.ok(texts.join('').includes(`${name}、经理、老板娘`));
+  if(name==='王总')for(const text of [...expected,...floats.filter(t=>!t.startsWith('老板娘')),named.diagnose(named.S.player).html])assert.doesNotMatch(text,/老板/);
+ }
+ assert.equal(EVENTS.p0.msg,'【工作群】老板：@所有人 大客户急件，今天必须交，谁来跟一下？');assert.equal(LEADER_TYPES.boss.name,'老板');assert.equal(LEADER_TYPES.wife.name,'老板娘');assert.equal(LEVELS[3].name,'周四 · 老板画饼');
+ console.log('PASS 默认/王总/含老板与$&称呼：群消息、天降/护短/收尾飘字、复盘、结算分享、教学提示、介绍及大厅玩法；类型/老板娘/原始关卡数据不变');
+
  // 真实字体与图集尺寸计算大厅，对照浏览器采得的CSS矩形；不替代栅格截图。
  const {ScreenPaint}=load('cocos/assets/scripts/view/ScreenPaint'),{LobbyView}=load('cocos/assets/scripts/view/LobbyView'),{ATLAS}=load('cocos/assets/scripts/view/atlas-data');
  const spr=Object.fromEntries(ATLAS.sheets.flatMap(s=>Object.entries(s.frames).map(([name,r])=>[name,{w:r[2],h:r[3]}]))),surface=new Proxy({width:375,height:812,assets:{spr}},{get:(o,k)=>k in o?o[k]:()=>{}}),paint=new ScreenPaint(surface),lobby=new LobbyView(paint);

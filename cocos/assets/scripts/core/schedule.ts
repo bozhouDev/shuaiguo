@@ -159,7 +159,7 @@ export const scheduleLogic = {
     this.addPots(P, fin.pots, l ? l.x : P.sn.x, l ? l.y : P.sn.y - 200);
     const end = this.S.t0 + this.L.duration - 0.6; // 赶在下班判定之前到点
     for (const pot of P.sn.segs.slice(-fin.pots)) pot.due = end;
-    this.floats.add(fin.say, P.sn.x, P.sn.y - 60, '#E8504A');
+    this.floats.add(this.bossText(fin.say), P.sn.x, P.sn.y - 60, '#E8504A');
     this.E.toast('同事都挤在茶水间，过去一口气甩掉！', 2400);
     this.E.sfx('tea');
     this.shake = 8;

@@ -74,7 +74,11 @@ export class Match {
     return e;
   }
   // 教学横幅保留逻辑计时，DOM 交给画面层。
-  showHint(h: Hint) { this.emit('showHint', h); this.hintTimer = h.sub ? 3.4 : 2.8; }
+  showHint(h: Hint) {
+    // 关卡与带教台词保留原始数据，只在出口替换本局称呼，不改“老板娘”。
+    if (this.bossName() !== '老板') h = { ...h, text: this.bossText(h.text), ...(h.sub === undefined ? {} : { sub: this.bossText(h.sub) }) };
+    this.emit('showHint', h); this.hintTimer = h.sub ? 3.4 : 2.8;
+  }
   // 群消息保留 chat 音效的调用顺序。
   showMsg(text: string) { this.emit('showMsg', text); this.msgTimer = 3.4; this.E.sfx('chat'); }
   // 横幅由帧循环单独推进，黄金录像只调用 update，因此不能在 update 中偷偷推进。
@@ -102,6 +106,8 @@ export class Match {
   saveProgress(p: Progress) { this.progress = JSON.parse(JSON.stringify(p)); this.emit('progress', this.loadProgress()); }
   // 称呼清理规则和默认值保持原型写法。
   bossName() { return this.cleanBossName(this.loadProgress().bossName) || '老板'; }
+  // 只处理原始台词中的称呼；回调用法保留用户输入的 $& 等字符，不递归替换新称呼。
+  bossText(text: string) { return text.replace(/老板(?!娘)/g, () => this.bossName()); }
 
   // 对应 draw() 的 pickAim(P)：画面层每帧必须在 update 后调用一次。
   // aimTgt 会记住 1.25 倍扇形内的旧目标；只在按甩时计算会改变下一次出手。
@@ -145,8 +151,8 @@ export class Match {
     if (stars > 0) prog.unlocked = Math.max(prog.unlocked, this.L.id + 1);
     const title = crushed ? '锅太多，走不动了' : !stars ? '被留下加班' : ['', '甩锅宗师', '职场老油条', '勉强下班'][myRank];
     const nephew = this.S.agents.find(a => a.key === 'nephew');
-    const pieReport = P.piesEaten ? `今天吃了老板 ${P.piesEaten} 张饼` : '';
-    const nephewReport = !nephew ? '' : this.S.nephewCrushed ? '今天我把老板小舅子压垮了' : '老板小舅子今天背锅 0 次，第一个下班';
+    const pieReport = P.piesEaten ? `今天吃了${this.bossName()} ${P.piesEaten} 张饼` : '';
+    const nephewReport = !nephew ? '' : this.S.nephewCrushed ? `今天我把${this.bossName()}小舅子压垮了` : `${this.bossName()}小舅子今天背锅 0 次，第一个下班`;
     const next = LEVELS[LEVELS.indexOf(this.L) + 1];
     const diag = !stars ? this.diagnose(P) : null;
     const shareKind = !stars ? 'blame' : next ? 'brag' : 'cert';
