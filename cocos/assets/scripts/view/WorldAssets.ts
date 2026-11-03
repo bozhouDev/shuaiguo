@@ -12,6 +12,7 @@ function load<T extends Asset>(path: string, type: new (...args: any[]) => T): P
 export class WorldAssets {
   spr: Record<string, Picture> = {};
   title!: TTFFont;
+  body400!: TTFFont;
   body700!: TTFFont;
   body900!: TTFFont;
   private crops = new Map<Picture, Map<string, Picture>>();
@@ -19,7 +20,7 @@ export class WorldAssets {
 
   // 图集失败只报错；图集内缺走路帧退回 normal，爆炸缺图退回撞击星。
   async load(): Promise<void> {
-    [this.title, this.body700, this.body900] = await Promise.all([load('title', TTFFont), load('body-700', TTFFont), load('body-900', TTFFont)]);
+    [this.title, this.body400, this.body700, this.body900] = await Promise.all([load('title', TTFFont), load('body-400', TTFFont), load('body-700', TTFFont), load('body-900', TTFFont)]);
     await Promise.all(ATLAS.sheets.map(async sheet => {
       try {
         const texture = await this.pixels(sheet.file + '/texture');

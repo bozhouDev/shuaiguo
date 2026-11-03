@@ -14,14 +14,14 @@ def build(source, output, text, weight=None):
     if weight is not None:
         font = instantiateVariableFont(font, {'wght': weight}, inplace=True)
         family = 'Shuaiguo Noto Sans SC'
-        style = 'Black' if weight == 900 else 'Bold'
+        style = {400: 'Regular', 700: 'Bold', 900: 'Black'}[weight]
         for nid, value in {1: family, 2: style, 3: family + ' ' + style, 4: family + ' ' + style,
                            6: 'ShuaiguoNotoSansSC-' + style, 16: family, 17: style}.items():
             for platform, enc, lang in [(3, 1, 0x409), (1, 0, 0)]:
                 font['name'].setName(value, nid, platform, enc, lang)
         font['OS/2'].usWeightClass = weight
-        font['OS/2'].fsSelection = (font['OS/2'].fsSelection & ~(1 << 6)) | (1 << 5)
-        font['head'].macStyle |= 1
+        font['OS/2'].fsSelection = (font['OS/2'].fsSelection & ~((1 << 6) | (1 << 5))) | (1 << (6 if weight == 400 else 5))
+        font['head'].macStyle = (font['head'].macStyle & ~1) | (0 if weight == 400 else 1)
     options = Options()
     subset = Subsetter(options)
     subset.populate(text=text)
@@ -31,19 +31,22 @@ def build(source, output, text, weight=None):
     font.save(out)
     return {'file': output, 'bytes': out.stat().st_size, 'weight': font['OS/2'].usWeightClass,
             'family': font['name'].getDebugName(1), 'style': font['name'].getDebugName(2),
-            'glyphs': len(font.getBestCmap())}
+            'glyphs': len(font.getBestCmap()),
+            'missingChinese': ''.join(ch for ch in text if '\u4e00' <= ch <= '\u9fff' and ord(ch) not in font.getBestCmap())}
 
 
 if __name__ == '__main__':
     files = [ROOT.parent / 'js/levels.js', ROOT.parent / 'js/game.js',
-             *sorted((ROOT / 'assets/scripts/core').glob('*.ts'))]
+             *sorted((ROOT / 'assets/scripts/core').glob('*.ts')),
+             *sorted((ROOT / 'assets/scripts/view').glob('*.ts'))]
     # 源码全部中文和标点纳入，动态插值再补完整数字和拉丁字母；宁可多收，不漏台词。
     text = ''.join(p.read_text() for p in files) + '这锅你来背甩!弹!急件0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz +-.×½⏰🔥🧋❓'
     text = ''.join(sorted(set(text)))
     reports = [build('ZCOOLKuaiLe-Regular.ttf', 'title.ttf', text),
+               build('NotoSansSC-VF.ttf', 'body-400.ttf', text, 400),
                build('NotoSansSC-VF.ttf', 'body-700.ttf', text, 700),
                build('NotoSansSC-VF.ttf', 'body-900.ttf', text, 900)]
-    dest = ROOT.parent / 'port/tmp/p3-1'
+    dest = ROOT.parent / 'port/tmp/p3-2'
     dest.mkdir(parents=True, exist_ok=True)
     (dest / 'fonts.json').write_text(json.dumps({'sources': [str(p.relative_to(ROOT.parent)) for p in files],
                                                'characters': len(text), 'fonts': reports}, ensure_ascii=False, indent=2))

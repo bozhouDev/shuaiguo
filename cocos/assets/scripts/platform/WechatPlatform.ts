@@ -1,8 +1,10 @@
-import type { Platform } from './Platform';
+import type { Platform, TopAvoidance } from './Platform';
 
 // 微信适配空壳：不调用 wx、云开发或广告接口。
 export class WechatPlatform implements Platform {
   readonly kind = 'wechat';
+  // P5使用wx.getMenuButtonBoundingClientRect及safeArea，换算设计坐标后返回。
+  topAvoidance(): TopAvoidance { return {top: 0}; }
   // 未接入时返回无数据。
   getStorage(_key: string): string | null { return null; }
   // 后续接微信本地存储，键名沿用原型。

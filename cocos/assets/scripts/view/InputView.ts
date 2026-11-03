@@ -12,7 +12,8 @@ const KEYS: Record<number, string> = {
 export class InputView {
   private tools: SpriteTools;
   private fireTouches = new Set<number>();
-  constructor(readonly match: Match, readonly surface: DrawSurface, readonly togglePause: () => void, readonly resume: () => void) {
+  private pressed = new Set<number>();
+  constructor(readonly match: Match, readonly surface: DrawSurface, readonly togglePause: () => void, readonly pointer: (x: number, y: number) => boolean, readonly key: (code: number) => boolean, readonly enabled: () => boolean) {
     this.tools = new SpriteTools(surface.assets);
     input.on(Input.EventType.TOUCH_START, this.down, this); input.on(Input.EventType.TOUCH_MOVE, this.move, this);
     input.on(Input.EventType.TOUCH_END, this.up, this); input.on(Input.EventType.TOUCH_CANCEL, this.up, this);
@@ -28,23 +29,27 @@ export class InputView {
   }
   // 按下立即计一次甩；第二根摇杆手指不抢第一根的ID。
   private down(e: EventTouch): void {
-    if (this.match.mode !== 'play') return; this.resume();
     const p = e.getUILocation(), x = p.x, y = this.surface.height - p.y, id = e.getID()!, c = this.fireCenter();
+    if (this.pointer(x, y) || !this.enabled() || this.match.mode !== 'play') return;
     if (Math.hypot(x - c.x, y - c.y) <= 46) {this.fireTouches.add(id); this.match.inp.fire++; return;}
     if (this.match.inp.down) return; this.match.inp.down = true; this.match.inp.id = id; this.aim(x, y);
   }
-  private move(e: EventTouch): void {if (e.getID() === this.match.inp.id) {const p = e.getUILocation(); this.aim(p.x, this.surface.height - p.y);}}
+  private move(e: EventTouch): void {if (this.enabled() && e.getID() === this.match.inp.id) {const p = e.getUILocation(); this.aim(p.x, this.surface.height - p.y);}}
   private up(e: EventTouch): void {const id = e.getID()!; this.fireTouches.delete(id); if (id === this.match.inp.id) {this.match.inp.down = false; this.match.inp.id = null;}}
   // 文字输入框保留浏览器的空格/方向键；按住空格或J不连发。
   private keyDown(e: EventKeyboard): void {
     if (typeof document !== 'undefined' && document.activeElement?.matches('input,textarea,[contenteditable]')) return;
+    if (this.pressed.has(e.keyCode)) return;
+    this.pressed.add(e.keyCode);
+    if (this.match.coachLocked()) {this.key(e.keyCode); return;}
+    if (e.keyCode !== KeyCode.KEY_P && e.keyCode !== KeyCode.ESCAPE && this.key(e.keyCode)) return;
     const k = KEYS[e.keyCode]; if (!k) return; const repeat = this.match.inp.keys[k]; this.match.inp.keys[k] = true;
     if (!repeat && (k === 'p' || k === 'escape')) this.togglePause();
     if (!repeat && (k === ' ' || k === 'j') && this.match.mode === 'play') this.match.inp.fire++;
   }
-  private keyUp(e: EventKeyboard): void {const k = KEYS[e.keyCode]; if (k) this.match.inp.keys[k] = false;}
+  private keyUp(e: EventKeyboard): void {this.pressed.delete(e.keyCode); const k = KEYS[e.keyCode]; if (k) this.match.inp.keys[k] = false;}
   // 切后台/暂停时清空输入，手指回来不会带入一帧移动或出手。
-  clear(): void {const i = this.match.inp; i.down = false; i.id = null; i.angle = null; i.mag = 0; i.keys = {}; i.fire = 0; this.fireTouches.clear();}
+  clear(background = false): void {if (background) this.pressed.clear(); const i = this.match.inp; i.down = false; i.id = null; i.angle = null; i.mag = 0; i.keys = {}; i.fire = 0; this.fireTouches.clear();}
   // 对应 updateThrowBtn；仅本卡操作按钮，不做 HUD。
   draw(time: number): void {
     const ctx = this.surface; ctx.begin();
@@ -72,6 +77,6 @@ export class InputView {
   destroy(): void {
     input.off(Input.EventType.TOUCH_START, this.down, this); input.off(Input.EventType.TOUCH_MOVE, this.move, this);
     input.off(Input.EventType.TOUCH_END, this.up, this); input.off(Input.EventType.TOUCH_CANCEL, this.up, this);
-    input.off(Input.EventType.KEY_DOWN, this.keyDown, this); input.off(Input.EventType.KEY_UP, this.keyUp, this); this.clear();
+    input.off(Input.EventType.KEY_DOWN, this.keyDown, this); input.off(Input.EventType.KEY_UP, this.keyUp, this); this.clear(true);
   }
 }

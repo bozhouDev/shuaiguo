@@ -160,7 +160,7 @@ export class DrawSurface {
     const size = Number(this.font.match(/([\d.]+)px/)?.[1] || 16), outline = this.strokeTextValue;
     if (label.fontSize !== size) { label.fontSize = size; label.lineHeight = size * 1.2; }
     // 世界文字遵照ctx.font：快乐体，领导名牌额外加粗；为后续画面保留700/900的明确选择。
-    const font = /900|body-900/.test(this.font) ? this.assets.body900 : /700|body-700/.test(this.font) ? this.assets.body700 : this.assets.title;
+    const font = /900|body-900/.test(this.font) ? this.assets.body900 : /700|body-700/.test(this.font) ? this.assets.body700 : /body-400/.test(this.font) ? this.assets.body400 : this.assets.title;
     if (label.font !== font) label.font = font;
     label.isBold = /bold/.test(this.font);
     if (label.string !== s) label.string = s;
