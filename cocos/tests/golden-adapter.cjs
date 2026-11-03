@@ -3,6 +3,7 @@
 // 不调用原型；snapshot/normalize 逐字采用 record.cjs 规则，适配器只读 core 状态。
 require('./register-core.cjs');
 const { Match } = require('../assets/scripts/core/match.ts');
+const {levelForMatch} = require('../assets/scripts/core/remote-config.ts');
 const DT = 1 / 60;
 function normalize(value) {
   if (typeof value === 'number') return Number.isFinite(value) ? (+value.toFixed(4) || 0) : String(value);
@@ -45,7 +46,8 @@ function snapshot(ctx, s, step, final = false) {
 // 对局事件按 harness 的原始调用时间复制，额外的画面事件不进入旧录像契约。
 function runCase(level, seed) {
   const events = [], kinds = new Set(['sfx', 'toast', 'buzz', 'floats', 'showMsg', 'showHint', 'spawnFx']);
-  const match = new Match({ level, seed, auto: true, simulating: true, onEvent(event) {
+  // 空远程配置也走正式开局的参数快照注入，必须仍与冻结原型100/100一致。
+  const match = new Match({ level, levelParams: levelForMatch(level,{version:0,levels:{}}), seed, auto: true, simulating: true, onEvent(event) {
     if (kinds.has(event.kind)) events.push({ t: event.t, kind: event.kind, args: JSON.parse(JSON.stringify(event.args)) });
   } });
   const s = match.S, snapshots = [], ctx = { TEST: match, E: match.E };

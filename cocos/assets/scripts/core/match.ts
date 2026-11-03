@@ -12,6 +12,7 @@ import { createTIP_CHECKS } from './tips';
 import { createTUT_STEPS } from './tutorial-steps';
 import * as C from './config';
 import { simulate } from './simulate';
+import {isBetterBest} from './progress';
 import type { State, Level, Input, MatchOptions, CoreEvent, Hint, Fx, Progress } from './types';
 
 type StateLogic = typeof stateLogic;
@@ -48,7 +49,7 @@ export class Match {
     const logic = { ...stateLogic, ...potsLogic, ...leadersLogic, ...scheduleLogic, ...tutorialLogic, ...agentsLogic };
     for (const [name, fn] of Object.entries(logic)) Object.defineProperty(this, name, { value: fn.bind(this), configurable: true });
     this.onEvent = options.onEvent;
-    this.L = LEVELS[options.level ?? 0];
+    this.L = options.levelParams ? JSON.parse(JSON.stringify(options.levelParams)) : LEVELS[options.level ?? 0];
     this.auto = options.auto ?? false;
     this.simulating = options.simulating ?? false;
     this.progress = JSON.parse(JSON.stringify(options.progress ?? { unlocked: 1, best: {} }));
@@ -144,8 +145,8 @@ export class Match {
     const myRank = crushed ? rank.length : rank.indexOf(P) + 1;
     const stars = crushed ? 0 : this.starsOfRank(myRank);
     const old = prog.best[this.L.id];
-    const myDebt = this.debtOf(P), oldDebt = old ? old.debt ?? old.blames ?? Infinity : Infinity;
-    const isBest = stars > 0 && (!old || stars > old.stars || (stars === old.stars && myDebt < oldDebt));
+    const myDebt = this.debtOf(P);
+    const isBest = isBetterBest({stars, debt: myDebt, blames: P.blames}, old);
     if (isBest) prog.best[this.L.id] = { blames: P.blames, debt: myDebt, stars };
     const unlockedNew = stars > 0 && this.L.id + 1 > prog.unlocked && LEVELS.some(lv => lv.id === this.L.id + 1);
     if (stars > 0) prog.unlocked = Math.max(prog.unlocked, this.L.id + 1);
@@ -153,7 +154,7 @@ export class Match {
     const nephew = this.S.agents.find(a => a.key === 'nephew');
     const pieReport = P.piesEaten ? `今天吃了${this.bossName()} ${P.piesEaten} 张饼` : '';
     const nephewReport = !nephew ? '' : this.S.nephewCrushed ? `今天我把${this.bossName()}小舅子压垮了` : `${this.bossName()}小舅子今天背锅 0 次，第一个下班`;
-    const next = LEVELS[LEVELS.indexOf(this.L) + 1];
+    const next = LEVELS[LEVELS.findIndex(lv => lv.id === this.L.id) + 1];
     const diag = !stars ? this.diagnose(P) : null;
     const shareKind = !stars ? 'blame' : next ? 'brag' : 'cert';
     return { reason, crushed, rank, myRank, stars, myDebt, isBest, unlockedNew, prog, title, pieReport, nephewReport, next, diag,

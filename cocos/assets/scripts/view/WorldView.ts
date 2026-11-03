@@ -1,7 +1,7 @@
 import {Game, Layers, Node, UITransform, game, sys, view} from 'cc';
 import {PREVIEW} from 'cc/env';
 import {Match} from '../core/match';
-import {CoreEvent, Progress} from '../core/types';
+import {CoreEvent, Progress, Level} from '../core/types';
 import {Platform, TopAvoidance} from '../platform/Platform';
 import {MatchUi} from './MatchUi';
 import {WebPlatform} from '../platform/WebPlatform';
@@ -12,7 +12,7 @@ import {createWorldPainter} from './WorldPainter';
 import {InputView} from './InputView';
 import {METRICS} from './visual-data';
 
-export interface WorldOptions {platform: Platform; params: URLSearchParams; level: number; tutorial: boolean; progress: Progress; buff?: string | null; assets: WorldAssets; onEvent: (e: CoreEvent) => void; onAction: (name: string) => void; blocked: () => boolean; onHidden: (hidden: boolean) => void}
+export interface WorldOptions {platform: Platform; params: URLSearchParams; level: number; levelParams?: Level; tutorial: boolean; progress: Progress; buff?: string | null; assets: WorldAssets; onEvent: (e: CoreEvent) => void; onAction: (name: string) => void; blocked: () => boolean; onHidden: (hidden: boolean) => void}
 
 // 外围组织器创建普通/带教对局；只读 core 状态、消费事件，主循环的顺序和原型相同。
 export class WorldView {
@@ -45,7 +45,7 @@ export class WorldView {
     try {progress = JSON.parse(platform.getStorage('shuaiguo_v3') || 'null') || {unlocked: 1, best: {}};} catch {progress = {unlocked: 1, best: {}};}
     if (options) progress = options.progress;
     const tutorial = options?.tutorial ?? (level === 0 && params.get('auto') !== '1' && (!progress.tutDone || (initial && params.get('tut') === '1')));
-    this.match = new Match({level, seed: params.has('seed') ? Number(params.get('seed')) : Date.now(), auto: params.get('auto') === '1',
+    this.match = new Match({level, levelParams:options?.levelParams, seed: params.has('seed') ? Number(params.get('seed')) : Date.now(), auto: params.get('auto') === '1',
       tutorial, progress, buff: options?.buff ?? (initial ? params.get('buff') : null), onEvent:event=>{if(!this.match?.simulating)this.events.push(event);}});
     this.root = new Node('World'); this.root.layer = Layers.Enum.UI_2D; parent.addChild(this.root);
     view.on('canvas-resize', this.resize, this);

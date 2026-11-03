@@ -92,8 +92,8 @@ export interface State {
 export interface Navigation { cols: number; rows: number; block: Uint8Array }
 export interface Input { down: boolean; id: number | null; x: number; y: number; angle: number | null; mag: number; keys: Record<string, boolean>; fire: number }
 export interface Best { stars: number; blames?: number; debt?: number }
-export interface Progress { unlocked: number; best: Record<number, Best>; bossName?: string; tutDone?: boolean; achievements?: Record<string, boolean> }
+export interface Progress { unlocked: number; best: Record<number, Best>; bossName?: string; bossNameAt?: number; tutDone?: boolean; achievements?: Record<string, boolean> }
 export interface Diagnosis { buff: string; img: string; html: string }
 // 事件只表达调用意图；可选参数的缺省和调用顺序由调用点保留。
 export interface CoreEvent { t: number; kind: string; args: unknown[] }
-export interface MatchOptions { level?: number; seed: number; auto?: boolean; simulating?: boolean; tutorial?: boolean; buff?: string | null; progress?: Progress; onEvent?: (event: CoreEvent) => void }
+export interface MatchOptions { levelParams?: Level; level?: number; seed: number; auto?: boolean; simulating?: boolean; tutorial?: boolean; buff?: string | null; progress?: Progress; onEvent?: (event: CoreEvent) => void }

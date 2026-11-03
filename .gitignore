@@ -26,3 +26,6 @@ cocos/node_modules/
 cocos/.vscode/
 cocos/.idea/
 cocos/.venv/
+
+# 云函数在各自目录装依赖，部署由云端安装
+cocos/cloudfunctions/**/node_modules/

@@ -1,3 +1,33 @@
+## 2026-11-04 · P6-1 云开发服务端与客户端数据层
+
+- **用户定的：** 按 `port/tasks/P6-1-云开发服务端与客户端接入.md` 执行，已先读任务卡及全部指定前置文件。使用云环境 `cloud1-d3gio6bskae9e684b`、AppID `wx15e416b0643d90af`；云只加分、失败不阻塞游戏。只做服务端和客户端数据层，不做排行榜界面/开放数据域，不改原型/默认数值。保持 main，不运行 CocosCreator、不构建、不提交/推送、不部署 Dokploy；授权用已登录微信 CLI 部署云函数。
+- **我定的细节（可改）：** `config/save/track/rank` 四函数、`saves/events/ranks/config` 四集合。core共享最好成绩比较与存档合并，Node生成每函数自包含CommonJS副本；事务保护并发云档/最好成绩/埋点限频。调参白名单仅关卡数值、字段有范围、时长不截断既有日程；开局深拷贝参数，局中不变。微信调用默认3秒超时；本地缓存/400ms存档防抖/200条持久事件队列、每批20条、每人每分钟120条新事件；超限丢弃不报错。好友KV键 `sg_debt_v1_<关卡ID>`，值 `{v:1,debt}`，只记有星局的最小总账。全服名为“打工人#”加身份哈希后四位，不公开老板称呼。
+- **必要接入：** 微信原有同步本地存储是空壳，本卡补接 `getStorageSync/setStorageSync`，键名不变。AppView接启动、开局、结算、改名时间戳、带教七步、广告尝试/结果、分享操作和前后台；simulate继续隔离，不加core事件或改变随机调用。`Match.calculateResult.next`改用关卡ID定位，兼容独立参数副本。
+- **构建方案：** `cocos/build-templates/wechatgame/project.config.json`合并AppID与 `cloudfunctionRoot: ../../cloudfunctions/`。Node拿现有 `build/wechatgame-001` 的配置模拟合并，路径/AppID/自包含目录均通过；未修改构建产物，明天仍需编辑器真实构建后读回确认。
+- **偏差与修正：** 首次微信部署因函数尚处于Creating而上传失败，CLI却退出0；脚本增加终态错误识别，等待创建结束后重试。测试抓到数据库故障被误判空档、防抖在途漏补传、玩家压垮时刻取错字段，以及大批量事件未按要求静默丢弃，均先保留失败证据再修正。构建/真机/控制台设置留待泊舟，不把部署成功当作真实调用验收。
+
+**已验证：**
+
+| 检查 | 结果 |
+|---|---|
+| `npm run test:core --prefix cocos` | 14/14，含五关各50局simulate逐字段一致 |
+| `npm run test:golden --prefix cocos` | 默认路径100/100；适配器改走正式空配置参数注入后仍100/100，快照/事件/结果完全一致 |
+| `npm run test:cloud --prefix cocos` | 15/15；服务端内存事务mock、客户端mock微信、缓存/离线/超时/局中隔离、队列重发/限频/排行/构建模板；生成副本无漂移 |
+| `npm run check:types --prefix cocos` | 退出0；仅Node调用tsc，未运行编辑器 |
+| `node cocos/tools/check-peripheral.cjs` | 原有外围契约与新增真实App埋点、bossNameAt、七步去重全PASS |
+| `node cocos/tools/check-debug-panel.cjs` | 全PASS；调试开局参数独立、simulate不写存档/不改活动状态与RNG |
+| `node tests/check-port-protected.cjs` | PASS 416个保护文件，内容变化0、无目录增删 |
+| Node语法 / `.meta`审计 / `git diff --check` | 全通过；129个meta无星号importer、缺TS meta、孤立meta或重复UUID；新增4个typescript meta |
+| 微信云函数部署 | 四函数代码上传success=true；最后track超量语义修正单独补发，结果见完整报告与日志 |
+
+**未验证 / 明天待办：** 编辑器刷新4个新TS；泊舟手动构建，读回AppID/cloudfunctionRoot和meta；开发者工具实际callFunction冒烟；首次调用建集合后逐集合设“仅管理端可读写”或read/write=false；手动建ranks复合排序索引及events分析索引；安卓断网/超时不阻塞、联网补传、跨设备合并、好友KV、真实函数日志与耗时。CLI无invoke子命令，未使用密钥绕行。没有向config写入任何游戏数值。
+
+**发现但未改：** P5广告/分享/震动/安全区空壳；开放数据域/榜单UI；强反作弊；名称时间戳跨设备时钟偏差；调试本地清档会被云同步恢复；介绍页仍用默认信息、全服榜不分调参版本；排行失败没有单独离线补传队列。当前ad_show记录广告流程尝试，真展示仍待P5与真机验收。已有AGENTS/.claude改动保持原样。
+
+**交付与清理：** 完整九节报告、数据库字段/权限/索引、四函数接口、客户端调用点、测试与部署原始输出、明天操作步骤见 `port/tmp/p6-1/report.md`。SDK仅临时装在save函数目录核对实际API，已清理node_modules；没有新开浏览器/CUA/服务器/编辑器，Node/CLI均终态退出，不关闭用户已有共享工具。未提交。
+
+---
+
 ## 2026-11-04 · P4-2 有意改进与调试面板（分项记录）
 
 ### A · rankDown 音效

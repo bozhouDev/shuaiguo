@@ -1,0 +1,54 @@
+// 自动生成：npm run cloud:prepare；勿手改。
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.levelForMatch = exports.sanitizeConfig = exports.REMOTE_BOUNDS = void 0;
+// 移植计划§5：线上只调关卡中已有的数值，绝不修改全局常量或对局中的对象。
+const levels_1 = require("./levels");
+// 时长最低仍覆盖现有全部时间表；其余字段可独立安全覆盖，非法字段逐项忽略。
+exports.REMOTE_BOUNDS = {
+    duration: [60, 240], potLife: [10, 60], skyChance: [0, 1], leaderFocus: [0, 1],
+    'ai.aggr': [0.1, 3], 'ai.parry': [0, 3], 'ai.dodge': [0.1, 3], 'ai.sneak': [0, 3], 'ai.focus': [0, 3],
+    'aiEnd.aggr': [0.1, 3], 'aiEnd.parry': [0, 3], 'aiEnd.dodge': [0.1, 3], 'aiEnd.sneak': [0, 3], 'aiEnd.focus': [0, 3],
+};
+// 接口和磁盘缓存都必须经过同一个白名单；过低时长不能截断本关原有日程。
+function sanitizeConfig(value) {
+    var _a, _b;
+    const empty = { version: 0, levels: {} };
+    if (!value || typeof value !== 'object')
+        return empty;
+    const v = value;
+    if (!Number.isSafeInteger(v.version) || v.version < 0 || !v.levels || typeof v.levels !== 'object')
+        return empty;
+    const out = { version: v.version, levels: {} };
+    for (const lv of levels_1.LEVELS) {
+        const patch = v.levels[lv.id];
+        if (!patch || typeof patch !== 'object')
+            continue;
+        const fields = {};
+        const last = Math.max(0, ...lv.pace.map(x => x.t), ...lv.bursts.map(x => x.t), ...(lv.incidents || []).map(x => x.t), ...(lv.pieMeetings || []).map(x => x.t + x.duration), ((_a = lv.finale) === null || _a === void 0 ? void 0 : _a.t) || 0, lv.rushAt || 0, ((_b = lv.events) === null || _b === void 0 ? void 0 : _b.window[1]) || 0);
+        for (const [key, [min, max]] of Object.entries(exports.REMOTE_BOUNDS)) {
+            const n = patch[key];
+            if (typeof n === 'number' && Number.isFinite(n) && n >= min && n <= max && (key !== 'duration' || n > last))
+                fields[key] = n;
+        }
+        if (Object.keys(fields).length)
+            out.levels[lv.id] = fields;
+    }
+    return out;
+}
+exports.sanitizeConfig = sanitizeConfig;
+// 每次开局深拷贝，缓存后续更新和外部对象修改不会影响已开始的局。
+function levelForMatch(index, config) {
+    var _a;
+    const lv = JSON.parse(JSON.stringify(levels_1.LEVELS[index]));
+    const fields = sanitizeConfig(config).levels[lv.id] || {};
+    for (const [key, value] of Object.entries(fields)) {
+        const [outer, inner] = key.split('.');
+        if (inner)
+            (lv[_a = outer] || (lv[_a] = {}))[inner] = value;
+        else
+            lv[outer] = value;
+    }
+    return lv;
+}
+exports.levelForMatch = levelForMatch;

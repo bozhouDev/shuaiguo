@@ -61,8 +61,17 @@ function load(file){file=path.resolve(file);if(!file.endsWith('.ts'))file+='.ts'
  let restarts=0;const host={ready:true,panel:'',world:{match:m,clearInput(){},flush(){}},audio:{unlock(){},sfx(){}},render(){},startGame(){restarts++;}};
  AppView.prototype.action.call(host,'start');assert.equal(restarts,0);assert.equal(m.S.tut,null);assert.equal(m.workT(),0);assert.equal(m.loadProgress().tutDone,true);
  console.log('PASS 教学末步使用原有对局正式上班，不重建/不重新进入教学');
- const {WechatPlatform}=load('cocos/assets/scripts/platform/WechatPlatform');const failedMatch=new Match({level:1,seed:1001,auto:true}),result=failedMatch.calculateResult('crushed');let message='';const adHost={result,world:{match:failedMatch},alive:true,serial:1,panel:'result',platform:new WechatPlatform(),open(name){this.panel=name;},toast(text){message=text;},render(){}};await AppView.prototype.ad.call(adHost,'revive');assert.equal(adHost.panel,'result');assert.equal(message,'广告不可用');assert.equal(failedMatch.S.revived,false);assert.equal(adHost.result,result);
+ const {WechatPlatform}=load('cocos/assets/scripts/platform/WechatPlatform');const failedMatch=new Match({level:1,seed:1001,auto:true}),result=failedMatch.calculateResult('crushed');let message='';const adEvents=[];const adHost={cloud:{track(...args){adEvents.push(args);}},result,world:{match:failedMatch},alive:true,serial:1,panel:'result',platform:new WechatPlatform(),open(name){this.panel=name;},toast(text){message=text;},render(){}};await AppView.prototype.ad.call(adHost,'revive');assert.equal(adHost.panel,'result');assert.equal(message,'广告不可用');assert.equal(failedMatch.S.revived,false);assert.equal(adHost.result,result);assert.deepEqual(adEvents.map(e=>[e[0],e[2].action,e[2].success]),[['ad_show','revive',undefined],['ad_result','revive',false]]);
  console.log('PASS 微信广告不可用保留结算与次数，不发复活奖励');
+ // 真实玩家被压垮只置S.over，不置player.crushed；上报时刻必须取本局工作时钟。
+ failedMatch.S.t=12;const cloudEvents=[];AppView.prototype.cloudResult.call({world:{match:failedMatch},cloud:{track(...args){cloudEvents.push(args);},settled(){},background(){}}},result);assert.equal(cloudEvents[0][2].crushed,true);assert.equal(cloudEvents[0][2].crushedAt,12);
+ console.log('PASS 云埋点按真实结算记录玩家压垮时刻');
+ // 名称修改在真实保存入口写独立时间戳；旧档未带时间戳仍能修改并触发同步。
+ let renamed={unlocked:1,best:{},bossName:'旧名'},syncs=0;const nameHost={edit:{string:'新名'},world:{match:failedMatch},store:{read:()=>structuredClone(renamed),save(p){renamed=p;return true;}},cloud:{progressChanged(){syncs++;}},showLobby(){},toast(){}};AppView.prototype.saveName.call(nameHost);assert.equal(renamed.bossName,'新名');assert.ok(renamed.bossNameAt>0);assert.equal(syncs,1);
+ const coach=new Match({seed:1,tutorial:true}),tutorialEvents=[],tutorialHost={world:{match:coach},cloudTutorialStep:-1,cloud:{track(...v){tutorialEvents.push(v);}}};for(let i=0;i<coach.L.tutorial.steps.length;i++){coach.S.tut.i=i;AppView.prototype.event.call(tutorialHost,{kind:'showHint',args:[]});AppView.prototype.event.call(tutorialHost,{kind:'showHint',args:[]});}assert.deepEqual(tutorialEvents.map(v=>v[2].step),[0,1,2,3,4,5,6]);
+ console.log('PASS 真实改名写bossNameAt并请求云同步，带教七步各记一次');
+
+
  const sounds=[];AppView.prototype.action.call({...host,panel:'boss',audio:{unlock(){},sfx(n){sounds.push(n);}},closePanel(){this.panel='';}},'cancel');assert.deepEqual(sounds,['click']);
  console.log('PASS 老板名称取消按钮音效与原型一致');
 

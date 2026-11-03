@@ -53,6 +53,7 @@ function paint(width = 375, height = 812) {
   const {AppView} = load('cocos/assets/scripts/view/AppView'), {LobbyView, LobbyDebug} = load('cocos/assets/scripts/view/LobbyView');
   const {PlayerStore} = load('cocos/assets/scripts/view/PlayerStore'), {Match} = load('cocos/assets/scripts/core/match');
   const {LEVELS} = load('cocos/assets/scripts/core/levels');
+  const {CloudServices}=load('cocos/assets/scripts/platform/CloudServices');
   // 运行真实App字段初始化；只替换设备节点创建，证明旧URL和全局入口也受debug约束。
   const original = Object.fromEntries(['node','pane','loadingCard','resize'].map(k=>[k,AppView.prototype[k]]));
   const oldWindow=global.window, previousLocation=global.location;
@@ -67,8 +68,8 @@ function paint(width = 375, height = 812) {
   console.log('PASS 真实App初始化：无debug时旧level/auto/tut/seed参数及SG_DEBUG均不生效');
   // 使用App原型及真实持久层，避免为测试添加生产接口。
   function host(enabled = true) {
-    const platform = storage(enabled), {p, surface, texts} = paint();
-    return Object.assign(Object.create(AppView.prototype), {platform, debugEnabled: enabled, store: new PlayerStore(platform), params: new URLSearchParams(), debug: new LobbyDebug(),
+    const platform = storage(enabled), {p, surface, texts} = paint(),store=new PlayerStore(platform),cloud=new CloudServices(platform,store);
+    return Object.assign(Object.create(AppView.prototype), {platform, debugEnabled: enabled, store,cloud, params: new URLSearchParams(), debug: new LobbyDebug(),
       parent: new Node(), root: new Node(), assets: {}, ready: true, alive: true, serial: 0, real: 0, screen: 'lobby', panel: '', selected: 0,
       heights: {}, scroll: 0, actions: [], surface, paint: p, texts, lobby: new LobbyView(p), praise: {clear() {}, reset() {}},
       audio: {unlock() {}, sfx() {}, bgm() {}, sync() {}, hidden() {}}, render() {}, removeEdit() {}, messages: {event() {}},
@@ -100,7 +101,7 @@ function paint(width = 375, height = 812) {
   try {
     const app = host(); app.panel = 'debug'; app.store.save({unlocked: 1, best: {}, tutDone: true}); app.debug.level = 4; app.debug.seed = '1001'; app.debug.auto = true;
     app.action('debug:start'); await Promise.resolve(); await Promise.resolve();
-    assert.equal(app.screen, 'play'); assert.equal(app.panel, ''); assert.equal(app.world.match.L, LEVELS[4]); assert.equal(app.world.match.auto, true); assert.equal(app.world.match.S.tut, null);
+    assert.equal(app.screen, 'play'); assert.equal(app.panel, ''); assert.deepEqual(app.world.match.L, LEVELS[4]);assert.notEqual(app.world.match.L,LEVELS[4],'开局必须持有独立参数快照'); assert.equal(app.world.match.auto, true); assert.equal(app.world.match.S.tut, null);
     const oracle = new Match({level: 4, seed: 1001, auto: true, progress: app.store.read()}); assert.deepEqual(app.world.match.S, oracle.S);
     assert.equal(app.store.read().unlocked, 5); app.world.destroy();
     const tut = host(); tut.panel = 'debug'; tut.store.save({unlocked: 5, best: {}, tutDone: true}); tut.debug.auto = true;

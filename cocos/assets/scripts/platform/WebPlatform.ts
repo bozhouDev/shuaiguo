@@ -1,8 +1,11 @@
-import type { Platform, TopAvoidance } from './Platform';
+import type { Platform, TopAvoidance, CloudAPI } from './Platform';
 
 // 网页存档沿用原型键名；广告、分享等仍留给后续任务。
 export class WebPlatform implements Platform {
   readonly kind = 'web';
+  // 网页明确不接云，不排网络请求。
+  readonly cloud: CloudAPI = {async init(){return false;},async call(){return {ok:false,error:'unavailable'};}};
+  async setUserCloudStorage(): Promise<boolean> {return false;}
   // 网页必须显式带debug=1；没有地址环境时保持关闭。
   debugEnabled(): boolean {return typeof location !== 'undefined' && new URLSearchParams(location.search).get('debug') === '1';}
   // 网页没有胶囊，和原型一样从0开始布局。
