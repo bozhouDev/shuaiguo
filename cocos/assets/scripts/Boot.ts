@@ -1,4 +1,4 @@
-import { _decorator, Camera, Canvas, Color, Component, Layers, Node, ResolutionPolicy, view } from 'cc';
+import { _decorator, Camera, Canvas, Color, Component, Layers, Node, ResolutionPolicy, sys, view } from 'cc';
 import {AppView} from './view/AppView';
 
 const { ccclass } = _decorator;
@@ -12,7 +12,7 @@ export class Boot extends Component {
   // 设计坐标采用实际网页CSS像素，360/375窄屏与原型保持同一字号和折行。
   onLoad(): void {
     const frame = view.getFrameSize();
-    view.setDesignResolutionSize(frame.width, frame.height, ResolutionPolicy.SHOW_ALL);
+    if(sys.platform===sys.Platform.WECHAT_GAME)view.setDesignResolutionSize(375,812,ResolutionPolicy.FIXED_WIDTH);else view.setDesignResolutionSize(frame.width, frame.height, ResolutionPolicy.SHOW_ALL);
     const cameraNode = new Node('Camera');
     this.node.parent!.addChild(cameraNode);
     cameraNode.setPosition(0, 0, 1000);
@@ -29,7 +29,7 @@ export class Boot extends Component {
   }
 
   // 长屏重排后相机同步正交高度，避免节点与触点坐标错位。
-  private resizeCamera(): void {const frame = view.getFrameSize(); view.setDesignResolutionSize(frame.width, frame.height, ResolutionPolicy.SHOW_ALL); if (this.camera) this.camera.orthoHeight = view.getVisibleSize().height / 2;}
+  private resizeCamera(): void {const frame = view.getFrameSize(); if(sys.platform===sys.Platform.WECHAT_GAME)view.setDesignResolutionSize(375,812,ResolutionPolicy.FIXED_WIDTH);else view.setDesignResolutionSize(frame.width, frame.height, ResolutionPolicy.SHOW_ALL); if (this.camera) this.camera.orthoHeight = view.getVisibleSize().height / 2;}
 
   // 资源导入或加载失败要保留错误，不能把空白画面当构建通过。
   start(): void {this.app = new AppView(this.node); this.app.start().catch(error => console.error('[P4-1] 资源加载失败', error));}

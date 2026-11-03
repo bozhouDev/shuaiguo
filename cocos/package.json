@@ -24,7 +24,8 @@
     "test:golden:extra": "node --experimental-strip-types ../tests/golden/verify-extra.cjs --adapter ./tests/extra-adapter.cjs",
     "test:cloud": "node --experimental-strip-types --test tests/cloud/*.test.mjs && node tools/prepare-cloud.mjs --check",
     "cloud:prepare": "node tools/prepare-cloud.mjs",
-    "cloud:deploy": "node tools/deploy-cloud.mjs"
+    "cloud:deploy": "node tools/deploy-cloud.mjs",
+    "test:wechat": "node --experimental-strip-types --test tests/wechat/*.test.mjs"
   },
   "version": "3.8.8"
 }

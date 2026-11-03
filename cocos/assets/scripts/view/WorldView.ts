@@ -27,6 +27,7 @@ export class WorldView {
   private freezeAt: number | null = null;
   private events: CoreEvent[] = [];
   private alive = true;
+  private offLifecycle?:()=>void;
   // 性能采样只在编辑器预览开启，不进入正式包。
   readonly timings: {dt: number; update: number; draw: number}[] = [];
 
@@ -37,7 +38,7 @@ export class WorldView {
   ui!: MatchUi;
   constructor(parent: Node, readonly restart: () => void, initial = true, readonly options?: WorldOptions) {
     this.assets = options?.assets || new WorldAssets();
-    const platform = this.platform = options?.platform || (sys.platform === sys.Platform.WECHAT_GAME ? new WechatPlatform() : new WebPlatform());
+    const platform: Platform = this.platform = options?.platform || (sys.platform === sys.Platform.WECHAT_GAME ? new WechatPlatform() : new WebPlatform());
     const params = this.params = options?.params || (PREVIEW && platform.debugEnabled() && platform.kind === 'web' && typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams());
     const level = options?.level ?? (params.has('level') ? Math.min(4, Math.max(0, (Number(params.get('level')) || 1) - 1)) : 0);
     if (params.has('freeze')) this.freezeAt = Math.max(0, Math.floor(Number(params.get('freeze')) || 0));
@@ -49,7 +50,7 @@ export class WorldView {
       tutorial, progress, buff: options?.buff ?? (initial ? params.get('buff') : null), onEvent:event=>{if(!this.match?.simulating)this.events.push(event);}});
     this.root = new Node('World'); this.root.layer = Layers.Enum.UI_2D; parent.addChild(this.root);
     view.on('canvas-resize', this.resize, this);
-    game.on(Game.EVENT_HIDE, this.hide, this); game.on(Game.EVENT_SHOW, this.show, this);
+    if(platform.onLifecycle)this.offLifecycle=platform.onLifecycle({hide:()=>this.hide(),show:()=>this.show()});else {game.on(Game.EVENT_HIDE, this.hide, this); game.on(Game.EVENT_SHOW, this.show, this);}
   }
   // 资源完整加载后再创建Label，避免首次纹理使用系统字体后未刷新。
   async start(): Promise<void> {
@@ -127,5 +128,5 @@ export class WorldView {
   // 回前台保持占位暂停，点继续或P/Esc恢复，首帧丢弃后台时间。
   private show(): void {this.hidden = false; this.skipFrame = true; this.options?.onHidden(false);}
   // 销毁场景时解除监听，释放运行时帧和本任务节点。
-  destroy(): void {this.alive = false; view.off('canvas-resize', this.resize, this); game.off(Game.EVENT_HIDE, this.hide, this); game.off(Game.EVENT_SHOW, this.show, this); this.controls?.destroy(); this.root.destroy(); if (!this.options) this.assets.destroy();}
+  destroy(): void {this.alive = false;this.offLifecycle?.(); view.off('canvas-resize', this.resize, this); game.off(Game.EVENT_HIDE, this.hide, this); game.off(Game.EVENT_SHOW, this.show, this); this.controls?.destroy(); this.root.destroy(); if (!this.options){this.assets.destroy();this.platform.dispose?.();}}
 }

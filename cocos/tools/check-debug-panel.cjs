@@ -70,7 +70,7 @@ function paint(width = 375, height = 812) {
   function host(enabled = true) {
     const platform = storage(enabled), {p, surface, texts} = paint(),store=new PlayerStore(platform),cloud=new CloudServices(platform,store);
     return Object.assign(Object.create(AppView.prototype), {platform, debugEnabled: enabled, store,cloud, params: new URLSearchParams(), debug: new LobbyDebug(),
-      parent: new Node(), root: new Node(), assets: {}, ready: true, alive: true, serial: 0, real: 0, screen: 'lobby', panel: '', selected: 0,
+      capture:{dispose(){}}, packages:{dispose(){}}, parent: new Node(), root: new Node(), assets: {}, ready: true, alive: true, serial: 0, real: 0, screen: 'lobby', panel: '', selected: 0,
       heights: {}, scroll: 0, actions: [], surface, paint: p, texts, lobby: new LobbyView(p), praise: {clear() {}, reset() {}},
       audio: {unlock() {}, sfx() {}, bgm() {}, sync() {}, hidden() {}}, render() {}, removeEdit() {}, messages: {event() {}},
       panes: [{p, surface, mask: {setPosition() {}, getComponent() {return {setContentSize() {}};}}, root: new Node()}]});

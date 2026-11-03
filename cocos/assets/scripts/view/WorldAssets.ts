@@ -19,15 +19,16 @@ export class WorldAssets {
   private frames: SpriteFrame[] = [];
 
   // 图集失败只报错；图集内缺走路帧退回 normal，爆炸缺图退回撞击星。
-  async load(onFonts?:()=>void): Promise<void> {
+  async load(onFonts?:()=>void, strict=false): Promise<void> {
     [this.title, this.body400, this.body700, this.body900] = await Promise.all([load('title', TTFFont), load('body-400', TTFFont), load('body-700', TTFFont), load('body-900', TTFFont)]);
     onFonts?.();
-    await Promise.all(ATLAS.sheets.map(async sheet => {
+    const sheets=await Promise.allSettled(ATLAS.sheets.map(async sheet => {
       try {
         const texture = await this.pixels(sheet.file + '/texture');
         for (const [name, rect] of Object.entries(sheet.frames)) this.spr[name] = this.picture(texture, rect);
-      } catch (error) { console.warn('图集加载失败', sheet.file, error); }
+      } catch (error) { console.warn('图集加载失败', sheet.file, error);if(strict)throw error; }
     }));
+    const failed=sheets.find((s):s is PromiseRejectedResult=>s.status==='rejected');if(failed)throw failed.reason;
     try {
       const texture = await this.pixels('fx/pot-cartoon-pow-bd83d9f0/texture');
       this.spr['pot-cartoon-pow-bd83d9f0'] = this.picture(texture, [0, 0, texture.width, texture.height]);

@@ -2,10 +2,11 @@ import {AudioClip, AudioSource, Node, assetManager, tween} from 'cc';
 import {Platform} from '../platform/Platform';
 import {Settings} from './PlayerStore';
 import {SFX} from './audio-data';
+import {WechatAudio} from '../platform/WechatAudio';
 export interface SoundOptions {vol?: number; rate?: number; delay?: number}
 interface Track {name: string; src: AudioBufferSourceNode; gain: GainNode; offset: number; start: number}
 // 网页用公开WebAudio实现原型的倍速/延迟/两总线；资源地址来自Cocos audio Bundle。
-// 微信此卡用AudioSource文件播放，真实设备的音频中断和倍速验证归P5。
+// 微信用原生InnerAudioContext小池，保留倍速、静音键和广告/来电/后台互斥。
 export class AudioView {
   readonly calls: Record<string, number> = {}; readonly played: Record<string, number> = {};
   private context: AudioContext | null = null;
@@ -21,11 +22,18 @@ export class AudioView {
   private background = false; private synthStep = 0; private synthNext = 0;
   private scheduler?: ReturnType<typeof setInterval>;
   private active = new Set<AudioBufferSourceNode>();
-  constructor(readonly root: Node, readonly platform: Platform, readonly settings: Settings) {}
+  private wechat?: WechatAudio;
+  private wechatUrls = new Map<string,string>();
+  private offFocus?: () => void;
+  constructor(readonly root: Node, readonly platform: Platform, readonly settings: Settings) {
+    if(platform.kind==='wechat'){this.wechat=new WechatAudio();this.offFocus=platform.onAudioFocus?.((reason,on)=>this.wechat!.blocked(reason,on));}
+  }
   // 音频包异步加载，不阻塞大厅，短音只在首次交互预载，BGM按需。
   private clip(id: string): Promise<AudioClip | null> {
     if (this.loads.has(id)) return this.loads.get(id)!;
     this.bundle ||= new Promise((resolve, reject) => assetManager.loadBundle('audio', (err, b) => err ? reject(err) : resolve(b)));
+    // 微信只解析Bundle已登记的原生文件地址；b.load(AudioClip)会隐式创建播放器，破坏小池上限。
+    if(this.wechat){const load=this.bundle.then(b=>{const info=b.getInfoWithPath(id,AudioClip);if(!info)throw Error('音频路径缺失：'+id);const url=assetManager.utils.getUrlWithUuid(info.uuid,{isNative:true,nativeExt:'.mp3'});if(this.alive){this.wechatUrls.set(id,url);this.sync();}return null;}).catch(error=>{this.failed.add(id);if(this.alive)console.warn('音频采样加载失败',id,error);return null;});this.loads.set(id,load);return load;}
     const load = this.bundle.then(b => new Promise<AudioClip>((resolve, reject) => b.load(id, AudioClip, (err, clip) => err ? reject(err) : resolve(clip))))
       .then(async clip => {if (!this.alive) return null; this.clips.set(id, clip); if (this.context) {const response = await fetch(clip.nativeUrl); if (!response.ok) throw new Error(String(response.status)); this.buffers.set(id, await this.context.decodeAudioData(await response.arrayBuffer()));} return clip;})
       .catch(error => {this.clips.delete(id);this.failed.add(id);if (this.alive) console.warn('音频采样加载失败', id, error); return null;});
@@ -57,6 +65,7 @@ export class AudioView {
     if(this.context&&!this.buffers.has(d.id)){if(opt.delay)this.later(opt.delay,()=>this.synth(d.fb||name));else this.synth(d.fb||name);return;}
     const volume = d.vol * (opt.vol ?? 1), rate = (d.rate || 1) * (opt.rate || 1);
     const play = (delay: number, speed: number) => {
+      if(this.wechat){this.later(delay,()=>{if(this.settings.sfx&&!this.background&&this.wechatUrls.has(d.id)&&this.wechat!.sfx(this.wechatUrls.get(d.id)!,volume,speed))this.played[name]=(this.played[name]||0)+1;});return;}
       const buffer = this.buffers.get(d.id);
       if (this.context && buffer) {const source = this.context.createBufferSource(), gain = this.context.createGain(); source.buffer = buffer; source.playbackRate.value = speed; gain.gain.value = volume; source.connect(gain); gain.connect(this.sfxBus!); this.active.add(source);source.onended=()=>{this.active.delete(source);source.disconnect();gain.disconnect();};source.start(this.context.currentTime + delay); this.played[name] = (this.played[name] || 0) + 1;}
       else if (!this.context && this.clips.has(d.id)) this.later(delay, () => {const node = new Node('Sound-' + name); this.root.addChild(node); const source = node.addComponent(AudioSource); source.clip = this.clips.get(d.id)!; source.playOnAwake = false; source.volume = volume; source.play(); this.sources.add(source); source.node.once(AudioSource.EventType.ENDED, () => {this.sources.delete(source); node.destroy();}); this.played[name] = (this.played[name] || 0) + 1;});
@@ -66,10 +75,11 @@ export class AudioView {
   // 记录播放位置后淡出，正常停止.3秒，换曲.6秒。
   private stop(fade: number): void {const c = this.current, ctx = this.context; if (c && ctx) {this.positions[c.name] = (c.offset + ctx.currentTime - c.start) % c.src.buffer!.duration; c.gain.gain.cancelScheduledValues(ctx.currentTime); c.gain.gain.setValueAtTime(c.gain.gain.value, ctx.currentTime); c.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + fade); c.src.stop(ctx.currentTime + fade + .05); this.current = null;} if (this.nativeBgm) {const source=this.nativeBgm;this.positions[this.nativeName]=source.currentTime;tween(source).to(fade,{volume:0}).call(()=>{source.stop();source.destroy();}).start();this.nativeBgm=null;}}
   // 新开局work和rush归零；暂停继续、返回大厅均接上次位置。
-  bgm(name: string | boolean, fromStart = false): void {this.want = name === true ? 'work' : typeof name === 'string' ? name : null; if (fromStart && this.want) {this.positions[this.want] = 0; if (this.want === 'work') this.positions.rush = 0;} this.sync();}
+  bgm(name: string | boolean, fromStart = false): void {this.want = name === true ? 'work' : typeof name === 'string' ? name : null; if(fromStart&&this.wechat&&this.want)this.wechat.reset(this.want); if (fromStart && this.want) {this.positions[this.want] = 0; if (this.want === 'work') this.positions.rush = 0;} this.sync();}
   // 加载完成再复查当前想放的歌，避免慢加载把旧场景音乐放出来。
   sync(): void {
     const name = this.settings.music ? this.want : null;
+    if(this.wechat){const id=`bgm_${name}`,url=this.wechatUrls.get(id);if(name&&!url){this.wechat.bgm(null);if(!this.failed.has(id))void this.clip(id).then(v=>{if(v&&this.alive)this.sync();});return;}this.wechat.bgm(this.unlocked?name:null,url||'');return;}
     if (this.current?.name === name || this.nativeBgm?.clip?.name === `bgm_${name}`) return;
     if (this.current || this.nativeBgm) this.stop(name ? .6 : .3);
     if (!name || !this.unlocked || !this.alive) return;
@@ -79,7 +89,7 @@ export class AudioView {
     else {const source = this.root.addComponent(AudioSource); source.playOnAwake = false; source.clip = clip!; source.loop = true; source.volume = 0; this.nativeName=name; source.currentTime = this.positions[name] || 0; source.play();tween(source).to(.5,{volume:.32}).start();this.nativeBgm = source;}
   }
   // 切后台整体挂起，回来恢复；游戏仍停在暂停页。
-  hidden(hide: boolean): void {this.background=hide;if (this.context) {if (hide) void this.context.suspend(); else if (this.unlocked) void this.context.resume();} else {for (const source of this.sources) hide ? source.pause() : source.play(); if (this.nativeBgm) hide ? this.nativeBgm.pause() : this.nativeBgm.play();}}
+  hidden(hide: boolean): void {this.background=hide;if(this.wechat){this.wechat.blocked('background',hide);return;}if (this.context) {if (hide) void this.context.suspend(); else if (this.unlocked) void this.context.resume();} else {for (const source of this.sources) hide ? source.pause() : source.play(); if (this.nativeBgm) hide ? this.nativeBgm.pause() : this.nativeBgm.play();}}
   // 频率滑音兜底，连接同一音效总线。
   private tone(f0:number,f1:number,dur:number,type:OscillatorType='square',vol=.08,delay=0): void {
     const t0 = this.context!.currentTime + (delay || 0);
@@ -126,5 +136,5 @@ export class AudioView {
   // 定时任务只用于真实音频延迟，销毁时一并撤销。
   private later(delay: number, fn: () => void): void {const timer = setTimeout(() => {this.timers.delete(timer); if (this.alive) fn();}, delay * 1000); this.timers.add(timer);}
   // 释放音频连接，不保留全局监听或后台音乐。
-  destroy(): void {this.alive = false;if(this.scheduler)clearInterval(this.scheduler);for(const source of this.active){source.stop();source.disconnect();}this.active.clear(); this.stop(0); for (const t of this.timers) clearTimeout(t); this.timers.clear(); for (const source of this.sources) source.destroy(); this.sources.clear(); if (this.context) void this.context.close();}
+  destroy(): void {this.alive = false;this.offFocus?.();this.wechat?.dispose();if(this.scheduler)clearInterval(this.scheduler);for(const source of this.active){source.stop();source.disconnect();}this.active.clear(); this.stop(0); for (const t of this.timers) clearTimeout(t); this.timers.clear(); for (const source of this.sources) source.destroy(); this.sources.clear(); if (this.context) void this.context.close();}
 }

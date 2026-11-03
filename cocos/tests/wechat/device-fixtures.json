@@ -1,0 +1,8 @@
+[
+  {"model":"iPhone X","w":375,"top":44,"c":{"left":281,"top":48,"width":88,"height":32},"source":"https://github.com/lingxiaoyi/navigation-bar#测试信息"},
+  {"model":"iPhone 8 Plus","w":414,"top":20,"c":{"left":320,"top":24,"width":88,"height":32},"source":"https://github.com/lingxiaoyi/navigation-bar#测试信息"},
+  {"model":"HUAWEI SLA-AL00","w":360,"top":24,"c":{"left":254,"top":32,"width":96,"height":32},"source":"https://github.com/lingxiaoyi/navigation-bar#测试信息"},
+  {"model":"XIAOMI MI6","w":360,"top":23,"c":{"left":265,"top":31,"width":87,"height":28},"source":"https://github.com/lingxiaoyi/navigation-bar#测试信息"},
+  {"model":"边界夹具-393宽","w":393,"top":59,"c":{"left":296,"top":65,"width":87,"height":32}},
+  {"model":"边界夹具-safeTop为0","w":414,"top":0,"c":{"left":320,"top":8,"width":87,"height":32}}
+]
