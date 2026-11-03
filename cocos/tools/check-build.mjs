@@ -22,13 +22,14 @@ await checkMetas(path.join(root, 'assets'));
 const main = JSON.parse(await readFile(path.join(output, 'assets/main/config.json'), 'utf8'));
 const resources = JSON.parse(await readFile(path.join(output, 'assets/resources/config.json'), 'utf8'));
 assert.ok(Object.hasOwn(main.scenes, 'db://assets/scenes/Boot.scene'), '缺少 Boot 场景');
-for (const name of ['player_normal', 'title', 'body', 'ui_click']) {
+for (const name of ['title', 'body-700', 'body-900', 'ui_click', 'fx/pot-cartoon-pow-bd83d9f0']) {
   assert.ok(Object.values(resources.paths).some((entry) => entry[0] === name), `资源缺失：${name}`);
 }
+assert.equal(Object.values(resources.paths).filter(entry => /^atlas\//.test(entry[0]) && !entry[0].endsWith('/texture') && !entry[0].endsWith('/spriteFrame')).length, 14, '缺少14张图集');
 if (path.basename(output).startsWith('wechatgame')) {
   const config = JSON.parse(await readFile(path.join(output, 'project.config.json'), 'utf8'));
   assert.equal(config.appid, 'wx15e416b0643d90af', '微信包 AppID 不符');
   assert.equal(config.compileType, 'game', '必须为小游戏工程');
 }
 // 压缩后函数名可能消失，运行证据交给浏览器和开发者工具检查。
-console.log(`PASS ${output}：meta 健康，Boot 场景、角色、两款字体、音效齐全，平台配置通过`);
+console.log(`PASS ${output}：meta 健康，Boot 场景、14张图集、爆炸帧、三款字体、音效齐全，平台配置通过`);

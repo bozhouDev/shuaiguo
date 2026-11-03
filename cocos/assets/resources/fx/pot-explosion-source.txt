@@ -1,0 +1,12 @@
+锅到期漫画爆炸序列帧（用户指定 Cartoon POW）
+来源：https://github.com/patch-gg/pixelfx
+版本：a84159688af3ca37a4be05a0d422b94451b2e24e
+模块：src/fx/explosions/cartoon-pow.js
+授权：同目录 pixelfx-LICENSE.txt（Patch / Hugo Duprez，MIT）
+
+导出参数：createFrame(184,144,-92,-72)，createFx(cartoonPow)，全部采用原版默认参数。
+保留原版 palette、seed=5、POW! 文字、闪光、射线、散星及字母落入动画。
+33 帧：t=min(i/30,1.05)，i=0..32；增量 update，clearFrame → draw → composite（透明底）。
+原尺寸不缩放，6列6行排列，末行留3空格。
+游戏按30fps取帧，1.05秒结束；普通锅画布宽92，急件110，中心原点与锅重合。
+文字属于用户明确指定的特效，沿用原版像素字，不涉及游戏中文字体。

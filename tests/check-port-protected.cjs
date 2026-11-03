@@ -1,4 +1,4 @@
-// 验证冻结原型、旧录像及本卡禁止触碰的 Cocos 目录，按 Git blob 内容哈希逐文件检查。
+// 验证冻结原型和入库录像；P3 起画面层和资源允许修改，core 由黄金录像保护。
 const fs = require('node:fs'),
   path = require('node:path'),
   crypto = require('node:crypto');
@@ -8,11 +8,7 @@ const roots = [
   'js',
   'css',
   'assets',
-  'index.html',
-  'cocos/assets/scripts/view',
-  'cocos/assets/scripts/platform',
-  'cocos/assets/scenes',
-  'cocos/assets/resources'
+  'index.html'
 ];
 const entries = execFileSync('git', ['ls-tree', '-rz', 'HEAD', '--', ...roots, 'tests/golden'], { cwd: root })
   .toString()
@@ -24,7 +20,7 @@ for (const entry of entries) {
   const [head, file] = entry.split('\t');
   if (
     file.startsWith('tests/golden/') &&
-    !/^tests\/golden\/(level-\d-seed-\d+\.json\.gz|manifest\.json)$/.test(file)
+    !/^tests\/golden\/(.*\.json\.gz|(?:extra-)?manifest\.json)$/.test(file)
   )
     continue;
   expected.add(file);
