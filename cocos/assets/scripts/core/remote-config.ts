@@ -1,7 +1,7 @@
 // 移植计划§5：线上只调关卡中已有的数值，绝不修改全局常量或对局中的对象。
 import {LEVELS} from './levels';
 import type {Level} from './types';
-export interface RemoteConfig {version: number; levels: Record<number, Record<string, number>>}
+export interface RemoteConfig {version: number; levels: Record<number, Record<string, number>>; perfSampleRate?:number}
 // 时长最低仍覆盖现有全部时间表；其余字段可独立安全覆盖，非法字段逐项忽略。
 export const REMOTE_BOUNDS: Record<string, readonly [number, number]> = {
   duration: [60, 240], potLife: [10, 60], skyChance: [0, 1], leaderFocus: [0, 1],
@@ -15,6 +15,8 @@ export function sanitizeConfig(value: unknown): RemoteConfig {
   const v = value as RemoteConfig;
   if (!Number.isSafeInteger(v.version) || v.version < 0 || !v.levels || typeof v.levels !== 'object') return empty;
   const out: RemoteConfig = {version: v.version, levels: {}};
+  // 性能采样只控制外围上报，不进入Level或玩法；缺省正式版关闭。
+  if(typeof v.perfSampleRate==='number'&&Number.isFinite(v.perfSampleRate)&&v.perfSampleRate>=0&&v.perfSampleRate<=1)out.perfSampleRate=v.perfSampleRate;
   for (const lv of LEVELS) {
     const patch = v.levels[lv.id]; if (!patch || typeof patch !== 'object') continue;
     const fields: Record<string, number> = {};

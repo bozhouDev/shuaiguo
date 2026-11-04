@@ -16,6 +16,11 @@ export interface WxCanvas {
   toTempFilePathSync(options: {x:number;y:number;width:number;height:number;destWidth:number;destHeight:number;fileType:'png'}): string;
 }
 export interface WechatAPI {
+  getDeviceInfo?(): {brand?:string;model?:string;system?:string;platform?:string};
+  getAppBaseInfo?(): {SDKVersion?:string};
+  getSystemInfoSync?(): {SDKVersion?:string};
+  getDeviceBenchmarkInfo?(options:{success:(v:{benchmarkLevel?:number;modelLevel?:number})=>void;fail:()=>void}):void;
+  __sgRenderResolution?: {capped:boolean;nativeDpr:number|null};
   getOpenDataContext?(): {postMessage(message: unknown): void};
   getStorageSync?(key:string): unknown; setStorageSync?(key:string,value:string): void; removeStorageSync?(key:string): void;
   getAccountInfoSync?(): {miniProgram?: {envVersion?: string}};

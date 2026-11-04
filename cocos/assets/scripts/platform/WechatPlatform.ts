@@ -37,6 +37,16 @@ export class WechatPlatform implements Platform {
   setUserCloudStorage(data: {key:string;value:string}[]): Promise<boolean> {return this.cloud.setUserCloudStorage(data);}
   // 只放行明确的开发/体验环境，未知、异常、正式版关闭。
   debugEnabled(): boolean {try {const env=wechatAPI().getAccountInfoSync?.().miniProgram?.envVersion;return env==='develop'||env==='trial';}catch{return false;}}
+  // 每局一次设备快照，只取性能分析白名单；缺接口/失败留空，不阻塞开局。
+  performanceDevice(): {brand:string;model:string;system:string;platform:string;sdkVersion:string;benchmarkLevel:number|null;modelLevel:number|null} {
+    const out={brand:'',model:'',system:'',platform:'',sdkVersion:'',benchmarkLevel:null as number|null,modelLevel:null as number|null};
+    try{const info=this.wx.getDeviceInfo?.();for(const key of ['brand','model','system','platform'] as const)if(typeof info?.[key]==='string')out[key]=info[key]!.slice(0,96);}catch{/* 缺省为空。 */}
+    try{out.sdkVersion=(this.wx.getAppBaseInfo?.().SDKVersion||this.wx.getSystemInfoSync?.().SDKVersion||'').slice(0,32);}catch{/* 旧基础库无接口。 */}
+    try{this.wx.getDeviceBenchmarkInfo?.({success:v=>{for(const key of ['benchmarkLevel','modelLevel'] as const)if(typeof v[key]==='number'&&Number.isFinite(v[key]))out[key]=v[key]!;},fail:()=>{}});}catch{/* 不支持时保留null。 */}
+    return out;
+  }
+  // 读取启动脚本的实际状态，避免把下次启动的本地设置当作本局生效值。
+  resolutionCapped():boolean{return this.wx.__sgRenderResolution?.capped===true;}
   // wx窗口/胶囊都是逻辑像素；FIXED_WIDTH设计宽375，不乘DPR，保留真实胶囊矩形供HUD换行。
   topAvoidance(): TopAvoidance {
     const fallback={top:44,capsule:{x:281,y:50,w:87,h:32}};

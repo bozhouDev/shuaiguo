@@ -61,7 +61,7 @@ export class LobbyView {
 
 // 暂留已有大厅文件，避免今晚新建脚本无法被编辑器导入；后续可独立拆分。
 export class LobbyDebug {
-  level = 0; auto = false; tutorial = false; performance = false; seed = ''; runs = DEBUG_PANEL.defaultRuns;
+  level = 0; auto = false; tutorial = false; performance = false; renderNative=false; wechat=false; seed = ''; runs = DEBUG_PANEL.defaultRuns;
   busy = false; result: SimulationStats | null = null; summary = '';
   private taps: number[] = [];
   // 使用单调真实时间计算滑动窗口；离开大厅、后台及关闭开关时重置。
@@ -84,6 +84,7 @@ export class LobbyDebug {
     y+=p.paragraph(`版本 ${DEBUG_BUILD.version}\n构建时间：${DEBUG_BUILD.time}`,{x,y,w,h:0},12,'#5E6A84');y+=10;
     p.text('选关',x,y,16,'#1F2A44','body-700');y+=26;
     LEVELS.forEach((lv,i)=>{p.button('debug:level:'+i,`第${lv.id}关 · ${lv.name.split('·')[0].trim()}`,{x,y,w,h:40},this.level===i?'main':'ghost');y+=46;});
+    if(this.wechat){p.button('debug:resolution',`渲染倍数：${this.renderNative?'原生':'2'}`,{x,y,w,h:44},'ghost');y+=50;p.text('下次启动生效',x,y,12,'#5E6A84','body-400');y+=26;}
     this.toggle(p,'debug:performance','性能浮层',{x,y,w,h:44},this.performance);y+=50;
     this.toggle(p,'debug:auto','auto 托管',{x,y,w,h:44},this.auto);y+=50;
     this.toggle(p,'debug:tutorial','强制带教',{x,y,w,h:44},this.tutorial);y+=50;

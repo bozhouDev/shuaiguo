@@ -20,6 +20,9 @@ function sanitizeConfig(value) {
     if (!Number.isSafeInteger(v.version) || v.version < 0 || !v.levels || typeof v.levels !== 'object')
         return empty;
     const out = { version: v.version, levels: {} };
+    // 性能采样只控制外围上报，不进入Level或玩法；缺省正式版关闭。
+    if (typeof v.perfSampleRate === 'number' && Number.isFinite(v.perfSampleRate) && v.perfSampleRate >= 0 && v.perfSampleRate <= 1)
+        out.perfSampleRate = v.perfSampleRate;
     for (const lv of levels_1.LEVELS) {
         const patch = v.levels[lv.id];
         if (!patch || typeof patch !== 'object')

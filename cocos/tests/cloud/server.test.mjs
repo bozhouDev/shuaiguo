@@ -35,6 +35,15 @@ test('track批量上限、跨实例频率限制、重试幂等及字段白名单
   assert.equal(db.tables.get('events').size,120);assert.equal((await track({events:batch(20).map(v=>({...v,id:v.id+'_x'}))})).data.accepted,0);
   assert.equal((await load('track',db,'other')({events:batch(1)})).data.accepted,1);
 });
+test('perf单独入库、严格字段白名单、幂等和大小上限',async()=>{
+ const db=memoryDB(),track=load('track',db);
+ const event={id:'perf_1',type:'perf',level:5,at:Date.now(),v:1,reason:'finish',start:0,end:120,capEnabled:true,device:{brand:'Apple',model:'iPhone mock',system:'iOS mock',platform:'ios',sdkVersion:'3.0',benchmarkLevel:null,modelLevel:2,nickname:'不收集'},segments:[{kind:'period',start:0,end:30,frames:100,pots:20,interval:50,worst5:100,logic:.5,draw:5,drawCalls:null,graphics:50,sprites:60,labels:40,targetFps:60,dpr:2,width:786,height:1704,evil:'no'}],bossName:'不收集'};
+ assert.equal((await track({events:[event]})).data.accepted,1);
+ assert.equal(db.tables.get('events').size,0);assert.equal(db.tables.get('perf').size,1);
+ const row=[...db.tables.get('perf').values()][0];assert.equal(row.openid,undefined);assert.equal(row.bossName,undefined);assert.equal(row.device.nickname,undefined);assert.equal(row.segments[0].evil,undefined);assert.equal(row.segments[0].drawCalls,null);
+ assert.equal((await track({events:[event]})).data.duplicates,1);
+ for(const change of [{id:'bad',device:{model:'x'.repeat(17000)}},{id:'bad',segments:Array(17).fill(event.segments[0])},{id:'bad',segments:[{...event.segments[0],interval:Infinity}]},{id:'bad',v:2}])assert.equal((await track({events:[{...event,...change}]})).data.accepted,0);
+});
 test('rank每关最好成绩、范围与星级校验、前50及榜外我的名次、匿名隔离',async()=>{
   const db=memoryDB(),rank=load('rank',db);
   const score={rank:1,stars:3,debt:5,blames:4,duration:70};

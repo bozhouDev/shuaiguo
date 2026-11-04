@@ -14,5 +14,5 @@ test('每次微信构建模板合并后保持AppID，云函数相对路径解析
   const merged={...existing,...template};
   assert.equal(merged.appid,'wx15e416b0643d90af');assert.equal(merged.compileType,'game');
   const functions=path.resolve(project,merged.cloudfunctionRoot);assert.equal(functions,path.join(root,'cloudfunctions'));
-  for(const n of ['config','save','track','rank'])for(const f of ['index.js','package.json','runtime.cjs','progress.js','remote-config.js','levels.js','config.js'])assert.equal(existsSync(path.join(functions,n,f)),true,n+'/'+f);
+  for(const n of ['config','save','track','rank'])for(const f of ['index.js','package.json','runtime.cjs','perf.cjs','progress.js','remote-config.js','levels.js','config.js'])assert.equal(existsSync(path.join(functions,n,f)),true,n+'/'+f);
 });

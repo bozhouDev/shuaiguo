@@ -33,6 +33,8 @@ export class WorldView {
   private offLifecycle?:()=>void;
   // 性能采样只在编辑器预览开启，不进入正式包。
   readonly timings: {dt: number; update: number; draw: number}[] = [];
+  // 外围自动采样只接收已有计时，不改玩法dt、事件或RNG。
+  perf?: {logic:number;draw:number};
 
   private platform: Platform;
   private params: QueryParams;
@@ -114,11 +116,11 @@ export class WorldView {
     m.updateClosingNotice();
     this.consumeEvents();
     this.painter.advance(dt); this.clock += dt; this.steps++;
-    const afterUpdate = performance.now(); this.render();
+    const afterUpdate = performance.now();if(this.perf)this.perf.logic+=afterUpdate-start; this.render();
     if (PREVIEW && this.freezeAt === null) {this.timings.push({dt: dt * 1000, update: afterUpdate - start, draw: performance.now() - afterUpdate});if(this.timings.length>240)this.timings.shift();}
   }
   // 绘制只消费view自己的缓存，除frameAim外不修改core。
-  render(): void {this.painter.draw(this.clock); this.controls.draw(this.clock); this.ui.draw(this.real, this.controls.fireCenter(), this.reducedMotion(), this.params.get('capsule') === '1');}
+  render(): void {const start=this.perf?performance.now():0;this.painter.draw(this.clock); this.controls.draw(this.clock); this.ui.draw(this.real, this.controls.fireCenter(), this.reducedMotion(), this.params.get('capsule') === '1');if(this.perf)this.perf.draw+=performance.now()-start;}
   // 顶部假胶囊仅编辑器网页参数启用；正式微信由平台实现接管。
   private topAvoidance(): TopAvoidance {return this.params.get('capsule') === '1' ? {top: 44, capsule: {x: this.surfaces[5].width - 94, y: 50, w: 87, h: 32}} : this.platform.topAvoidance();}
   // 网页尊重减少动态偏好，微信正式设置留给P5。

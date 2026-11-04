@@ -5,7 +5,7 @@ const db=cloud.database({throwOnNotFound:false});
 let ready;
 // 仅忽略确实已存在的集合；网络、权限错误必须返回不可用，不伪装初始化成功。
 async function ensureCollections(){
-  if(!ready)ready=Promise.all(['saves','events','ranks','config'].map(async name=>{
+  if(!ready)ready=Promise.all(['saves','events','ranks','config','perf'].map(async name=>{
     try{await db.createCollection(name);}catch(e){
       // 已存在的错误码在SDK/后端版本间不同，用服务端只读查询确认存在，避免误吞权限/网络错误。
       try{await db.collection(name).limit(1).get();}catch{throw e;}

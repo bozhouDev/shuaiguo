@@ -27,6 +27,11 @@ test('白名单与边界过滤，开局快照不受后来配置或调用者对�
   assert.equal(m.L.duration,80);assert.equal(m.L.ai.aggr,1.1);
   assert.equal(new Match({seed:1}).L.duration,70);
 });
+test('性能比例沿现有配置返回，缺省关、范围合法且不进入Level',()=>{
+ assert.equal(sanitizeConfig({version:1,levels:{},perfSampleRate:.25}).perfSampleRate,.25);
+ for(const n of [-1,2,'1',Infinity])assert.equal(sanitizeConfig({version:1,levels:{},perfSampleRate:n}).perfSampleRate,undefined);
+ assert.equal(levelForMatch(0,{version:1,levels:{},perfSampleRate:1}).perfSampleRate,undefined);
+});
 test('微信永不返回/抛错/断网全部限时降级，迟到回调不改变结果',async()=>{
   const wx={cloud:{init(){},callFunction(){}}};globalThis.wx=wx;
   const p=new WechatPlatform();assert.equal(await p.cloud.init(),true);

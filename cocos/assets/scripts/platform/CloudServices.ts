@@ -40,6 +40,8 @@ export class CloudServices {
   }
   // 每次开局从缓存生成独立深拷贝；不会持有已开始对局的引用。
   level(index:number):Level{return levelForMatch(index,this.config);}
+  // 每局只抽一次；使用外围随机源，绝不消费core RNG。网页始终关闭。
+  performanceEnabled():boolean{return this.platform.kind==='wechat'&&(this.platform.debugEnabled()||Math.random()<(this.config.perfSampleRate??0));}
   // 只接受非回退版本；空配置也可以用更高版本撤回覆盖。
   private async fetchConfig():Promise<void>{
     const r=await this.platform.cloud.call<unknown>('config',{});if(!this.alive||!r.ok)return;
