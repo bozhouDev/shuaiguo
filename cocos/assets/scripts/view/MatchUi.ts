@@ -26,6 +26,12 @@ export class MatchUi {
   }
   // Enter/空格仅激活最后一步的开始上班按钮，其他输入锁定。
   key(code: number): boolean {if (!this.match.coachLocked()) return this.paused() || this.match.mode !== 'play'; if (code === 13 || code === 32) this.action('start'); return true;}
+  // 暂停不冻结尚未结束的CSS等价动画；稳态才复用HUD/横幅节点，null表示本帧仍需绘制。
+  pausedVisualKey(real:number,reduce:boolean):string|null {
+    const m=this.messages,n=this.closing.notice;
+    if(real-m.hintChange<.34||real-m.msgChange<.25||real-m.toastAt<.2||real>=m.toastUntil&&real-m.toastUntil<.2||!reduce&&(real-this.hud.pulseAt<2.7||!!this.match.S.tut||!n.hidden&&!!n.warning))return null;
+    return [m.hintOn,m.hintChange,m.msgOn,m.msgChange,m.toastAt,real<m.toastUntil,n.hidden,n.seconds,n.title,n.detail,n.passed].join(':');
+  }
   // 本层只负责对局HUD与提示，外围卡片由AppView接管。
   draw(real: number, fire: {x: number; y: number}, reduce: boolean, debugCapsule = false): void {
     this.real = real; const c = this.surface, avoid = this.avoidance(); c.begin(); this.hud.draw(this.match, real, avoid);

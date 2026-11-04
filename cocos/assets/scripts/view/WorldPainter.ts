@@ -10,7 +10,7 @@ interface Pose {name: string; flip?: boolean; dir?: string; walking?: boolean}
 interface Walk {x: number; y: number; vx: number; vy: number; dir: string; flip: boolean; dist: number; still: number}
 interface Floor {base: string; alt: string; line: string; size: number; wood?: boolean}
 // 对局世界独立闭包：不在人物/领导状态上挂 walk，不使用 core 随机流。
-export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: DrawSurface, propsLayer: DrawSurface, teaLayer: DrawSurface, assets: WorldAssets) {
+export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: DrawSurface, propsLayer: DrawSurface, teaLayer: DrawSurface, assets: WorldAssets, mapReady=false) {
  let ctx = main;
  const st = main, inp = m.inp, E = new SpriteTools(assets);
  const FOOT_DY = 20, PLAYER_H = 70, NPC_H = 64, FLAT_W = 74;
@@ -548,7 +548,7 @@ export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: Draw
 
    ctx.end(); ctx = main;
  }
- buildMap();
+ if(!mapReady)buildMap();
  return {
    draw(time: number) { main.begin(); draw(time); main.end(); },
    advance(dt: number) {for (const f of floats) {f.life -= dt; f.y -= 38 * dt;} for (let i = floats.length - 1; i >= 0; i--) if (floats[i].life <= 0) floats.splice(i, 1);},

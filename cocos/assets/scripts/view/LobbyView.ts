@@ -19,6 +19,8 @@ export class LobbyView {
   select(index:number,prog:Progress={unlocked:1,best:{}}):void {this.calendar(prog);const w=Math.min(360,Math.min(this.p.c.width,this.p.c.height*.666)-32),d=this.days[index];this.scroll=Math.max(0,Math.min(this.max,d.x+d.w/2-w/2));}
   // 同一句不连续出现，1.6真实秒后自动恢复。
   poke(real:number):void {let i:number;do{i=Math.floor(Math.random()*LOBBY_LINES.length);}while(i===this.line);this.line=i;this.heroUntil=real+1.6;}
+  // 大厅动效都是两帧阶跃；仅当实际姿势/闪光变化时重画，保留原来的相位与频率。
+  frameKey(real:number,reduce:boolean):string {const bob=(delay:number)=>reduce?0:((real-delay)%1.2+1.2)%1.2>=.6?1:0,spark=(delay:number)=>reduce?1:((real-delay)%1+1)%1>=.5?1:0;return [real<this.heroUntil?this.line:-1,bob(0),bob(.3),...Array.from({length:3},(_,i)=>bob(i*.4)),...Array.from({length:4},(_,i)=>spark(i*.5))].join(':');}
   // 横滑后就近吸附卡片中心，边缘夹紧，不触发选关。
   swipe(delta:number,snap=false):void {this.scroll=Math.max(0,Math.min(this.max,this.scroll-delta));if(snap){const w=this.strip!.w-32;this.scroll=this.days.map(d=>Math.max(0,Math.min(this.max,d.x+d.w/2-w/2))).sort((a,b)=>Math.abs(a-this.scroll)-Math.abs(b-this.scroll))[0];}}
   // 大厅主布局：真实CSS像素，底部菜单固定，人物区分配剩余高度。
@@ -59,7 +61,7 @@ export class LobbyView {
 
 // 暂留已有大厅文件，避免今晚新建脚本无法被编辑器导入；后续可独立拆分。
 export class LobbyDebug {
-  level = 0; auto = false; tutorial = false; seed = ''; runs = DEBUG_PANEL.defaultRuns;
+  level = 0; auto = false; tutorial = false; performance = false; seed = ''; runs = DEBUG_PANEL.defaultRuns;
   busy = false; result: SimulationStats | null = null; summary = '';
   private taps: number[] = [];
   // 使用单调真实时间计算滑动窗口；离开大厅、后台及关闭开关时重置。
@@ -82,6 +84,7 @@ export class LobbyDebug {
     y+=p.paragraph(`版本 ${DEBUG_BUILD.version}\n构建时间：${DEBUG_BUILD.time}`,{x,y,w,h:0},12,'#5E6A84');y+=10;
     p.text('选关',x,y,16,'#1F2A44','body-700');y+=26;
     LEVELS.forEach((lv,i)=>{p.button('debug:level:'+i,`第${lv.id}关 · ${lv.name.split('·')[0].trim()}`,{x,y,w,h:40},this.level===i?'main':'ghost');y+=46;});
+    this.toggle(p,'debug:performance','性能浮层',{x,y,w,h:44},this.performance);y+=50;
     this.toggle(p,'debug:auto','auto 托管',{x,y,w,h:44},this.auto);y+=50;
     this.toggle(p,'debug:tutorial','强制带教',{x,y,w,h:44},this.tutorial);y+=50;
     y+=p.paragraph('强制带教会选第1关，并关闭托管',{x,y,w,h:0},12,'#5E6A84');y+=8;

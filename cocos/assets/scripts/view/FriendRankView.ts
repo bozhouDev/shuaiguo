@@ -14,6 +14,8 @@ export class FriendRankView {
   private sent='';
   private visible=false;
   private available=true;
+  // 主域稳态缓存必须看到SDK失败后的占位变化，否则首帧失败会永久留白。
+  frameKey():string {return `${this.selected}:${this.available}`;}
   constructor(readonly p:ScreenPaint,readonly parent:Node,readonly wechat:boolean) {}
   // 保留安全区/胶囊空间；三种窄屏均固定顶部和底部，列表占用中间剩余高度。
   draw(avoid:TopAvoidance,active=true):void {

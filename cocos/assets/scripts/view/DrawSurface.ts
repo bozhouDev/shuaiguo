@@ -182,7 +182,8 @@ export class DrawSurface {
     label.isBold = /bold/.test(this.font);
     if (label.string !== s) label.string = s;
     label.color = this.color(this.fillStyle); label.enableOutline = !!outline;
-    if (outline) { label.outlineWidth = outline.width / 2; label.outlineColor = this.color(outline.color); }
+    // 3.8.8的outlineColor setter只比对象身份；同值新Color也会重排字并上传整张纹理。
+    if (outline) { label.outlineWidth = outline.width / 2; const ink=this.color(outline.color); if(!label.outlineColor?.equals?.(ink))label.outlineColor=ink; }
     this.place(e.node, x, y); this.strokeTextValue = null;
   }
 }

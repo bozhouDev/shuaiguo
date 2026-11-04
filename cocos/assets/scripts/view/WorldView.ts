@@ -13,6 +13,7 @@ import {InputView} from './InputView';
 import {METRICS} from './visual-data';
 
 export interface WorldOptions {platform: Platform; params: QueryParams; level: number; levelParams?: Level; tutorial: boolean; progress: Progress; buff?: string | null; assets: WorldAssets; onEvent: (e: CoreEvent) => void; onAction: (name: string) => void; blocked: () => boolean; onHidden: (hidden: boolean) => void}
+export interface WorldVisuals {root:Node; surfaces:DrawSurface[]; theme:string}
 
 // 外围组织器创建普通/带教对局；只读 core 状态、消费事件，主循环的顺序和原型相同。
 export class WorldView {
@@ -24,9 +25,11 @@ export class WorldView {
   private painter!: ReturnType<typeof createWorldPainter>;
   private controls!: InputView;
   private root: Node;
+  private ownsVisuals=true; private mapReady=false;
   private freezeAt: number | null = null;
   private events: CoreEvent[] = [];
   private alive = true;
+  private pauseFrames=0; private lastPauseUI:string|null='';
   private offLifecycle?:()=>void;
   // 性能采样只在编辑器预览开启，不进入正式包。
   readonly timings: {dt: number; update: number; draw: number}[] = [];
@@ -36,7 +39,7 @@ export class WorldView {
   private realOrigin = performance.now();
   real = 0;
   ui!: MatchUi;
-  constructor(parent: Node, readonly restart: () => void, initial = true, readonly options?: WorldOptions) {
+  constructor(parent: Node, readonly restart: () => void, initial = true, readonly options?: WorldOptions, warm?:WorldVisuals) {
     this.assets = options?.assets || new WorldAssets();
     const platform: Platform = this.platform = options?.platform || (sys.platform === sys.Platform.WECHAT_GAME ? new WechatPlatform() : new WebPlatform());
     const params = this.params = options?.params || (PREVIEW && platform.debugEnabled() && platform.kind === 'web' && typeof location !== 'undefined' ? new QueryParams(location.search) : new QueryParams());
@@ -48,7 +51,9 @@ export class WorldView {
     const tutorial = options?.tutorial ?? (level === 0 && params.get('auto') !== '1' && (!progress.tutDone || (initial && params.get('tut') === '1')));
     this.match = new Match({level, levelParams:options?.levelParams, seed: params.has('seed') ? Number(params.get('seed')) : Date.now(), auto: params.get('auto') === '1',
       tutorial, progress, buff: options?.buff ?? (initial ? params.get('buff') : null), onEvent:event=>{if(!this.match?.simulating)this.events.push(event);}});
-    this.root = new Node('World'); this.root.layer = Layers.Enum.UI_2D; parent.addChild(this.root);
+    // 只接管介绍页已预热的显示节点；Match仍按点击时的seed/进度/云参数重新创建。
+    if(warm){this.root=warm.root;this.surfaces.push(...warm.surfaces);this.mapReady=warm.theme===this.match.L.theme;}
+    else {this.root = new Node('World'); this.root.layer = Layers.Enum.UI_2D; parent.addChild(this.root);}
     view.on('canvas-resize', this.resize, this);
     if(platform.onLifecycle)this.offLifecycle=platform.onLifecycle({hide:()=>this.hide(),show:()=>this.show()});else {game.on(Game.EVENT_HIDE, this.hide, this); game.on(Game.EVENT_SHOW, this.show, this);}
   }
@@ -57,12 +62,12 @@ export class WorldView {
     if (!this.options) await this.assets.load(); if (!this.alive) return;
     this.realOrigin = performance.now();
     const size = view.getVisibleSize(); this.root.setPosition(-size.width / 2, size.height / 2);
-    for (const name of ['Floor', 'Tea', 'Props', 'Actors', 'Controls', 'MatchUI']) {
+    for (const name of this.surfaces.length?[]:['Floor', 'Tea', 'Props', 'Actors', 'Controls', 'MatchUI']) {
       const node = new Node(name); node.layer = Layers.Enum.UI_2D; node.addComponent(UITransform); this.root.addChild(node);
       const surface = new DrawSurface(node, this.assets); surface.width = size.width; surface.height = size.height; surface.metrics = METRICS;
       surface.cull = name !== 'Floor' && name !== 'Props'; this.surfaces.push(surface);
     }
-    this.painter = createWorldPainter(this.match, this.surfaces[3], this.surfaces[0], this.surfaces[2], this.surfaces[1], this.assets);
+    this.painter = createWorldPainter(this.match, this.surfaces[3], this.surfaces[0], this.surfaces[2], this.surfaces[1], this.assets,this.mapReady);
     this.ui = new MatchUi(this.surfaces[5], this.match, () => this.topAvoidance(), () => this.paused, name => this.action(name));
     this.controls = new InputView(this.match, this.surfaces[4], () => this.action('pause'), (x, y) => this.options?.blocked() || this.ui.pointer(x, y), code => this.options?.blocked() || this.ui.key(code), () => !this.options?.blocked() && !this.paused && !this.match.coachLocked());
     this.consumeEvents();
@@ -84,7 +89,15 @@ export class WorldView {
   update(dt: number): void {
     if (!this.ready || this.frozen) return;
     this.real = (performance.now() - this.realOrigin) / 1000;
-    if (this.hidden || this.paused) {this.render(); return;}
+    if (this.hidden) return;
+    if (this.paused) {
+      const reduce=this.reducedMotion(),key=this.ui.pausedVisualKey(this.real,reduce);
+      // 前两帧让走路/摇杆收成静止姿势；其后不再三角化人物、影子与视野。
+      if(this.pauseFrames<2){this.render();this.pauseFrames++;}
+      else if(key===null||key!==this.lastPauseUI)this.ui.draw(this.real,this.controls.fireCenter(),reduce,this.params.get('capsule')==='1');
+      this.lastPauseUI=key;return;
+    }
+    this.pauseFrames=0;this.lastPauseUI='';
     if (this.skipFrame) {this.skipFrame = false; return;}
     this.tick(Math.min(.033, dt), false);
   }
@@ -102,7 +115,7 @@ export class WorldView {
     this.consumeEvents();
     this.painter.advance(dt); this.clock += dt; this.steps++;
     const afterUpdate = performance.now(); this.render();
-    if (PREVIEW && this.freezeAt === null) this.timings.push({dt: dt * 1000, update: afterUpdate - start, draw: performance.now() - afterUpdate});
+    if (PREVIEW && this.freezeAt === null) {this.timings.push({dt: dt * 1000, update: afterUpdate - start, draw: performance.now() - afterUpdate});if(this.timings.length>240)this.timings.shift();}
   }
   // 绘制只消费view自己的缓存，除frameAim外不修改core。
   render(): void {this.painter.draw(this.clock); this.controls.draw(this.clock); this.ui.draw(this.real, this.controls.fireCenter(), this.reducedMotion(), this.params.get('capsule') === '1');}
@@ -127,6 +140,8 @@ export class WorldView {
   private hide(): void {this.hidden = true; if (this.match.mode === 'play') this.paused = true; this.controls?.clear(true); this.options?.onHidden(true);}
   // 回前台保持占位暂停，点继续或P/Esc恢复，首帧丢弃后台时间。
   private show(): void {this.hidden = false; this.skipFrame = true; this.options?.onHidden(false);}
+  // 一次性移交池所有权；旧World照常解绑输入/生命周期，新World负责最终释放节点。
+  takeVisuals():WorldVisuals {if(!this.ready||!this.ownsVisuals||!this.options)throw Error('对局显示节点不可移交');this.ownsVisuals=false;return {root:this.root,surfaces:this.surfaces,theme:this.match.L.theme};}
   // 销毁场景时解除监听，释放运行时帧和本任务节点。
-  destroy(): void {this.alive = false;this.offLifecycle?.(); view.off('canvas-resize', this.resize, this); game.off(Game.EVENT_HIDE, this.hide, this); game.off(Game.EVENT_SHOW, this.show, this); this.controls?.destroy(); this.root.destroy(); if (!this.options){this.assets.destroy();this.platform.dispose?.();}}
+  destroy(): void {this.alive = false;this.offLifecycle?.(); view.off('canvas-resize', this.resize, this); game.off(Game.EVENT_HIDE, this.hide, this); game.off(Game.EVENT_SHOW, this.show, this); this.controls?.destroy(); if(this.ownsVisuals)this.root.destroy(); if (!this.options){this.assets.destroy();this.platform.dispose?.();}}
 }
