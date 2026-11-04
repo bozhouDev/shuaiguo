@@ -1,6 +1,8 @@
 import {EventKeyboard, EventTouch, Input, KeyCode, input, sys} from 'cc';
 import {Match} from '../core/match';
 import {THROW_CD} from '../core/config';
+import {RetainedWorld} from './RetainedWorld';
+import {MatchNode} from './MatchNodes';
 import {DrawSurface} from './DrawSurface';
 import {SpriteTools, stickCenter} from './SpriteTools';
 
@@ -10,11 +12,11 @@ const KEYS: Record<number, string> = {
 };
 // 对应 engine createInput；全局触摸可同时读两根手指，甩锅触点从摇杆输入中排除。
 export class InputView {
-  private tools: SpriteTools;
+  private tools: SpriteTools;private retained?:MatchNode;
   private fireTouches = new Set<number>();
   private pressed = new Set<number>();
-  constructor(readonly match: Match, readonly surface: DrawSurface, readonly togglePause: () => void, readonly pointer: (x: number, y: number) => boolean, readonly key: (code: number) => boolean, readonly enabled: () => boolean) {
-    this.tools = new SpriteTools(surface.assets);
+  constructor(readonly match: Match, readonly surface: DrawSurface, readonly togglePause: () => void, readonly pointer: (x: number, y: number) => boolean, readonly key: (code: number) => boolean, readonly enabled: () => boolean,nodes?:RetainedWorld) {
+    this.tools = new SpriteTools(surface.assets);this.retained=nodes?new MatchNode(surface.root,'ThrowButton',nodes.atlas):undefined;
     input.on(Input.EventType.TOUCH_START, this.down, this); input.on(Input.EventType.TOUCH_MOVE, this.move, this);
     input.on(Input.EventType.TOUCH_END, this.up, this); input.on(Input.EventType.TOUCH_CANCEL, this.up, this);
     if (sys.isBrowser) { input.on(Input.EventType.KEY_DOWN, this.keyDown, this); input.on(Input.EventType.KEY_UP, this.keyUp, this); }
@@ -52,6 +54,7 @@ export class InputView {
   clear(background = false): void {if (background) this.pressed.clear(); const i = this.match.inp; i.down = false; i.id = null; i.angle = null; i.mag = 0; i.keys = {}; i.fire = 0; this.fireTouches.clear();}
   // 对应 updateThrowBtn；仅本卡操作按钮，不做 HUD。
   draw(time: number): void {
+    if(this.retained){this.drawRetained(time);return;}
     const ctx = this.surface; ctx.begin();
     if (this.match.mode !== 'play') {ctx.end(); return;}
     const P = this.match.S.player, c = this.fireCenter();
@@ -73,10 +76,19 @@ export class InputView {
     this.tools.label(ctx, parry ? '弹!' : this.match.holdsHot(P) ? '急件' : '甩!', 0, 0, 30, parry ? '#FFFDF5' : has ? '#1F2A44' : '#5E6A84', 'rgba(0,0,0,0)');
     ctx.restore(); ctx.end();
   }
+  // 常驻甩键：反甩只缩放容器；冷却只更新同一扇形的顶点，不重建Graphics。
+  private drawRetained(time:number):void {
+    const m=this.match,n=this.retained!.show(m.mode==='play');if(m.mode!=='play')return;const P=m.S.player,c=this.fireCenter(),parry=P.parryLock<=0&&m.S.throws.some(f=>f.owner!==P&&m.incomingTTI(f,P)<=m.parryWin(f)),has=m.potsOf(P)>0&&!(m.S.tut&&!m.S.tut.def?.fire),scale=parry?1+.08*(1-Math.cos(time/.18*Math.PI))/2:1;
+    n.at(c.x,c.y,0,scale);n.child('shadow').ellipse(3,4,46,46,'#1F2A44');n.child('face').ellipse(0,0,46,46,parry?'#E8504A':has?'#FFD84D':'#D5DAE3');n.child('border').ellipse(0,0,46,46,'#1F2A44',1,0,Math.PI*2,3);
+    // 下半圆两条同形弧相差5px，构成原按钮硬内阴影。
+    const inner=n.child('inner');if(!inner.retainMesh()){const xy:number[]=[],indices:number[]=[];for(let i=0;i<=64;i++){const a=i*Math.PI/64,x=Math.cos(a)*43,y=Math.sin(a)*43;xy.push(x,y,x,y-5);if(i){const j=(i-1)*2;indices.push(j,j+1,j+2,j+1,j+3,j+2);}}inner.mesh({xy,indices},'rgba(0,0,0,.18)');}
+    const cd=parry?0:Math.max(0,P.cool,P.stun)/THROW_CD,cool=n.child('cooldown').show(cd>0);if(cd>0)cool.ellipse(0,0,46,46,'rgba(31,42,68,.45)',1,-Math.PI/2,-Math.PI/2+Math.min(1,cd)*Math.PI*2);
+    n.child('label').text(parry?'弹!':m.holdsHot(P)?'急件':'甩!',0,0,30,parry?'#FFFDF5':has?'#1F2A44':'#5E6A84','rgba(0,0,0,0)');
+  }
   // 释放全局监听，不留下触摸或键盘抢占。
   destroy(): void {
     input.off(Input.EventType.TOUCH_START, this.down, this); input.off(Input.EventType.TOUCH_MOVE, this.move, this);
     input.off(Input.EventType.TOUCH_END, this.up, this); input.off(Input.EventType.TOUCH_CANCEL, this.up, this);
-    input.off(Input.EventType.KEY_DOWN, this.keyDown, this); input.off(Input.EventType.KEY_UP, this.keyUp, this); this.clear(true);
+    input.off(Input.EventType.KEY_DOWN, this.keyDown, this); input.off(Input.EventType.KEY_UP, this.keyUp, this); this.clear(true);if(this.retained){this.retained.node.removeFromParent();this.retained.destroy();}
   }
 }

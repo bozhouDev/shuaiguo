@@ -60,10 +60,14 @@ test('结算所有固定文字在现有字体子集内，长称呼行不侵入�
 });
 test('WorldAssets加载全部结算PNG并设置最近邻，九宫格裁片缓存且销毁派生帧',async()=>{
  const {load:loadView,cc}=require('./wechat/view-harness.cjs');
- const frames=[];class Texture {static Filter={NEAREST:0,NONE:1};setFilters(...args){this.filters=args;}setMipFilter(v){this.mip=v;}}
+ const frames=[];class Texture {static Filter={NEAREST:0,NONE:1};static WrapMode={CLAMP_TO_EDGE:0};reset(size){Object.assign(this,size);}setWrapMode(){}getGFXTexture(){return {gpuTexture:{glTexture:{}}};}destroy(){}setFilters(...args){this.filters=args;}setMipFilter(v){this.mip=v;}}
+ // 只替换新增GPU设备边界；结算PNG加载、帧尺寸、最近邻和裁片仍走真实WorldAssets。
+ cc.ImageAsset=class{};cc.assetManager.releaseAsset=()=>{};
+ cc.gfx={...cc.gfx,TextureInfo:class{},TextureType:{TEX2D:0},TextureUsageBit:{SAMPLED:1,TRANSFER_SRC:2,TRANSFER_DST:4},Format:{RGBA8:0},BufferTextureCopy:class{texOffset={x:0,y:0};texExtent={width:0,height:0};}};
+ cc.director.root={device:{gl:{createFramebuffer(){},getParameter(){},bindFramebuffer(){},framebufferTexture2D(){},bindTexture(){},copyTexSubImage2D(){},deleteFramebuffer(){}},createTexture:()=>({gpuTexture:{glTexture:{}},resize(){},destroy(){}}),copyTexImagesToTexture(){},copyBuffersToTexture(){}}};
  cc.Texture2D=Texture;cc.TTFFont=class{};cc.Rect=class{constructor(x,y,width,height){Object.assign(this,{x,y,width,height});}};cc.Size=class{};
  cc.SpriteFrame=class{constructor(){frames.push(this);}destroy(){this.destroyed=true;}};
- const paths=[];cc.resources={load(file,Type,done){paths.push(file);if(Type===Texture){const png=fs.readFileSync('cocos/assets/resources/'+file.replace(/\/texture$/,'.png')),texture=new Texture();texture.width=png.readUInt32BE(16);texture.height=png.readUInt32BE(20);done(null,texture);}else done(null,{});}};
+ const paths=[];cc.resources={load(file,Type,done){paths.push(file);if(Type===Texture){const png=fs.readFileSync('cocos/assets/resources/'+file.replace(/\/texture$/,'.png')),texture=new Texture();texture.width=png.readUInt32BE(16);texture.height=png.readUInt32BE(20);done(null,texture);}else if(Type===cc.ImageAsset){const png=fs.readFileSync('cocos/assets/resources/'+file+'.png');done(null,{width:png.readUInt32BE(16),height:png.readUInt32BE(20),data:{}});}else done(null,{});}};
  const {WorldAssets}=loadView('cocos/assets/scripts/view/WorldAssets'),assets=new WorldAssets();await assets.load(undefined,true);
  const expected=fs.readdirSync('cocos/assets/resources/result').filter(n=>n.endsWith('.png')&&!/ribbon_\d/.test(n)).map(n=>n.slice(0,-4));
  assert.equal(expected.length,17);for(const name of expected){const pic=assets.spr[name];assert.ok(pic);assert.ok(paths.includes(`result/${name}/texture`));assert.deepEqual(pic.frame.texture.filters,[0,0]);assert.equal(pic.frame.texture.mip,1);}

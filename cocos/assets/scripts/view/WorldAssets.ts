@@ -1,5 +1,6 @@
-import {Asset, Rect, Size, SpriteFrame, Texture2D, TTFFont, resources} from 'cc';
+import {Asset, assetManager, ImageAsset, EffectAsset, Material, Director, director, gfx, Rect, Size, SpriteFrame, Texture2D, TTFFont, resources} from 'cc';
 import {ATLAS} from './atlas-data';
+import {MATCH_ATLAS} from './match-atlas-data';
 
 // 结算独立素材不回写原型图集；名称与阶段一交付的PNG一一对应。
 const RESULT_IMAGES = ['sky_clear', 'trophy', 'ribbon', 'ribbon_red', 'rays_left', 'rays_right',
@@ -17,6 +18,9 @@ function load<T extends Asset>(path: string, type: new (...args: any[]) => T): P
 export class WorldAssets {
   spr: Record<string, Picture> = {};
   title!: TTFFont;
+  matchTexture!: Texture2D;
+  matchBuffers?:{format:gfx.Attribute[];accessor:any};
+  matchMaterial?:Material;matchEffect?:EffectAsset;
   body400!: TTFFont;
   body700!: TTFFont;
   body900!: TTFFont;
@@ -27,11 +31,15 @@ export class WorldAssets {
   async load(onFonts?:()=>void, strict=false): Promise<void> {
     [this.title, this.body400, this.body700, this.body900] = await Promise.all([load('title', TTFFont), load('body-400', TTFFont), load('body-700', TTFFont), load('body-900', TTFFont)]);
     onFonts?.();
-    const sheets=await Promise.allSettled(ATLAS.sheets.map(async sheet => {
-      try {
-        const texture = await this.pixels(sheet.file + '/texture');
-        for (const [name, rect] of Object.entries(sheet.frames)) this.spr[name] = this.picture(texture, rect);
-      } catch (error) { console.warn('图集加载失败', sheet.file, error);if(strict)throw error; }
+    // 先建共享帧；外围页面与对局共用纹理，完全覆盖的旧角色/图标图集不再加载。
+    // 微信后续资源失败会重试load；拼好的纹理/帧继续复用，不能每次重试再占39MB。
+    if(!this.matchTexture){
+      this.matchTexture=await this.assembleMatch();
+      for(const [name,rect] of Object.entries(MATCH_ATLAS.frames))this.spr[name]=this.picture(this.matchTexture,rect);
+    }
+    const sheets=await Promise.allSettled(ATLAS.sheets.filter(sheet=>Object.keys(sheet.frames).some(name=>!this.spr[name])).map(async sheet=>{
+      try{const texture=await this.pixels(sheet.file+'/texture');for(const [name,rect] of Object.entries(sheet.frames))if(!this.spr[name])this.spr[name]=this.picture(texture,rect);}
+      catch(error){console.warn('图集加载失败',sheet.file,error);if(strict)throw error;}
     }));
     const failed=sheets.find((s):s is PromiseRejectedResult=>s.status==='rejected');if(failed)throw failed.reason;
     // 必需的结算美术跟随首屏加载；缺失直接报告加载失败，避免静默显示半张弹窗。
@@ -45,6 +53,47 @@ export class WorldAssets {
     } catch (error) { console.warn('爆炸图加载失败，使用撞击星', error); }
     for (const kind of ['calm', 'parry', 'rankup']) {try {const texture = await this.pixels(`ui/praise-${kind}/texture`); this.spr[`praise-${kind}`] = this.picture(texture, [0, 0, texture.width, texture.height]);}catch(error){console.warn('贴纸加载失败',kind,error);}}
 
+  }
+
+  // 来源只建ImageAsset。共用一张临时gfx搬运纹理，避免2D Canvas预乘/反预乘改变半透明颜色。
+  // 逐帧copyTexSubImage2D保留原始RGBA，不读回CPU、不经Canvas，不建来源Texture2D。
+  private async assembleMatch(): Promise<Texture2D> {
+    const texture=new Texture2D();texture.reset({width:MATCH_ATLAS.width,height:MATCH_ATLAS.height});
+    texture.setFilters(Texture2D.Filter.NEAREST,Texture2D.Filter.NEAREST);texture.setMipFilter(Texture2D.Filter.NONE);
+    texture.setWrapMode(Texture2D.WrapMode.CLAMP_TO_EDGE,Texture2D.WrapMode.CLAMP_TO_EDGE);
+    const device=director.root!.device;
+    const sheets=ATLAS.sheets.filter(sheet=>Object.keys(sheet.frames).some(name=>name in MATCH_ATLAS.frames));
+    // 搬运区仅在启动期间存在，一次处理一个来源；上限取真实来源尺寸，不开4096整图CPU副本。
+    const scratch=device.createTexture(new gfx.TextureInfo(gfx.TextureType.TEX2D,gfx.TextureUsageBit.SAMPLED|gfx.TextureUsageBit.TRANSFER_SRC|gfx.TextureUsageBit.TRANSFER_DST,gfx.Format.RGBA8,1,1));
+    // gfx没有跨WebGL1/2的公开区域复制入口。只在此处取原生句柄，且原样恢复绑定，不改引擎状态缓存。
+    const gl=(device as unknown as {gl:WebGLRenderingContext}).gl;
+    const gl2=gl as WebGL2RenderingContext,framebufferTarget=gl2.READ_FRAMEBUFFER??gl.FRAMEBUFFER;
+    const framebufferBinding=gl2.READ_FRAMEBUFFER_BINDING??gl.FRAMEBUFFER_BINDING,framebuffer=gl.createFramebuffer();
+    const native=(t:gfx.Texture):WebGLTexture=>(t as unknown as {gpuTexture:{glTexture:WebGLTexture}}).gpuTexture.glTexture;
+    try {
+      const white=new gfx.BufferTextureCopy();white.texExtent.width=white.texExtent.height=1;
+      device.copyBuffersToTexture([new Uint8Array([255,255,255,255])],texture.getGFXTexture()!,[white]);
+      for(const sheet of sheets){
+        const image=await load(sheet.file,ImageAsset);
+        try {
+          scratch.resize(image.width,image.height);
+          const region=new gfx.BufferTextureCopy();region.texExtent.width=image.width;region.texExtent.height=image.height;
+          device.copyTexImagesToTexture([image.data as HTMLImageElement],scratch,[region]);
+          const previousFramebuffer=gl.getParameter(framebufferBinding),previousTexture=gl.getParameter(gl.TEXTURE_BINDING_2D);
+          try {
+            gl.bindFramebuffer(framebufferTarget,framebuffer);gl.framebufferTexture2D(framebufferTarget,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,native(scratch),0);
+            gl.bindTexture(gl.TEXTURE_2D,native(texture.getGFXTexture()!));
+            for(const [name,[sx,sy,w,h]] of Object.entries(sheet.frames)){
+              if(!(name in MATCH_ATLAS.frames))continue;
+              const [x,y]=MATCH_ATLAS.frames[name as keyof typeof MATCH_ATLAS.frames];
+              gl.copyTexSubImage2D(gl.TEXTURE_2D,0,x,y,sx,sy,w,h);
+            }
+          } finally {gl.bindTexture(gl.TEXTURE_2D,previousTexture);gl.bindFramebuffer(framebufferTarget,previousFramebuffer);}
+        } finally {assetManager.releaseAsset(image);}
+      }
+      return texture;
+    } catch(error){texture.destroy();throw error;}
+    finally {gl.deleteFramebuffer(framebuffer);scratch.destroy();}
   }
 
   // 图集和爆炸序列图统一像素采样，不启用模糊和mipmap。
@@ -86,5 +135,5 @@ export class WorldAssets {
   }
 
   // 节点销毁后释放本局派生帧，resources 资源仍由 Cocos 管理。
-  destroy(): void { for (const frame of this.frames) frame.destroy(); this.frames = []; this.crops.clear(); }
+  destroy(): void { const buffers=this.matchBuffers;if(buffers){this.matchBuffers=undefined;director.once(Director.EVENT_AFTER_DRAW,()=>{const b=director.root?.batcher2D as any;if(b?._bufferAccessors.get(40)===buffers.accessor){b._bufferAccessors.delete(40);if(b._staticVBBuffer===buffers.accessor)b._staticVBBuffer=null;}buffers.accessor.destroy();});}this.matchMaterial?.destroy();this.matchEffect?.destroy();for (const frame of this.frames) frame.destroy(); this.matchTexture?.destroy(); this.frames = []; this.crops.clear(); }
 }

@@ -1,6 +1,8 @@
 import {Match} from '../core/match';
 import {CoreEvent} from '../core/types';
 import {TopAvoidance} from '../platform/Platform';
+import {RetainedWorld} from './RetainedWorld';
+import {MatchNode} from './MatchNodes';
 import {DrawSurface} from './DrawSurface';
 import {UiPaint, Box} from './UiPaint';
 import {HudView} from './HudView';
@@ -11,11 +13,13 @@ import {TutorialView} from './TutorialView';
 export class MatchUi {
   readonly p: UiPaint; readonly hud: HudView; readonly messages: MessageView; readonly closing: ClosingView; readonly tutorial: TutorialView;
   real = 0; result: {myRank: number} | null = null;
-  private panel: Box | null = null;
+  private panel: Box | null = null;private hudNodes?:MatchNode;private lastDrawKey:string|null=null;
   // CSS真实时间使用performance.now，浏览器暂停/后台不会停止toast；freeze截图可固定real。
-  constructor(readonly surface: DrawSurface, readonly match: Match, readonly avoidance: () => TopAvoidance, readonly paused: () => boolean, readonly action: (name: string) => void) {this.p = new UiPaint(surface); this.hud = new HudView(this.p); this.messages = new MessageView(this.p); this.closing = new ClosingView(this.p); this.tutorial = new TutorialView(this.p);}
+  constructor(readonly surface: DrawSurface, readonly match: Match, readonly avoidance: () => TopAvoidance, readonly paused: () => boolean, readonly action: (name: string) => void,nodes?:RetainedWorld) {this.p = new UiPaint(surface); this.hudNodes=nodes?new MatchNode(surface.root,'HUD',nodes.atlas):undefined;this.hud = new HudView(this.p,this.hudNodes); this.messages = new MessageView(this.p); this.closing = new ClosingView(this.p); this.tutorial = new TutorialView(this.p);}
   // 事件消费与世界层共享同一队列，声音意图留给P4。
   event(e: CoreEvent): void {this.messages.event(e.kind, e.args, this.real); if (e.kind === 'closingNotice') this.closing.event(e.args[0] as ClosingNotice, this.real); if (e.kind === 'coachRankPulse') this.hud.pulseAt = this.real; }
+  // 显示池移交时仅移除本实例的HUD，不能留下引用旧图集帧的节点。
+  destroy():void {if(this.hudNodes){this.hudNodes.node.removeFromParent();this.hudNodes.destroy();}}
   // 指针命中在InputView摇杆处理之前调用，面板/最后一步不允许穿透操作。
   pointer(x: number, y: number): boolean {
     const inside = (b: Box | null) => b && x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
@@ -34,7 +38,13 @@ export class MatchUi {
   }
   // 本层只负责对局HUD与提示，外围卡片由AppView接管。
   draw(real: number, fire: {x: number; y: number}, reduce: boolean, debugCapsule = false): void {
-    this.real = real; const c = this.surface, avoid = this.avoidance(); c.begin(); this.hud.draw(this.match, real, avoid);
+    this.real = real; const c = this.surface, avoid = this.avoidance();
+    if(this.hudNodes){
+      this.hud.draw(this.match,real,avoid);
+      // 稳定消息/提示沿用已有节点；入退场、倒计时警告与教学目标仍逐帧绘制，HUD单独更新。
+      const visual=this.match.S.tut?null:this.pausedVisualKey(real,reduce),key=visual===null?null:JSON.stringify([visual,c.width,c.height,this.hud.bottom,avoid,reduce,debugCapsule]);
+      if(key!==null&&key===this.lastDrawKey)return;this.lastDrawKey=key;c.begin();c.insertLayer(this.hudNodes.node);
+    }else {c.begin();this.hud.draw(this.match,real,avoid);}
     // 仅预览 capsule=1 时标出假胶囊和44px顶部边界，正式平台不画调试框。
     if (debugCapsule && avoid.capsule) {
       const b = avoid.capsule; c.fillStyle = 'rgba(255,216,77,.2)'; c.fillRect(b.x, b.y, b.w, b.h);

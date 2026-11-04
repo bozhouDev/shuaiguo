@@ -1,13 +1,13 @@
-import {Director, Graphics, Label, Layers, Node, Sprite, UITransform, director, game, view} from 'cc';
+import {Director, Graphics, Label, Layers, MeshRenderData, Node, Sprite, UITransform, director, game, view} from 'cc';
 
-export interface PerfFrame {at:number; interval:number; logic:number; draw:number; drawCalls:number|null; graphics:number; sprites:number; labels:number; changedLabels:number; vertices:number|null; labelLayout:number; graphicClears:number}
+export interface PerfFrame {at:number; interval:number; logic:number; draw:number; drawCalls:number|null; graphics:number; sprites:number; labels:number; changedLabels:number; vertices:number|null; labelLayout:number; graphicClears:number;graphicMeshes:number}
 // 调试采样器也由Node/浏览器基准工具复用；只在debugEnabled且主动打开时构造。
 // Cocos的私有实现只用于只读统计，版本不兼容时返回null，绝不把缺失数据报成0。
 export class PerfProbe {
   readonly version='p7-3-v1';
   frames:PerfFrame[]=[]; starts:Record<string,number>[]=[];
   private undo:(()=>void)[]=[];
-  private last=0; private logic=0; private draw=0; private changed=new Set<Label>(); private layout=0; private clears=0;
+  private last=0; private logic=0; private draw=0; private changed=new Set<Label>(); private layout=0; private clears=0;private meshes=0;
   private overlay?:Node; private text?:Label; private nextText=0;
   // 仪器连接外围实例及真实World原型；不复制玩法，不改dt和随机数。
   constructor(private app:any,worldPrototype:any,visible=true) {
@@ -24,6 +24,7 @@ export class PerfProbe {
     this.undo.push(()=>Object.defineProperty(Label.prototype,'string',descriptor));
     for(const method of ['updateRenderData','updateRenderer'])this.wrap(Label.prototype,method,function(original,args){const t=performance.now();try{return original(...args);}finally{probe.layout+=performance.now()-t;}});
     this.wrap(Graphics.prototype,'clear',function(original,args){probe.clears++;return original(...args);});
+    if(MeshRenderData)this.wrap(MeshRenderData,'add',function(original,args){probe.meshes++;return original(...args);});
     if(visible)this.makeOverlay();
     director.on(Director.EVENT_AFTER_DRAW,this.afterDraw,this);
   }
@@ -53,19 +54,19 @@ export class PerfProbe {
     const own=this.overlay?1:0;let vertices:number|null=0;
     for(const g of gs){if(g.node===this.overlay)continue;const impl=(g as any).impl;if(!impl?.getRenderDataList){vertices=null;break;}for(const data of impl.getRenderDataList())vertices!+=data.vertexStart;}
     const calls=(director.root as any)?.device?.numDrawCalls;
-    if(this.last){this.frames.push({at:now,interval:now-this.last,logic:this.logic,draw:this.draw,drawCalls:typeof calls==='number'?calls:null,graphics:gs.length-own,sprites:ss.length,labels:ls.length-own,changedLabels:this.changed.size,vertices,labelLayout:this.layout,graphicClears:this.clears});if(this.frames.length>1800)this.frames.shift();}
+    if(this.last){this.frames.push({at:now,interval:now-this.last,logic:this.logic,draw:this.draw,drawCalls:typeof calls==='number'?calls:null,graphics:gs.length-own,sprites:ss.length,labels:ls.length-own,changedLabels:this.changed.size,vertices,labelLayout:this.layout,graphicClears:this.clears,graphicMeshes:this.meshes});if(this.frames.length>1800)this.frames.shift();}
     if(this.pendingStart&&this.app.screen==='play'&&this.app.world?.ready){this.pendingStart.firstSubmitted=now-this.pendingStart.clickedAt;this.pendingStart.firstLabelLayout=this.layout;this.pendingStart=undefined;}
-    this.last=now;this.logic=this.draw=this.layout=this.clears=0;this.changed.clear();
+    this.last=now;this.logic=this.draw=this.layout=this.clears=this.meshes=0;this.changed.clear();
     if(this.overlay){const size=view.getVisibleSize();this.overlay.setPosition(-size.width/2+10,size.height/2-145);this.overlay.setSiblingIndex(root.children.length-1);if(now>=this.nextText){this.nextText=now+250;const s=this.summary(2000),current=this.frames.at(-1),f=(v:unknown)=>typeof v==='number'?v.toFixed(2):'N/A';this.text!.string=`性能 · 第${this.app.world?.match.L.id??'-'}关 · 近2秒\n帧间隔 ${f(s.interval)} / 最差5% ${f(s.worst5)} ms\n逻辑 ${f(s.logic)} · 绘制 ${f(s.draw)} ms\ndraw call ${current?.drawCalls??'N/A'} · 顶点 ${current?.vertices??'N/A'}\nGraphics ${current?.graphics??0} / Sprite ${current?.sprites??0} / Label ${current?.labels??0}\n本帧改字 ${current?.changedLabels??0} · 排字 ${f(s.labelLayout)} ms\n目标 ${game.frameRate} FPS · DPR ${view.getDevicePixelRatio()}`;}}
   }
   // 最差5%为最慢ceil(n*.05)帧的均值；原始interval从未被玩法的33ms上限截断。
   summary(windowMs=2000):Record<string,number|null> {
     const end=this.frames.at(-1)?.at??0,frames=this.frames.filter(f=>f.at>=end-windowMs),result:Record<string,number|null>={frames:frames.length};
-    for(const key of ['interval','logic','draw','drawCalls','graphics','sprites','labels','changedLabels','vertices','labelLayout','graphicClears'] as const){const values=frames.map(f=>f[key]);result[key]=values.length&&values.every(v=>v!==null)?(values as number[]).reduce((a,b)=>a+b,0)/values.length:null;}
+    for(const key of ['interval','logic','draw','drawCalls','graphics','sprites','labels','changedLabels','vertices','labelLayout','graphicClears','graphicMeshes'] as const){const values=frames.map(f=>f[key]);result[key]=values.length&&values.every(v=>v!==null)?(values as number[]).reduce((a,b)=>a+b,0)/values.length:null;}
     const slow=frames.map(f=>f.interval).sort((a,b)=>b-a).slice(0,Math.max(1,Math.ceil(frames.length*.05)));result.worst5=slow.length?slow.reduce((a,b)=>a+b,0)/slow.length:null;return result;
   }
   // 重置仅清仪器缓冲，当前对局和节点池保持原状。
-  reset():void {this.frames=[];this.last=0;this.logic=this.draw=this.layout=this.clears=0;this.changed.clear();}
+  reset():void {this.frames=[];this.last=0;this.logic=this.draw=this.layout=this.clears=this.meshes=0;this.changed.clear();}
   // 释放本采样器创建的节点与hook，保留用户场景/其他监听。
   destroy():void {director.off(Director.EVENT_AFTER_DRAW,this.afterDraw,this);for(const undo of this.undo.reverse())undo();this.overlay?.destroy();this.frames=[];}
 }

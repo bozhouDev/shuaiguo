@@ -70,8 +70,8 @@ export class WorldView {
       surface.cull = name !== 'Floor' && name !== 'Props'; this.surfaces.push(surface);
     }
     this.painter = createWorldPainter(this.match, this.surfaces[3], this.surfaces[0], this.surfaces[2], this.surfaces[1], this.assets,this.mapReady);
-    this.ui = new MatchUi(this.surfaces[5], this.match, () => this.topAvoidance(), () => this.paused, name => this.action(name));
-    this.controls = new InputView(this.match, this.surfaces[4], () => this.action('pause'), (x, y) => this.options?.blocked() || this.ui.pointer(x, y), code => this.options?.blocked() || this.ui.key(code), () => !this.options?.blocked() && !this.paused && !this.match.coachLocked());
+    this.ui = new MatchUi(this.surfaces[5], this.match, () => this.topAvoidance(), () => this.paused, name => this.action(name),this.painter.nodes);
+    this.controls = new InputView(this.match, this.surfaces[4], () => this.action('pause'), (x, y) => this.options?.blocked() || this.ui.pointer(x, y), code => this.options?.blocked() || this.ui.key(code), () => !this.options?.blocked() && !this.paused && !this.match.coachLocked(),this.painter.nodes);
     this.consumeEvents();
     this.ready = true;
     if (!this.match.S.player.crushed && this.match.potsOf(this.match.S.player)) this.match.frameAim();
@@ -145,5 +145,5 @@ export class WorldView {
   // 一次性移交池所有权；旧World照常解绑输入/生命周期，新World负责最终释放节点。
   takeVisuals():WorldVisuals {if(!this.ready||!this.ownsVisuals||!this.options)throw Error('对局显示节点不可移交');this.ownsVisuals=false;return {root:this.root,surfaces:this.surfaces,theme:this.match.L.theme};}
   // 销毁场景时解除监听，释放运行时帧和本任务节点。
-  destroy(): void {this.alive = false;this.offLifecycle?.(); view.off('canvas-resize', this.resize, this); game.off(Game.EVENT_HIDE, this.hide, this); game.off(Game.EVENT_SHOW, this.show, this); this.controls?.destroy(); if(this.ownsVisuals)this.root.destroy(); if (!this.options){this.assets.destroy();this.platform.dispose?.();}}
+  destroy(): void {this.alive = false;this.offLifecycle?.(); view.off('canvas-resize', this.resize, this); game.off(Game.EVENT_HIDE, this.hide, this); game.off(Game.EVENT_SHOW, this.show, this); this.controls?.destroy(); this.ui?.destroy();this.painter?.destroy(); if(this.ownsVisuals)this.root.destroy(); if (!this.options){this.assets.destroy();this.platform.dispose?.();}}
 }

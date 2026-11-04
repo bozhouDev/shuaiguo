@@ -29,10 +29,20 @@ class Node {
 }
 const cc = {Label, Color, UITransform, Sprite, Mask, Node, EditBox, view: {getVisibleSize: () => ({width: 375, height: 812})}, Layers: {Enum: {UI_2D: 1}},
   KeyCode: new Proxy({}, {get: (_, k) => k}), Graphics: class {static LineCap = {ROUND: 0, BUTT: 1}; clear() {} moveTo() {} lineTo() {} close() {} fill() {} stroke() {}}};
+// 常驻层只替换原生网格/图集上传边界；真实RetainedWorld仍负责状态、图标选择、布局与只读约束。
+class RetainedNode {
+  children=new Map();constructor(parent,name,atlas){this.atlas=atlas;this.node=new Node();this.node.active=true;parent.addChild(this.node);}
+  child(name){if(!this.children.has(name))this.children.set(name,new RetainedNode(this.node,name,this.atlas));return this.children.get(name);}
+  retainMesh(){return false;}show(v){this.node.active=v;return this;}at(){return this;}order(){}rect(){return this;}ellipse(){return this;}path(){return this;}mesh(){return this;}
+  image(name){images.push(name);return this;}picture(){return this;}
+  text(text){const c=surface(375,812);c.fillText(text,0,0);return this;}
+  nativeText(...args){return this.text(...args);}destroy(){}
+}
+const retainedBoundary={MatchNode:RetainedNode,MatchCollection:class{constructor(parent,name){this.parent=parent;this.name=name;}sync(values,draw){values.forEach((v,i)=>draw(this.parent.child(this.name+i),v,i));}},MatchAtlas:class{constructor(texture,assets){this.assets=assets;this.pictures=Object.fromEntries(Object.entries(assets.spr).map(([name,p])=>[name,{...p,frame:{rect:{x:0,y:0,width:p.w,height:p.h},texture:{width:4096,height:4096}}}]));}}};
 // 设备边界桩只代替Cocos节点，不代替页面、排版、字体回退或最终写字逻辑。
 function load(file) {
   file = path.resolve(root, file); if (!file.endsWith('.ts')) file += '.ts';
-  if (cache.has(file)) return cache.get(file).exports;
+  if(file.endsWith('/MatchNodes.ts'))return retainedBoundary; if (cache.has(file)) return cache.get(file).exports;
   const mod = {exports: {}}; cache.set(file, mod);
   const js = ts.transpileModule(fs.readFileSync(file, 'utf8'), {compilerOptions: {module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022}}).outputText;
   new Function('require', 'module', 'exports', js)(s => s === 'cc' ? cc : s === 'cc/env' ? {PREVIEW: true} : load(path.resolve(path.dirname(file), s)), mod, mod.exports);
@@ -95,7 +105,7 @@ for (const [width, height] of [[375, 812], [375, 667], [360, 780]]) for (const b
   ui.event({kind: 'closingNotice', args: [{hidden: false, warning: true, seconds: 3, title: '下班倒计时', detail: '冲进前三'}]}, 1);
   ui.draw(1, {x: width - 68, y: height - 100}, true);
   const layers = Array.from({length: 4}, () => surface(width, height));
-  const painter = createWorldPainter(m, ...layers, {spr, headCrop: () => ({sx: 0, size: 40})});
+  const painter = createWorldPainter(m, ...layers, {spr,matchTexture:{}, headCrop: () => ({sx: 0, size: 40})});
   m.S.player.sn.segs = [{label: '急件', hot: true, due: 3}]; m.S.tea = 5;
   m.S.bots[0].sn.x = 0; m.S.bots[0].sn.y = 0; m.S.bots[0].sn.segs = [{label: '急件', hot: true, due: 3}];
   const before = JSON.stringify(m.S), rng = m.E.rngState();

@@ -1,4 +1,4 @@
-// 仅连接已有7456；DPR=1、CDP CPU×6；finally关闭浏览器，不启动/构建Creator。
+// 已有7456或明确标注的独立源码页；默认DPR1/CPU×6，finally关闭浏览器，不启动/构建Creator。
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createRequire} from 'node:module';
@@ -11,16 +11,17 @@ const arg=(key,fallback)=>process.argv.find(s=>s.startsWith(`--${key}=`))?.slice
 const phase=arg('phase','before'),seconds=Number(arg('seconds','10')),mode=arg('mode','bench'),variant=arg('variant','native');
 const out=path.resolve(root,arg('out',`port/tmp/p7-3/${phase}`));await fs.mkdir(out,{recursive:true});
 const base=arg('url','http://localhost:7456/'),url=new URL('?scene=3b08c73f-d17c-4dfc-a45e-854ddae97b2f&debug=1&seed=1001&auto=1',base).href;
-// HTTP先核对刷新版本；旧P7-2绝不进入性能测量，也不做源码替换。
+// 原生预览先核对刷新版本；独立源码页另标sourceHost，不冒充Creator原生预览。
 async function freshness(){
  const b=new URL('/scripting/x/',base),map=await (await fetch(new URL('import-map.json',b))).json(),sources={};
- for(const name of ['AppView','WorldAssets','DrawSurface','WorldView']){const key=Object.keys(map.imports).find(k=>k.endsWith(`/${name}.ts`));sources[name]=key?await(await fetch(new URL(map.imports[key],b))).text():'';}
- return {at:new Date().toISOString(),p72:sources.WorldAssets.includes('ribbon_red')&&sources.AppView.includes('step.buff'),p73:sources.AppView.includes('PerfProbe'),outline:sources.DrawSurface.includes('3.8.8的outlineColor'),idle:sources.AppView.includes('frameKey()'),warm:sources.AppView.includes('takeVisuals()'),fps:sources.AppView.includes('frameRate(60)'),geometry:sources.DrawSurface.includes('recordGeometry'),sources:Object.fromEntries(Object.entries(sources).map(([n,s])=>[n,{bytes:s.length,sha256:createHash('sha256').update(s).digest('hex')}]))};
+ for(const name of ['AppView','WorldAssets','DrawSurface','WorldView','WorldPainter','HudView','InputView']){const key=Object.keys(map.imports).find(k=>k.endsWith(`/${name}.ts`));sources[name]=key?await(await fetch(new URL(map.imports[key],b))).text():'';}
+ return {at:new Date().toISOString(),p72:sources.WorldAssets.includes('ribbon_red')&&sources.AppView.includes('step.buff'),p73:sources.AppView.includes('PerfProbe'),outline:sources.DrawSurface.includes('3.8.8的outlineColor'),idle:sources.AppView.includes('frameKey()'),warm:sources.AppView.includes('takeVisuals()'),fps:sources.AppView.includes('frameRate(60)'),geometry:sources.DrawSurface.includes('recordGeometry'),retained:sources.WorldPainter.includes('RetainedWorld')&&sources.HudView.includes('drawRetained')&&sources.InputView.includes('drawRetained'),sources:Object.fromEntries(Object.entries(sources).map(([n,s])=>[n,{bytes:s.length,sha256:createHash('sha256').update(s).digest('hex')}]))};
 }
-const fresh=await freshness();await fs.appendFile(path.join(out,'freshness.ndjson'),JSON.stringify(fresh)+'\n');console.log('FRESHNESS',JSON.stringify(fresh));
+const standalone=process.argv.includes('--source-host');
+const fresh=standalone?{at:new Date().toISOString(),p72:true,sourceHost:true,creatorPreview:false}:await freshness();await fs.appendFile(path.join(out,'freshness.ndjson'),JSON.stringify(fresh)+'\n');console.log('FRESHNESS',JSON.stringify(fresh));
 if(mode==='freshness')process.exit(0);
 assert.ok(fresh.p72,'7456仍是旧P7-2，先等泊舟刷新；本次未测量');
-if(phase==='after'&&!process.argv.includes('--source-overlay'))for(const feature of ['outline','idle','warm','fps','geometry'])assert.equal(fresh[feature],true,`7456尚未导入${feature}，本次未测量`);
+if(phase==='after'&&!process.argv.includes('--source-overlay'))for(const feature of ['outline','idle','warm','fps','geometry','retained'])assert.equal(fresh[feature],true,`7456尚未导入${feature}，本次未测量`);
 for(const feature of arg('expect','').split(',').filter(Boolean))assert.equal(fresh[feature],true,`7456尚未导入${feature}，本次未测量`);
 assert.ok(['native','outline-guard'].includes(variant),'未知A/B变体');
 if(variant==='outline-guard')assert.equal(fresh.outline,false,'单项A/B必须基于尚无该修复的原生基线');
@@ -32,7 +33,7 @@ async function sourceModules(dir,base=dir){const result={};for(const entry of aw
 const modules=sourceOverlay?await sourceModules(path.resolve(root,arg('source-dir','cocos/assets/scripts'))):undefined;
 // 基线也用同一份调试仪器；只注入观察hook，不替换App/World/绘图源码。
 const probeSource=ts.transpileModule(await fs.readFile(path.join(root,'cocos/assets/scripts/view/PerfProbe.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
-const browser=await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader']});
+const browser=await chromium.launch({headless:true,args:['--enable-unsafe-swiftshader','--enable-precise-memory-info']});
 const report={phase,seconds,cpuThrottle:6,dpr:Number(arg('dpr','1')),renderDprOverride:arg('render-dpr',null),fresh,variant,sourceOverlay,sourceRoot:sourceOverlay?arg('source-dir','cocos/assets/scripts'):null,moduleHashes:modules?Object.fromEntries(Object.entries(modules).map(([n,s])=>[n,createHash('sha256').update(s).digest('hex')])):undefined,levels:[],screens:[],errors:[]};
 report.browserPids=execFileSync('ps',['-axo','pid,ppid,comm'],{encoding:'utf8'}).trim().split('\n').slice(1).map(s=>s.trim().split(/\s+/)).filter(([pid,parent,...command])=>Number(parent)===process.pid&&/chrome|chromium/i.test(command.join(' '))).map(([pid])=>Number(pid));
 const get=()=>cc.director.getScene().getChildByName('Canvas').getChildByName('Boot').getComponent('Boot').app;
@@ -45,26 +46,107 @@ function top(profile){
  return [...functions.values()].filter(x=>!['(program)','(idle)','(garbage collector)'].includes(x.function)).sort((a,b)=>b.selfMs-a.selfMs).slice(0,20);
 }
 async function open(level,freeze){const page=await browser.newPage({viewport:{width:375,height:812},deviceScaleFactor:Number(arg('dpr','1')),isMobile:true,hasTouch:true,userAgent:'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36'});page.setDefaultTimeout(90000);
- if(arg('render-dpr',''))await page.route('**/scripting/engine/bin/.cache/dev/preview/bundled/index.js',async route=>{
+ // 在首个GL分配前记录真实纹理；包括Label/内置纹理，删除即从驻留表移除。
+ if(mode==='atlas-audit')await page.addInitScript(()=>{
+  const live=new Map(),states=new WeakMap();let serial=0;
+  const state=gl=>{let s=states.get(gl);if(!s){s={unit:0,bindings:new Map()};states.set(gl,s);}return s;};globalThis.__glTextures=live;
+  for(const Type of [globalThis.WebGLRenderingContext,globalThis.WebGL2RenderingContext])if(Type){const p=Type.prototype;
+   const wrap=(name,observe)=>{const old=p[name];if(!old)return;p[name]=function(...args){const result=old.apply(this,args);observe.call(this,args,result);return result;};};
+   wrap('createTexture',(_a,t)=>live.set(t,{id:++serial,width:0,height:0}));
+   wrap('activeTexture',function([unit]){state(this).unit=unit;});
+   wrap('bindTexture',function([target,t]){const s=state(this);s.bindings.set(s.unit+':'+target,t);});
+   wrap('deleteTexture',([t])=>live.delete(t));
+   for(const name of ['texImage2D','texStorage2D'])wrap(name,function(a){const s=state(this),target=a[0]>=34069&&a[0]<=34074?34067:a[0],t=s.bindings.get(s.unit+':'+target),row=live.get(t);if(!row)return;
+    if(target===34067)row.faces=6;
+    if(name==='texStorage2D'){row.width=a[3];row.height=a[4];}else if(a[1]===0){const image=a[5];row.width=a.length===6?image.width:a[3];row.height=a.length===6?image.height:a[4];}
+   });
+   for(const name of ['texImage3D','texStorage3D'])wrap(name,function(a){const s=state(this),row=live.get(s.bindings.get(s.unit+':'+a[0]));if(row&&(name==='texStorage3D'||a[1]===0)){row.width=a[3];row.height=a[4];row.depth=a[5];}});
+  }
+ });
+ if(process.argv.includes('--webgl1'))await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(kind,...args){return kind==='webgl2'?null:original.call(this,kind,...args);};});
+ if(arg('render-dpr',''))await page.route(/\/(?:scripting\/engine\/bin\/\.cache\/dev\/preview|engine)\/bundled\/index\.js/,async route=>{
   // 只在本测试页模拟微信的满DPR画布；不改引擎文件、服务器或工程缩放路径。
   const response=await route.fetch(),body=await response.text(),pattern=/Math\.min\(\(_window\$devicePixelRa = window\.devicePixelRatio\)[^;]+?, 2\)/g;
   const matches=body.match(pattern);assert.equal(matches?.length,1,'无法定位网页引擎DPR上限，禁止冒充DPR3实验');
   await route.fulfill({response,body:body.replace(pattern,m=>m.replace(/, 2\)$/,`, ${Number(arg('render-dpr','2'))})`))});
- });page.on('pageerror',e=>report.errors.push(e.message));page.on('console',m=>{if(m.type()==='error')report.errors.push(m.text());});await page.goto(url+`&level=${level}${freeze===undefined?'':`&freeze=${freeze}`}`,{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>globalThis.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.app?.ready);await ev(page,a=>{a.frozen=true;cc.profiler.hideStats();});
+ });page.on('pageerror',e=>report.errors.push(e.stack||e.message));page.on('console',m=>{if(m.type()==='error')report.errors.push(m.text());});await page.goto(url+`&level=${level}${freeze===undefined?'':`&freeze=${freeze}`}`,{waitUntil:'domcontentloaded'});if(standalone){await page.waitForFunction(()=>globalThis.__sourceReady);await page.evaluate(()=>{const {Node,Component,Camera,Canvas,Layers,Color,ResolutionPolicy,view,_decorator}=cc;view.setDesignResolutionSize(375,812,ResolutionPolicy.SHOW_ALL);class Boot extends Component{update(dt){this.app?.update(dt);}}_decorator.ccclass('Boot')(Boot);const canvas=cc.director.getScene().getChildByName('Canvas'),boot=new Node('Boot');canvas.addChild(boot);boot.addComponent(Boot);const n=new Node('Camera');canvas.addChild(n);n.setPosition(0,0,1000);const camera=n.addComponent(Camera);camera.projection=Camera.ProjectionType.ORTHO;camera.orthoHeight=view.getVisibleSize().height/2;camera.near=0;camera.far=2000;camera.visibility=Layers.Enum.UI_2D;camera.clearColor=new Color('#1F2A44');canvas.getComponent(Canvas).cameraComponent=camera;});}else await page.waitForFunction(()=>globalThis.cc?.director.getScene()?.getChildByName('Canvas')?.getChildByName('Boot')?.getComponent('Boot')?.app?.ready);if(!standalone)await ev(page,a=>{a.frozen=true;cc.profiler.hideStats();});
+ await page.evaluate(({root,imported})=>{globalThis.__auditAtlasRoot=root;globalThis.__importedSourceImages=imported;}, {root:arg('atlas-dir','cocos/assets/resources/atlas'),imported:process.argv.includes('--imported-source-images')});
  if(modules)await page.evaluate(async modules=>{
-  const cc=await System.import('cc'),cache={};const load=id=>{if(cache[id])return cache[id].exports;const mod={exports:{}};cache[id]=mod;const localRequire=s=>{if(s==='cc')return cc;if(s==='cc/env')return {PREVIEW:true};const parts=id.split('/');parts.pop();for(const part of s.split('/')){if(part==='..')parts.pop();else if(part!=='.')parts.push(part);}let target=parts.join('/');if(!target.endsWith('.ts'))target+='.ts';return load(target);};new Function('require','module','exports',modules[id])(localRequire,mod,mod.exports);return mod.exports;};
-  const boot=cc.director.getScene().getChildByName('Canvas').getChildByName('Boot').getComponent('Boot'),old=boot.app;boot.app=undefined;old.destroy();await new Promise(requestAnimationFrame);const {AppView}=load('view/AppView.ts');boot.app=new AppView(boot.node);await boot.app.start();boot.app.frozen=true;
+  const cc=await System.import('cc'),cache={};
+  if(globalThis.__sourceReady){const atlasRoot=globalThis.__auditAtlasRoot||'cocos/assets/resources/atlas';const original=cc.resources.load.bind(cc.resources);cc.resources.load=function(name,type,done){if(name.startsWith('atlas/match')||(name.startsWith('atlas/')&&type===cc.ImageAsset&&!globalThis.__importedSourceImages)){cc.assetManager.loadRemote('/raw/'+atlasRoot+'/'+name.replace('atlas/','').replace('/texture','')+'.png',{ext:'.png'},(error,image)=>{if(error)return done(error);if(type===cc.ImageAsset)return done(null,image);const texture=new cc.Texture2D();texture.image=image;done(null,texture);});}else original(name,type,done);};}const load=id=>{if(cache[id])return cache[id].exports;const mod={exports:{}};cache[id]=mod;const localRequire=s=>{if(s==='cc')return cc;if(s==='cc/env')return {PREVIEW:true};const parts=id.split('/');parts.pop();for(const part of s.split('/')){if(part==='..')parts.pop();else if(part!=='.')parts.push(part);}let target=parts.join('/');if(!target.endsWith('.ts'))target+='.ts';return load(target);};new Function('require','module','exports',modules[id])(localRequire,mod,mod.exports);return mod.exports;};
+  const boot=cc.director.getScene().getChildByName('Canvas').getChildByName('Boot').getComponent('Boot'),old=boot.app;boot.app=undefined;old?.destroy();if(old)await new Promise(resolve=>cc.director.once(cc.Director.EVENT_AFTER_DRAW,resolve));else await new Promise(requestAnimationFrame);const {AppView}=load('view/AppView.ts');
+  // 仅源码验收页安装资源/时延仪器；不进入生产代码，不把浏览器内存当微信真机值。
+  const {WorldAssets}=load('view/WorldAssets.ts'),device=cc.director.root.device,images=new Map(),events=[];
+  const stats={events,sourceImages:[],initialHeap:performance.memory?.usedJSHeapSize,peakHeap:0,peakGfx:0,peakKnownCpu:0,rawBytes:0};globalThis.__loadAudit=stats;
+  const sample=(event,extra={})=>{const decoded=[...images.values()].reduce((n,v)=>n+v,0),heap=performance.memory?.usedJSHeapSize||0,gpu=device.memoryStatus.textureSize;
+   stats.peakHeap=Math.max(stats.peakHeap,heap);stats.peakGfx=Math.max(stats.peakGfx,gpu);stats.peakKnownCpu=Math.max(stats.peakKnownCpu,decoded+stats.rawBytes+(extra.cropBytes||0));events.push({event,ms:performance.now(),gpu,heap,decoded,raw:stats.rawBytes,...extra});};
+  const loadResource=cc.resources.load,release=cc.assetManager.releaseAsset;
+  cc.resources.load=function(name,type,done){return loadResource.call(this,name,type,(error,asset)=>{if(!error&&type===cc.ImageAsset){images.set(asset,asset.width*asset.height*4);stats.sourceImages.push({name,width:asset.width,height:asset.height});sample('image-loaded');}done(error,asset);});};
+  cc.assetManager.releaseAsset=function(image){const result=release.call(this,image);if(images.delete(image)){stats.rawBytes=0;sample('image-released');}return result;};
+  const originalMethods={};for(const name of ['copyTexImagesToTexture','copyTextureToBuffers','copyBuffersToTexture']){const original=device[name];originalMethods[name]=original;device[name]=function(...args){if(name==='copyTextureToBuffers')stats.rawBytes=args[1].reduce((n,b)=>n+b.byteLength,0);sample(name,{cropBytes:name==='copyBuffersToTexture'?args[0].reduce((n,b)=>n+b.byteLength,0):0});return original.apply(this,args);};}
+  const assemble=WorldAssets.prototype.assembleMatch;if(assemble)WorldAssets.prototype.assembleMatch=async function(){const start=performance.now();try{return await assemble.call(this);}finally{stats.assembleMs=performance.now()-start;sample('assembly-complete');}};
+  const start=performance.now();boot.app=new AppView(boot.node);await boot.app.start();stats.startMs=performance.now()-start;stats.sourcesRemaining=images.size;stats.finalGfx=device.memoryStatus.textureSize;sample('app-ready');boot.app.frozen=true;
+  // 完成后恢复仪器；只在验收页保留数字和纹理读回，不污染性能窗口。
+  cc.resources.load=loadResource;cc.assetManager.releaseAsset=release;for(const name in originalMethods)device[name]=originalMethods[name];if(assemble)WorldAssets.prototype.assembleMatch=assemble;
  },modules);
- return page;}
+ report.loading=await page.evaluate(()=>globalThis.__loadAudit);report.device=await page.evaluate(()=>({api:cc.director.root.device.gfxAPI,renderer:cc.director.root.device.renderer}));return page;}
 try{
- if(mode==='checkpoints'){
+ if(mode==='atlas-audit'){
+  const page=await open(5,120);await page.addStyleTag({content:'#__vconsole{display:none!important}'});report.inventory=[];
+  for(const screen of ['lobby','intro','play','result']){
+   await ev(page,async(a,screen)=>{Math.random=()=>.5;a.real=2;if(screen==='lobby')a.showLobby();if(screen==='intro')await a.showIntro();if(screen==='play'){await a.startGame();a.frozen=true;a.real=2;a.world.real=2;a.world.render();a.render();}if(screen==='result'){for(let i=0;i<8000&&a.world.match.mode!=='over';i++)a.tick(1/60);a.real=125;a.render();}},screen);
+   await page.waitForTimeout(300);await page.locator('#GameCanvas').screenshot({path:path.join(out,screen+'.png')});
+   if(process.argv.includes('--isolate-ui')){
+    await ev(page,a=>{const textures=new Set(['boss_idle','cashier_normal','designer_normal','director_idle','intern_normal','wok','nephew_normal','player_normal','pm_normal','tester_normal','veteran_normal','wife_idle'].map(name=>a.assets.spr[name]?.frame.texture));globalThis.__hiddenSprites=[];const walk=node=>{if(!node.activeInHierarchy)return;for(const sprite of node.getComponents(cc.Sprite))if(sprite.enabled&&textures.has(sprite.spriteFrame?.texture)&&node.name.startsWith('Draw-')){sprite.enabled=false;globalThis.__hiddenSprites.push(sprite);}for(const child of node.children)walk(child);};walk(a.parent);});
+    await page.waitForTimeout(150);await page.locator('#GameCanvas').screenshot({path:path.join(out,screen+'-without-shared-sprites.png')});
+    await page.evaluate(()=>{for(const sprite of globalThis.__hiddenSprites)sprite.enabled=true;delete globalThis.__hiddenSprites;});await page.waitForTimeout(100);
+   }
+
+   const row=await ev(page,a=>{const textures=[...globalThis.__glTextures.values()].filter(t=>t.width&&t.height).map(t=>({...t,bytes:t.width*t.height*4*(t.faces||t.depth||1)})),atlas=a.world?.painter?.nodes?.atlas;return {textures,gfxTextureBytes:cc.director.root.device.memoryStatus.textureSize,bytes:textures.reduce((n,t)=>n+t.bytes,0),textCache:atlas?{x:atlas.x,y:atlas.y,row:atlas.row,count:atlas.texts.size}:null,screen:a.screen,panel:a.panel};});// 逐个记录换源精灵的变换，差异分类使用实际节点，禁止用热图位置猜文字是否受影响。
+   row.sprites=await ev(page,a=>{const rows=[];const walk=(node,path)=>{if(!node.activeInHierarchy)return;for(const sprite of node.getComponents(cc.Sprite)){const f=sprite.spriteFrame;if(f?.texture!==a.assets.matchTexture)continue;const t=node.getComponent(cc.UITransform),m=node.worldMatrix;rows.push({path:path+'/'+node.name,width:t.width,height:t.height,anchor:{x:t.anchorX,y:t.anchorY},rect:{x:f.rect.x,y:f.rect.y,width:f.rect.width,height:f.rect.height},matrix:{a:m.m00,b:m.m01,c:m.m04,d:m.m05,x:m.m12,y:m.m13}});}for(const child of node.children)walk(child,path+'/'+node.name);};walk(a.parent,'');return rows;});
+   report.inventory.push({requested:screen,...row});console.log('INVENTORY',JSON.stringify({screen,bytes:row.bytes,textCache:row.textCache}));
+  }
+  if(process.argv.includes('--read-atlas'))report.atlas=await ev(page,async a=>{const texture=a.assets.matchTexture,bytes=new Uint8Array(texture.width*texture.height*4),region=new cc.gfx.BufferTextureCopy();region.texExtent.width=texture.width;region.texExtent.height=texture.height;cc.director.root.device.copyTextureToBuffers(texture.getGFXTexture(),[bytes],[region]);return {width:texture.width,height:texture.height,sha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('')};});
+  await page.close();
+ }else if(mode==='effects'){
+  const page=await open(5);await page.addStyleTag({content:'#__vconsole{display:none!important}'});report.effects=[];
+  const cases=['shake','parry','sky-overlap','hot-reuse','hot-halo','explosion-0','explosion-12','explosion-30','crushed','praise-calm','praise-parry','praise-rankup','tutorial-1','tutorial-3','tutorial-4','revive','rescue'];
+  for(const name of cases){
+   const state=await ev(page,async(a,name)=>{
+    Math.random=()=>.75;a.selected=4;a.params.delete('freeze');a.params.set('auto','1');await a.startGame();a.frozen=true;a.world.frozen=true;let w=a.world,m=w.match,P=m.S.player;
+    if(name.startsWith('praise-'))await a.showTourStep({kind:'praise',name,level:1,seed:1001,praise:name.slice(7)});
+    else if(name.startsWith('tutorial-'))await a.showTourStep({kind:'tutorial',name,level:1,seed:1001,step:Number(name.slice(9))});
+    else if(name==='revive')await a.showTourStep({kind:'revive',name,level:2,seed:1001});
+    else if(name==='rescue'){await a.showTourStep({kind:'result',name,level:2,seed:1001,result:'fail'});a.world.match.rescue();a.world.flush();}
+    else {
+     const x=P.sn.x,y=P.sn.y,hot={src:'fixture',phase:'fly',x,y,t:.5,warn0:1,target:P,hot:false,a:0,spin:0,life:10,label:'急件'};
+     if(name==='shake')w.painter.event('shake',[8]);
+     if(name==='parry'){m.S.throws=[{owner:m.S.bots[0],target:P,x:x-70,y,a:0,speed:900,pot:{label:'改方案',due:999},label:'改方案',hot:false,dist:0,range:500,bounces:0,spin:0,rolled:new Set()}];w.clock=.18;}
+     if(name==='sky-overlap'){hot.phase='sky';m.S.flying=[hot];}
+     if(name==='hot-reuse'){m.S.flying=[hot];w.render();hot.hot=true;}
+     if(name==='hot-halo'){P.sn.segs=[{label:'急件',hot:true,due:m.S.t+2}];w.clock=.125;}
+     if(name.startsWith('explosion-'))m.S.fx=[{name:'pot_explosion',x,y,size:160,t:Number(name.slice(10))/30,dur:1.1}];
+     if(name==='crushed'){const b=m.S.bots[0];b.crushed=true;b.sn.x=x+60;b.sn.y=y;}
+    }
+    w=a.world;m=w.match;
+    const snapshot=()=>{const seen=new Map();return JSON.stringify({state:m.S,mode:m.mode,progress:m.prog,input:m.inp,rng:m.E.rngState()},(_key,v)=>{if(typeof v==='function')return '<function>';if(v&&typeof v==='object'){if(seen.has(v))return {$ref:seen.get(v)};seen.set(v,seen.size);if(v instanceof Set)return {set:[...v]};}return v;});};
+    const before=snapshot();w.render();a.render();if(snapshot()!==before)throw Error('画面层回写core: '+name);
+    return {name,level:m.L.id,t:m.S.t,steps:w.steps,rng:m.E.rngState(),coreReadOnly:true,revived:m.S.revived,rescued:m.S.rescued,tutorial:m.S.tut?.i??null,fireCenter:w.controls.fireCenter(),rate:cc.game.frameRate,canvas:[cc.game.canvas.width,cc.game.canvas.height]};
+   },name);
+   await page.waitForTimeout(80);await page.locator('#GameCanvas').screenshot({path:path.join(out,name+'.png')});report.effects.push(state);console.log('EFFECT',JSON.stringify(state));
+  }
+  await page.close();
+ }else if(mode==='inspect'){
+  const page=await open(Number(arg('level','5')));await ev(page,async a=>{Math.random=()=>.5;await a.startGame();a.frozen=true;for(let i=0;i<600;i++)a.tick(1/60);});await page.waitForTimeout(300);
+  report.nodes=await ev(page,a=>{const rows=[];const walk=(node,path)=>{if(!node.activeInHierarchy)return;for(const c of node.components||node._components||[]){if(c instanceof cc.Sprite||c instanceof cc.Label||c instanceof cc.Graphics){const r=c.renderData;rows.push({path:path+'/'+node.name,type:c.constructor.name,frame:c.spriteFrame?.rect,texture:c.spriteFrame?.texture?.getId(),textureHash:r?.textureHash,dataHash:r?.dataHash,buffer:r?.chunk?.bufferId,vertices:r?.vertexCount,material:c.getRenderMaterial(0)?.name,materialHash:c.getRenderMaterial(0)?.hash,shader:c.getRenderMaterial(0)?.passes[0]?.hash});}}for(const child of node.children)walk(child,path+'/'+node.name);};walk(a.parent,'');return rows;});await page.close();
+ }else if(mode==='checkpoints'){
   // 固定步只用于独立测试页面；每次先逐帧回放到请求点，再按真实rAF采集同样数量的玩法帧。
   // 不延长关卡、不复活、不改数值；超过下班的请求点明确记录终态，不能冒充后期对局。
   report.checkpoints=[];
   const checkpoints=arg('checkpoints','10,60,100,150,170').split(',').map(Number),levels=arg('levels','1,5').split(',').map(Number);
   for(const level of levels)for(const requested of checkpoints){
    const page=await open(level),cdp=await page.context().newCDPSession(page);
-   await ev(page,async(a,requested)=>{a.audio.bgm(false);Math.random=()=>.5;await a.startGame();a.frozen=true;for(let i=0;i<Math.round(requested*60);i++){a.tick(1/60);if(a.world.match.mode==='over'){a.real=Math.max(a.real,requested);a.render();break;}}},requested);
+   const firstPlayMs=await ev(page,async(a,requested)=>{a.audio.bgm(false);Math.random=()=>.5;const start=performance.now();await a.startGame();a.frozen=true;await new Promise(resolve=>cc.director.once(cc.Director.EVENT_AFTER_DRAW,resolve));const firstPlayMs=performance.now()-start;for(let i=0;i<Math.round(requested*60);i++){a.tick(1/60);if(a.world.match.mode==='over'){a.real=Math.max(a.real,requested);a.render();break;}}return firstPlayMs;},requested);
    const state=await ev(page,a=>({id:a.world.match.L.id,agents:a.world.match.S.agents.length,leaders:a.world.match.S.leaders.length,auto:a.world.match.auto,screen:a.screen,mode:a.world.match.mode,t:a.world.match.S.t,steps:a.world.steps,rng:a.world.match.E.rngState(),pots:a.world.match.S.agents.reduce((n,p)=>n+p.sn.segs.length,0),flying:a.world.match.S.flying.length,throws:a.world.match.S.throws.length,fx:a.world.match.S.fx.length,floats:a.world.match.S.floats?.length??null,canvas:{width:document.querySelector('#GameCanvas').width,height:document.querySelector('#GameCanvas').height},visible:cc.view.getVisibleSize(),dpr:cc.view.getDevicePixelRatio(),renderer:cc.director.root.device.renderer}));
    assert.equal(state.id,level);assert.equal(state.agents,level===5?8:level===3?7:4);assert.equal(state.leaders,level===5?3:level===3?2:1);assert.equal(state.auto,true);
    await page.addStyleTag({content:'#__vconsole{display:none!important}'});await page.waitForTimeout(200);
@@ -72,7 +154,7 @@ try{
    if(state.mode!=='play'){const entry={level,requested,state,summary:null,notAssessed:'请求点已自然结算，不作为对局性能样本'};report.checkpoints.push(entry);console.log('CHECKPOINT',JSON.stringify(entry));await cdp.detach();await page.close();continue;}
    await ev(page,(a,source)=>{const exports={};new Function('require','exports',source)(()=>cc,exports);a.__perf=new exports.PerfProbe(a,a.world.constructor.prototype,false);},probeSource);
    await cdp.send('Emulation.setCPUThrottlingRate',{rate:6});await cdp.send('Profiler.enable');await cdp.send('Profiler.setSamplingInterval',{interval:1000});await cdp.send('Profiler.start');
-   const sampleFrames=Number(arg('frames',String(Math.round(seconds*60))));
+   const sampleFrames=Number(arg(requested>=119?'frames-late':'frames',arg('frames',String(Math.round(seconds*60)))));
    const sampleWindow=await ev(page,async(a,count)=>{a.frameRate(60);a.__perf.reset();let completed=0;for(let i=0;i<count;i++){if(a.world.match.mode!=='play')break;a.tick(1/60);if(a.world.match.mode!=='play')break;await new Promise(requestAnimationFrame);completed++;}return {requestedFrames:count,completedFrames:completed,truncated:completed<count};},sampleFrames);
    const measurements=await ev(page,a=>({summary:a.__perf.summary(1e9),frames:a.__perf.frames,mode:a.world.match.mode,t:a.world.match.S.t,steps:a.world.steps,rng:a.world.match.E.rngState(),pools:a.world.surfaces.map(s=>s.stats())}));
    if(sampleWindow.truncated)measurements.summary=null;
@@ -86,12 +168,14 @@ try{
    let touchCheck;
    if(process.argv.includes('--touch-check')&&measurements.mode==='play'){
     const button=await ev(page,a=>a.world.ui.hud.actions.find(b=>b.action==='pause')),box=await page.locator('#GameCanvas').boundingBox(),size=await ev(page,a=>({width:a.surface.width,height:a.surface.height}));assert.ok(button);
-    await page.touchscreen.tap(box.x+(button.x+button.w/2)*box.width/size.width,box.y+(button.y+button.h/2)*box.height/size.height);assert.equal(await ev(page,a=>a.panel),'pause','DPR实验暂停触点错位');
+    await ev(page,a=>{a.__tap=[];cc.input.once(cc.Input.EventType.TOUCH_START,e=>a.__tap.push({ui:e.getUILocation(),location:e.getLocation()}));});
+    await page.touchscreen.tap(box.x+(button.x+button.w/2)*box.width/size.width,box.y+(button.y+button.h/2)*box.height/size.height);
+    const attempt={button,box,size,...await ev(page,a=>({panel:a.panel,events:a.__tap,scale:[cc.view.getScaleX(),cc.view.getScaleY()],viewport:cc.view.getViewportRect(),screen:a.screen,mode:a.world.match.mode,paused:a.world.paused}))};report.touchAttempts??=[];report.touchAttempts.push(attempt);console.log('TOUCH',JSON.stringify(attempt));assert.equal(attempt.panel,'pause','DPR实验暂停触点错位');
     await ev(page,a=>a.render());const resume=await ev(page,a=>a.actions.find(b=>b.action==='resume'));assert.ok(resume);await page.touchscreen.tap(box.x+(resume.x+resume.w/2)*box.width/size.width,box.y+(resume.y+resume.h/2)*box.height/size.height);assert.equal(await ev(page,a=>a.panel),'','DPR实验继续触点错位');
     touchCheck=await ev(page,async a=>{let resizes=0;const listener=()=>resizes++,read=()=>({canvas:[document.querySelector('#GameCanvas').width,document.querySelector('#GameCanvas').height],visible:cc.view.getVisibleSize(),dpr:cc.view.getDevicePixelRatio()});cc.view.on('canvas-resize',listener);try{const before=read();a.frameRate(15);await new Promise(r=>setTimeout(r,150));const idle=read();a.frameRate(60);await new Promise(r=>setTimeout(r,150));return {pauseAndResume:true,before,idle,after:read(),resizes};}finally{cc.view.off('canvas-resize',listener);}});
     assert.deepEqual(touchCheck.before,touchCheck.idle);assert.deepEqual(touchCheck.before,touchCheck.after);assert.equal(touchCheck.resizes,0);
    }
-   const entry={level,requested,state,...measurements,sampleWindow,categories,touchCheck,top20:top(profile)};report.checkpoints.push(entry);console.log('CHECKPOINT',JSON.stringify({level,requested,state,summary:measurements.summary}));
+   const entry={level,requested,firstPlayMs,loading:await page.evaluate(()=>globalThis.__loadAudit),state,...measurements,sampleWindow,categories,touchCheck,top20:top(profile)};report.checkpoints.push(entry);console.log('CHECKPOINT',JSON.stringify({level,requested,state,summary:measurements.summary}));
    await ev(page,a=>a.__perf.destroy());await cdp.detach();await page.close();
   }
  }else if(mode==='idle-rate'){
