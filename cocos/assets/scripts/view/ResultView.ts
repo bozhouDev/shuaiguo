@@ -46,7 +46,8 @@ export class ResultView {
     const p = this.p, failed = !r.stars, sky = r.crushed ? 'storm' : failed ? 'overcast' : 'clear';
     p.image(`ui_result_sky_${sky}`, b.x + 8, b.y + 8, b.w - 16, 96);
     p.contain('ui_result_' + (r.crushed ? 'crushed' : failed ? 'overtime' : 'trophy'),
-      {x: b.x + 28, y: b.y, w: b.w - 56, h: 72});
+      // 顶端留 12px：弹窗遮罩从卡片内沿开始裁，贴着 b.y 画会把奖杯把手/闹钟铃切掉（微信巡检实测）。
+      {x: b.x + 28, y: b.y + 12, w: b.w - 56, h: 62});
     // 彩带只拉中段，折带按相同比例保留，奖杯底座轻叠在彩带后。
     const ribbon = p.c.assets.spr['ui_result_' + (failed ? 'ribbon_red' : 'ribbon')];
     if (ribbon) {
