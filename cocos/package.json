@@ -25,7 +25,9 @@
     "test:cloud": "node --experimental-strip-types --test tests/cloud/*.test.mjs && node tools/prepare-cloud.mjs --check",
     "cloud:prepare": "node tools/prepare-cloud.mjs",
     "cloud:deploy": "node tools/deploy-cloud.mjs",
-    "test:wechat": "node --experimental-strip-types --test tests/wechat/*.test.mjs"
+    "test:wechat": "node --experimental-strip-types --test tests/wechat/*.test.mjs",
+    "test:golden:compiled": "node tools/golden-compiled.cjs --mutation-test",
+    "test:tour": "node --experimental-strip-types --test tests/tour.test.cjs"
   },
   "version": "3.8.8"
 }

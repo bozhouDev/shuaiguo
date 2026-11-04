@@ -25,15 +25,17 @@ import {AudioView, SoundOptions} from './AudioView';
 import {MessageView} from './MessageView';
 import {Box} from './UiPaint';
 import {DEBUG_PANEL, uiEase} from './ui-data';
+import {readTour, TourRunner, TourStep, prepareTourResult} from './Tour';
 type Panel = ''|'pause'|'settings'|'rules'|'boss'|'result'|'share'|'assets'|'ad'|'debug'|'debug-clear'|'debug-edit';
 interface Pane {mask: Node; root: Node; surface: DrawSurface; p: ScreenPaint}
 // 原型外围流程的唯一组织器：游戏数据由core拥有，所有页面/音频/存储走view/platform。
 export class AppView {
   readonly assets = new WorldAssets();
   readonly platform: Platform = sys.platform === sys.Platform.WECHAT_GAME ? new WechatPlatform() : new WebPlatform();
-  readonly store = new PlayerStore(this.platform);
+  store = new PlayerStore(this.platform);
   readonly cloud = new CloudServices(this.platform,this.store,levels=>{for(const level of levels)this.rank?.invalidate(level);});
   private cloudTutorialStep = -1;
+  private tour?: TourRunner; private tourActive=false;
   // 环境在启动时读取一次，避免大厅逐帧调用微信同步接口。
   readonly debugEnabled = this.platform.debugEnabled();
   readonly params = this.debugEnabled && this.platform.kind === 'web' && typeof location !== 'undefined' ? new QueryParams(location.search) : new QueryParams();
@@ -76,17 +78,64 @@ export class AppView {
 
   // 网页仍按P4异步音频；微信先报告resources/audio分包进度，再载图集字体。
   async start(): Promise<void> {
+    // 正式环境完全不读取全局；首次启动才建立隔离存档，加载重试不重复创建。
+    if(!this.tour){try{const steps=readTour(this.debugEnabled,()=>(globalThis as unknown as {__SG_TOUR?:unknown}).__SG_TOUR);if(steps.length)this.prepareTour(steps);}catch(error){console.error('[SG TOUR] error',error);}}
     if(this.platform.kind==='wechat'){
       if(this.loadingBusy)return;this.loadingBusy=true;this.loadingError=false;
       try {for(const [i,name] of ['resources','audio'].entries())await this.packages.load(name,(_name,n)=>this.loadingStatus(`加载中… ${Math.floor((i*100+n)/2)}%`,name==='audio'?'正在加载音频':'正在把锅摆好'));}
       catch {this.loadingBusy=false;if(this.alive){this.loadingError=true;this.loadingStatus('加载失败','请点击重试');}return;}
     }
-    void this.cloud.start();
+    if(!this.tourActive)void this.cloud.start();
     try {await this.assets.load(()=>{if(!this.alive)return;for(const label of this.loading.getComponentsInChildren(Label)){label.font=label.fontSize===34?this.assets.title:this.assets.body400;label.useSystemFont=false;}},this.platform.kind==='wechat');}catch(error){this.loadingBusy=false;if(this.platform.kind!=='wechat')throw error;if(this.alive){this.loadingError=true;this.loadingStatus('加载失败','请点击重试');}return;}this.loadingBusy=false;if(!this.alive)return;this.loading.active=false;
     const prog=this.store.read(),q=Number(this.params.get('level'));this.selected=q&&LEVELS.some(l=>l.id===q)?q-1:Math.max(0,LEVELS.filter(l=>l.id<=prog.unlocked).length-1);
     if(q&&LEVELS.some(l=>l.id===q)&&prog.unlocked<q){prog.unlocked=q;this.store.save(prog);}
     this.ready=true;this.exposeDebug();if(q&&LEVELS.some(l=>l.id===q))await this.showIntro();else this.showLobby();this.render();
     console.log('[P4-1] 外围流程就绪',{screen:this.screen,level:this.selected+1});
+    if(this.tour)await this.tour.start();
+  }
+  // 巡检使用独立空存档；不读用户进度、不写本地/云端，不消费远程调参。
+  private prepareTour(steps:TourStep[]):void {
+    this.tourActive=true;
+    const memory=new Map<string,string>(),platform=Object.create(this.platform) as Platform;
+    platform.getStorage=key=>memory.get(key)??null;
+    platform.setStorage=(key,value)=>{memory.set(key,value);};
+    platform.removeStorage=key=>{memory.delete(key);};
+    this.store=new PlayerStore(platform);
+    this.tour=new TourRunner(steps,step=>this.showTourStep(step),(...values)=>console.log(...values));
+  }
+  // 每步独立开固定种子对局，复用真实WorldView、core、各页面；仅调试夹具改状态。
+  private async showTourStep(step:TourStep):Promise<void> {
+    if(!this.alive)return;
+    this.frozen=true;this.selected=(step.level??1)-1;
+    this.params.set('seed',String(step.seed));this.params.delete('freeze');this.params.delete('tut');this.params.set('auto',step.kind==='tutorial'?'0':'1');
+    this.showLobby();
+    if(step.kind==='rules')this.open('rules');
+    else if(step.kind==='boss'){this.open('boss');this.ensureEdit(false);}
+    else if(step.kind==='intro')await this.showIntro();
+    else if(step.kind==='rank'){this.rank.selected=this.selected;this.screen='rank';}
+    else if(step.kind!=='lobby'){
+      await this.startGame(step.kind==='tutorial');if(!this.alive||!this.world)return;
+      const world=this.world,m=world.match;world.frozen=true;
+      if(step.kind==='tutorial'){for(let i=1;i<(step.step??1);i++)m.tutNext();world.flush();}
+      if(step.kind==='match'){
+        // P4-1逐帧工具使用1/30；超过下班/压垮后仍走真实收尾，不延长关卡。
+        for(let i=0;i<Math.round((step.seconds??0)*30);i++)this.tick(1/30);
+        console.log('[SG TOUR STATE]',step.name,{requestedSeconds:step.seconds,t:m.S.t,mode:m.mode,over:m.S.over,panel:this.panel,seed:step.seed});
+      }
+      if(step.kind==='pause')this.open('pause');
+      if(step.kind==='settings')this.open('settings');
+      if(step.kind==='result'||step.kind==='revive'||step.kind==='share'){
+        const type=step.kind==='revive'?'crush':step.kind==='share'?'three':step.result!;
+        prepareTourResult(m,type);m.finish(type==='crush'?'crushed':'time');world.flush();
+        if(step.kind==='revive'){this.closePanel();this.result=null;world.ui.result=null;world.ui.closing.notice={hidden:true};m.revive();world.flush();}
+        if(step.kind==='share'){this.resultScroll=this.scroll;this.resultAt=this.panelAt;this.open('share');}
+      }
+      if(step.kind==='praise'){m.S.t=25;this.praise.show(step.praise!,m,this.real,[],false,false);}
+    }
+    // 让CSS等价进场动画停在P4-1截图的0.4秒，随后hold期间画面不再走动。
+    if(!this.alive)return;this.real+=.4;
+    if(this.world){this.world.real+=.4;this.world.render();}
+    this.render();
   }
   // 加载卡先用系统字显示下载进度；失败时整张卡可点，首屏始终可见。
   private loadingStatus(title:string,detail:string):void {if(!this.alive)return;const labels=this.loading.getComponentsInChildren(Label);labels[0].string=title;labels[1].string=detail;for(const label of labels)label.useSystemFont=true;}
@@ -97,20 +146,20 @@ export class AppView {
   // 同一份已加载图集/字体跨场景复用，切换时只释放节点和派生状态。
   private async createWorld(tutorial:boolean,buff:string|null,playing=false): Promise<void> {
     const serial=++this.serial;this.capture.dispose();this.world?.destroy();this.praise.reset();this.cloudTutorialStep=-1;
-    const w=new WorldView(this.parent,()=>{void this.startGame();},true,{platform:this.platform,params:this.params,level:this.selected,levelParams:playing?this.cloud.level(this.selected):undefined,tutorial,progress:this.store.read(),buff,assets:this.assets,onEvent:e=>this.event(e),onAction:name=>this.action(name),blocked:()=>this.screen!=='play'||!!this.panel,onHidden:hidden=>this.audio.hidden(hidden)});this.world=w;this.root.setSiblingIndex(this.parent.children.length-1);await w.start();if(!this.alive||serial!==this.serial)return;w.paused=this.screen!=='play';
+    const w=new WorldView(this.parent,()=>{void this.startGame();},true,{platform:this.platform,params:this.params,level:this.selected,levelParams:playing&&!this.tourActive?this.cloud.level(this.selected):undefined,tutorial,progress:this.store.read(),buff,assets:this.assets,onEvent:e=>this.event(e),onAction:name=>this.action(name),blocked:()=>this.tourActive||this.screen!=='play'||!!this.panel,onHidden:hidden=>this.audio.hidden(hidden)});this.world=w;this.root.setSiblingIndex(this.parent.children.length-1);await w.start();if(!this.alive||serial!==this.serial)return;w.paused=this.screen!=='play';
   }
   // forceTut只消费本次；广告增益不跨局，带教则不带增益。
-  async startGame(forceTut=false,buff:string|null=null): Promise<void> {this.rank.hide();this.audio.unlock();this.screen='play';this.closePanel();this.result=null;const tutorial=!!LEVELS[this.selected].tutorial&&this.params.get('auto')!=='1'&&(forceTut||this.params.get('tut')==='1'||!this.store.read().tutDone);this.params.delete('tut');await this.createWorld(tutorial,buff,true);if(!this.alive)return;this.cloud.track('start',this.world!.match.L.id,{buff:this.world!.match.S.buff,tutorial});this.audio.bgm('work',true);if(this.world?.match.S.buff){this.toast(`带着「${BUFFS[this.world.match.S.buff].name}」上班`,1800);this.audio.sfx('buff');}if(this.params.has('freeze')){this.world!.frozen=true;const frames=Math.max(0,Math.floor(Number(this.params.get('freeze'))||0));for(let i=0;i<frames;i++)this.tick(1/60);this.frozen=true;}this.render();}
+  async startGame(forceTut=false,buff:string|null=null): Promise<void> {this.rank.hide();if(!this.tourActive)this.audio.unlock();this.screen='play';this.closePanel();this.result=null;const tutorial=!!LEVELS[this.selected].tutorial&&this.params.get('auto')!=='1'&&(forceTut||this.params.get('tut')==='1'||!this.store.read().tutDone);this.params.delete('tut');await this.createWorld(tutorial,buff,true);if(!this.alive)return;if(!this.tourActive)this.cloud.track('start',this.world!.match.L.id,{buff:this.world!.match.S.buff,tutorial});this.audio.bgm('work',true);if(this.world?.match.S.buff){this.toast(`带着「${BUFFS[this.world.match.S.buff].name}」上班`,1800);this.audio.sfx('buff');}if(this.params.has('freeze')){this.world!.frozen=true;const frames=Math.max(0,Math.floor(Number(this.params.get('freeze'))||0));for(let i=0;i<frames;i++)this.tick(1/60);this.frozen=true;}this.render();}
   // 真实页面每帧；冻结入口仍可显式tick做同种子截图，普通网页不改固定步长。
-  update(dt:number): void {if(!this.ready||this.frozen)return;this.real+=Math.min(.033,dt);if(this.screen==='play')this.world?.update(dt);this.render();}
+  update(dt:number): void {if(!this.ready)return;if(this.tourActive){if(!this.backgrounded)void this.tour?.advance(dt).catch(error=>console.error('[SG TOUR] error',error));this.render();return;}if(this.frozen)return;this.real+=Math.min(.033,dt);if(this.screen==='play')this.world?.update(dt);this.render();}
   // 调试单步使用真实WorldView.tick，禁止复制一份玩法算法。
   tick(dt:number): void {this.real+=dt;if(this.screen==='play'&&!this.panel)this.world?.tick(dt);this.render();}
   // 同一事件同时交给已有HUD和外围；只有进度事件写入平台。
-  private event(e:CoreEvent): void {const m=this.world?.match;if(m&&!m.simulating&&e.kind==='showHint'&&m.S.tut&&this.cloudTutorialStep!==m.S.tut.i){this.cloudTutorialStep=m.S.tut.i;this.cloud.track('tutorial',m.L.id,{step:m.S.tut.i});}if(e.kind==='sfx')this.audio.sfx(String(e.args[0]),e.args[1] as SoundOptions);if(e.kind==='bgm')this.audio.bgm(e.args[0] as string|boolean,e.args[1] as boolean);if(e.kind==='buzz')this.buzz(e.args[0] as number);if(e.kind==='progress'){this.store.save(mergeProgress(this.store.read(),e.args[0] as ReturnType<PlayerStore['read']>));this.cloud.progressChanged();}if(e.kind==='toast')this.messages.event('toast',e.args,this.real);if(e.kind==='finish'){this.result=e.args[0] as Result;this.cloudResult(this.result);this.open('result');}if(e.kind==='hidePanel')this.closePanel();if(e.kind==='praise'&&this.world)this.praise.show(String(e.args[0]),this.world.match,this.real,this.occupied(),this.reduced(),!!this.panel);}
+  private event(e:CoreEvent): void {const m=this.world?.match;if(!this.tourActive&&m&&!m.simulating&&e.kind==='showHint'&&m.S.tut&&this.cloudTutorialStep!==m.S.tut.i){this.cloudTutorialStep=m.S.tut.i;this.cloud.track('tutorial',m.L.id,{step:m.S.tut.i});}if(e.kind==='sfx')this.audio.sfx(String(e.args[0]),e.args[1] as SoundOptions);if(e.kind==='bgm')this.audio.bgm(e.args[0] as string|boolean,e.args[1] as boolean);if(e.kind==='buzz')this.buzz(e.args[0] as number);if(e.kind==='progress'){this.store.save(mergeProgress(this.store.read(),e.args[0] as ReturnType<PlayerStore['read']>));if(!this.tourActive)this.cloud.progressChanged();}if(e.kind==='toast')this.messages.event('toast',e.args,this.real);if(e.kind==='finish'){this.result=e.args[0] as Result;this.cloudResult(this.result);this.open('result');}if(e.kind==='hidePanel')this.closePanel();if(e.kind==='praise'&&this.world)this.praise.show(String(e.args[0]),this.world.match,this.real,this.occupied(),this.reduced(),!!this.panel);}
   // 只在真实结算出口采集纯数字，不发送老板称呼、复盘台词或任何自由文本。
-  private cloudResult(r:Result):void {const m=this.world?.match;if(!m||m.simulating)return;const score={rank:r.myRank,stars:r.stars,debt:r.myDebt,blames:m.S.player.blames,duration:Math.max(0,m.workT())};this.cloud.track('finish',m.L.id,{...score,crushed:r.crushed,crushedAt:r.crushed?score.duration:0,revived:m.S.revived,rescued:m.S.rescued});this.cloud.settled(m.L.id,score);this.cloud.background();}
+  private cloudResult(r:Result):void {const m=this.world?.match;if(!m||m.simulating||this.tourActive)return;const score={rank:r.myRank,stars:r.stars,debt:r.myDebt,blames:m.S.player.blames,duration:Math.max(0,m.workT())};this.cloud.track('finish',m.L.id,{...score,crushed:r.crushed,crushedAt:r.crushed?score.duration:0,revived:m.S.revived,rescued:m.S.rescued});this.cloud.settled(m.L.id,score);this.cloud.background();}
   // 震动总开关在画面边界生效，ms原样传平台。
-  private buzz(ms:number): void {if(this.store.settings.vibrate)this.platform.vibrate(ms);}
+  private buzz(ms:number): void {if(!this.tourActive&&this.store.settings.vibrate)this.platform.vibrate(ms);}
   private toast(text:string,ms=1600): void {this.messages.event('toast',[text,ms],this.real);}
   private unlock=(): void => {this.audio.unlock();};
   // 打开任何卡片立即清理贴纸；暂停不修改core.mode。
@@ -119,6 +168,7 @@ export class AppView {
   private closePanel(): void {if(this.debug?.busy)this.cancelDebugRun();this.debug?.resetTaps();this.panel='';this.scroll=0;this.focus=-1;this.removeEdit();if(this.world)this.world.paused=this.screen!=='play';}
   // 所有按钮动作统一音效分类，广告/开关/主角按原型安静。
   action(name:string): void {
+    if(this.tourActive)return;
     if(!this.ready||this.panel==='ad')return;
     // 工牌不作普通按钮反馈；关闭门禁时连计数、音效和存储也不触发。
     if(name==='debug-badge'){if(this.debugEnabled&&this.screen==='lobby'&&!this.panel){if(this.debug.tap(performance.now()/1000)){this.debug.level=this.selected;this.open('debug');this.render();}}else this.debug.resetTaps();return;}
@@ -199,8 +249,8 @@ export class AppView {
   // 名称EditBox用纯文本；长度按Unicode检查后调用core清理函数，存储失败保留输入。
   private saveName(): void {const value=this.edit?.string||'',m=this.world?.match||new Match({seed:0,progress:this.store.read()});if(Array.from(value.trim()).length>6){this.toast('最多 6 个字',1500);return;}const prog=this.store.read();prog.bossName=m.cleanBossName(value);prog.bossNameAt=Math.max(Date.now(),(prog.bossNameAt||0)+1);if(!this.store.save(prog)){this.toast('保存失败，请重试',1500);return;}this.cloud.progressChanged();this.showLobby();}
   // 3.8.8小游戏适配会showKeyboard并在confirm后complete；不在RETURN重入blur/保存，等中文最终输入提交。
-  // 微信原生最大长度100，六字业务校验仍按Unicode；网页保持原有不限长度。
-  private ensureEdit(): void {if(this.edit)return;if(this.cachedEdit){this.edit=this.cachedEdit;this.cachedEdit=null;this.edit.string=this.store.read().bossName||'老板';this.edit.node.active=true;this.positionEdit();this.edit.focus();return;}const n=this.node('BossNameEditBox',this.root);n.active=false;const edit=n.addComponent(EditBox),labelNode=this.node('Text',n),label=labelNode.addComponent(Label);guardLabelText(label);label.useSystemFont=true;label.fontSize=18;label.color=new Color('#1F2A44');label.horizontalAlign=Label.HorizontalAlign.LEFT;labelNode.getComponent(UITransform)!.setContentSize(260,40);edit.textLabel=label;edit.inputMode=EditBox.InputMode.SINGLE_LINE;edit.returnType=EditBox.KeyboardReturnType.DONE;edit.maxLength=this.platform.kind==='wechat'?100:-1;edit.string=this.store.read().bossName||'老板';this.edit=edit;this.positionEdit();n.on(EditBox.EventType.EDITING_DID_BEGAN,()=>{if(this.platform.kind==='web')queueMicrotask(()=>{if(!this.alive||this.edit!==edit)return;const field=document.activeElement;if(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement)field.select();});});n.active=true;edit.focus();}
+  // 微信原生最大长度100，六字业务校验仍按Unicode；巡检只显示输入框，不自动唤起键盘。
+  private ensureEdit(focus=true): void {if(this.edit)return;if(this.cachedEdit){this.edit=this.cachedEdit;this.cachedEdit=null;this.edit.string=this.store.read().bossName||'老板';this.edit.node.active=true;this.positionEdit();if(focus)this.edit.focus();return;}const n=this.node('BossNameEditBox',this.root);n.active=false;const edit=n.addComponent(EditBox),labelNode=this.node('Text',n),label=labelNode.addComponent(Label);guardLabelText(label);label.useSystemFont=true;label.fontSize=18;label.color=new Color('#1F2A44');label.horizontalAlign=Label.HorizontalAlign.LEFT;labelNode.getComponent(UITransform)!.setContentSize(260,40);edit.textLabel=label;edit.inputMode=EditBox.InputMode.SINGLE_LINE;edit.returnType=EditBox.KeyboardReturnType.DONE;edit.maxLength=this.platform.kind==='wechat'?100:-1;edit.string=this.store.read().bossName||'老板';this.edit=edit;this.positionEdit();n.on(EditBox.EventType.EDITING_DID_BEGAN,()=>{if(this.platform.kind==='web')queueMicrotask(()=>{if(!this.alive||this.edit!==edit)return;const field=document.activeElement;if(field instanceof HTMLInputElement||field instanceof HTMLTextAreaElement)field.select();});});n.active=true;if(focus)edit.focus();}
   // 种子/局数复用同一个原生单行输入框；重排时不丢未保存的输入。
   private positionEdit(): void {if(!this.edit)return;const w=Math.min(340,this.surface.width-32),h=this.heights[this.panel]||300,y=(this.surface.height-Math.min(h,(this.surface.height-32)*.92))/2;this.edit.node.setPosition(this.surface.width/2,-(y+140-this.scroll));this.edit.node.getComponent(UITransform)!.setContentSize(w-40,48);}
   // 复用同一EditBox：Cocos安卓键盘有延迟scrollIntoView，立即销毁会读到空DOM。
@@ -259,17 +309,17 @@ export class AppView {
   // 横竖屏重排只更新可视坐标；保持当前关卡、输入值和对局。
   private resize(): void {const size=view.getVisibleSize();this.root.setPosition(-size.width/2,size.height/2);this.surface.width=size.width;this.surface.height=size.height;this.loading?.setPosition(size.width/2,-size.height/2);this.positionEdit();if(this.ready)this.render();}
   // 手指滑条与按钮点击互斥；超过8px判滑动，不误触选关。
-  private down(e:EventTouch): void {if(!this.ready&&this.platform.kind==='wechat'){if(this.loadingError)void this.start();return;}this.audio.unlock();this.focusVisible=false;if(!this.ready||this.panel==='ad'||this.touch)return;const pos=e.getUILocation(),x=pos.x,y=this.surface.height-pos.y;if(this.edit){const pos=this.edit.node.position,size=this.edit.node.getComponent(UITransform)!.contentSize;if(Math.abs(x-pos.x)<=size.width/2&&Math.abs(y+pos.y)<=size.height/2)return;}const strip=this.screen==='lobby'?this.lobby.strip:this.screen==='intro'?this.intro.strip:null;const tabs=!!strip&&x>=strip.x&&x<=strip.x+strip.w&&y>=strip.y&&y<=strip.y+strip.h;this.touch={id:e.getID()!,x,y,lastX:x,lastY:y,distance:0,tabs,horizontal:tabs,rankList:this.screen==='rank'&&!this.panel&&this.rank.contains(x,y)};}
+  private down(e:EventTouch): void {if(this.tourActive)return;if(!this.ready&&this.platform.kind==='wechat'){if(this.loadingError)void this.start();return;}this.audio.unlock();this.focusVisible=false;if(!this.ready||this.panel==='ad'||this.touch)return;const pos=e.getUILocation(),x=pos.x,y=this.surface.height-pos.y;if(this.edit){const pos=this.edit.node.position,size=this.edit.node.getComponent(UITransform)!.contentSize;if(Math.abs(x-pos.x)<=size.width/2&&Math.abs(y+pos.y)<=size.height/2)return;}const strip=this.screen==='lobby'?this.lobby.strip:this.screen==='intro'?this.intro.strip:null;const tabs=!!strip&&x>=strip.x&&x<=strip.x+strip.w&&y>=strip.y&&y<=strip.y+strip.h;this.touch={id:e.getID()!,x,y,lastX:x,lastY:y,distance:0,tabs,horizontal:tabs,rankList:this.screen==='rank'&&!this.panel&&this.rank.contains(x,y)};}
   private move(e:EventTouch): void {const t=this.touch;if(!t||e.getID()!==t.id)return;const pos=e.getUILocation(),x=pos.x,y=this.surface.height-pos.y,dx=x-t.lastX,dy=y-t.lastY;t.distance=Math.max(t.distance,Math.hypot(x-t.x,y-t.y));t.lastX=x;t.lastY=y;if(this.panel)this.scroll=Math.max(0,Math.min(this.maxScroll,this.scroll-dy));else if(this.screen==='rank'&&t.rankList)this.rank.scroll(-dy);else if(this.screen==='lobby'&&t.tabs)this.lobby.swipe(dx);else if(this.screen==='intro')this.intro.swipe(dx,dy,t.tabs);this.render();}
   private up(e:EventTouch): void {const t=this.touch;if(!t||e.getID()!==t.id)return;this.touch=null;if(t.distance>=8){if(this.screen==='lobby'&&t.tabs)this.lobby.swipe(0,true);return;}const a=[...this.actions].reverse().find(a=>t.x>=a.x&&t.x<=a.x+a.w&&t.y>=a.y&&t.y<=a.y+a.h);if(a)this.action(a.action);}
   private cancel(): void {this.touch=null;}
   // 滚轮和键盘仅作用外围菜单；对局按键继续由InputView处理。
-  private wheel(e:EventMouse): void {if(this.panel){this.scroll=Math.max(0,Math.min(this.maxScroll,this.scroll-e.getScrollY()*.25));this.render();}else if(this.screen==='rank'){const pos=e.getUILocation();if(this.rank.contains(pos.x,this.surface.height-pos.y))this.rank.scroll(-e.getScrollY()*.25);this.render();}else if(this.screen==='intro'){this.intro.swipe(0,e.getScrollY()*.25,false);this.render();}}
-  private key(e:EventKeyboard): void {this.audio.unlock();if(this.edit)return;if((e.keyCode===KeyCode.KEY_P||e.keyCode===KeyCode.ESCAPE)&&this.panel==='pause')return;if(e.keyCode===KeyCode.TAB){this.focusVisible=true;this.focus=(this.focus+1)%Math.max(1,this.actions.length);this.render();}else if((e.keyCode===KeyCode.ENTER||e.keyCode===KeyCode.SPACE)&&this.focus>=0&&this.actions[this.focus])this.action(this.actions[this.focus].action);}
-  private hide(): void {this.backgrounded=true;this.rank.hide();this.cloud.background();this.debug.resetTaps();this.touch=null;this.audio.hidden(true);if(this.screen==='play'&&this.world?.match.mode==='play'&&!this.panel){this.audio.bgm(false);this.open('pause');this.render();}}
-  private show(): void {this.backgrounded=false;this.cloud.foreground();this.audio.hidden(false);this.render();}
+  private wheel(e:EventMouse): void {if(this.tourActive)return;if(this.panel){this.scroll=Math.max(0,Math.min(this.maxScroll,this.scroll-e.getScrollY()*.25));this.render();}else if(this.screen==='rank'){const pos=e.getUILocation();if(this.rank.contains(pos.x,this.surface.height-pos.y))this.rank.scroll(-e.getScrollY()*.25);this.render();}else if(this.screen==='intro'){this.intro.swipe(0,e.getScrollY()*.25,false);this.render();}}
+  private key(e:EventKeyboard): void {if(this.tourActive)return;this.audio.unlock();if(this.edit)return;if((e.keyCode===KeyCode.KEY_P||e.keyCode===KeyCode.ESCAPE)&&this.panel==='pause')return;if(e.keyCode===KeyCode.TAB){this.focusVisible=true;this.focus=(this.focus+1)%Math.max(1,this.actions.length);this.render();}else if((e.keyCode===KeyCode.ENTER||e.keyCode===KeyCode.SPACE)&&this.focus>=0&&this.actions[this.focus])this.action(this.actions[this.focus].action);}
+  private hide(): void {this.backgrounded=true;this.rank.hide();if(!this.tourActive)this.cloud.background();this.debug.resetTaps();this.touch=null;this.audio.hidden(true);if(!this.tourActive&&this.screen==='play'&&this.world?.match.mode==='play'&&!this.panel){this.audio.bgm(false);this.open('pause');this.render();}}
+  private show(): void {this.backgrounded=false;if(!this.tourActive)this.cloud.foreground();this.audio.hidden(false);this.render();}
   // 网页入口只挂在window，不在微信创建浏览器全局；simulate复用core不碰真实存档。
   private exposeDebug(): void {if(!this.debugEnabled||this.platform.kind!=='web'||typeof window==='undefined')return;const app=this;(window as unknown as {SG_DEBUG:unknown}).SG_DEBUG={simulate(level=0,runs=20,seed?:number){const m=new Match({level,seed:seed??Date.now(),progress:app.store.read()});return m.simulate(level,runs,seed);},previewAssets(){app.open('assets');app.render();},praise(kind:string){if(!app.world)return false;return app.praise.show(kind,app.world.match,app.real,app.occupied(),app.reduced(),!!app.panel);},state:()=>app.screen==='lobby'?null:app.world?.match.S};}
   // 清理只针对本任务创建的节点、事件、计时器与音频；保留用户编辑器。
-  destroy(): void {this.cancelDebugRun();this.alive=false;this.serial++;this.capture.dispose();this.packages.dispose();this.rank.destroy();this.offLifecycle?.();this.world?.destroy();this.audio.destroy();this.cloud.dispose();this.platform.dispose?.();this.removeEdit();this.praise.clear();view.off('canvas-resize',this.resize,this);game.off(Game.EVENT_HIDE,this.hide,this);game.off(Game.EVENT_SHOW,this.show,this);input.off(Input.EventType.TOUCH_START,this.down,this);input.off(Input.EventType.TOUCH_MOVE,this.move,this);input.off(Input.EventType.TOUCH_END,this.up,this);input.off(Input.EventType.TOUCH_CANCEL,this.cancel,this);input.off(Input.EventType.KEY_DOWN,this.key,this);input.off(Input.EventType.MOUSE_WHEEL,this.wheel,this);if(typeof window!=='undefined'){window.removeEventListener('pointerdown',this.unlock,true);window.removeEventListener('keydown',this.unlock,true);delete (window as unknown as {SG_DEBUG?:unknown}).SG_DEBUG;}this.root.destroy();this.assets.destroy();}
+  destroy(): void {this.tour?.stop();this.cancelDebugRun();this.alive=false;this.serial++;this.capture.dispose();this.packages.dispose();this.rank.destroy();this.offLifecycle?.();this.world?.destroy();this.audio.destroy();this.cloud.dispose();this.platform.dispose?.();this.removeEdit();this.praise.clear();view.off('canvas-resize',this.resize,this);game.off(Game.EVENT_HIDE,this.hide,this);game.off(Game.EVENT_SHOW,this.show,this);input.off(Input.EventType.TOUCH_START,this.down,this);input.off(Input.EventType.TOUCH_MOVE,this.move,this);input.off(Input.EventType.TOUCH_END,this.up,this);input.off(Input.EventType.TOUCH_CANCEL,this.cancel,this);input.off(Input.EventType.KEY_DOWN,this.key,this);input.off(Input.EventType.MOUSE_WHEEL,this.wheel,this);if(typeof window!=='undefined'){window.removeEventListener('pointerdown',this.unlock,true);window.removeEventListener('keydown',this.unlock,true);delete (window as unknown as {SG_DEBUG?:unknown}).SG_DEBUG;}this.root.destroy();this.assets.destroy();}
 }
