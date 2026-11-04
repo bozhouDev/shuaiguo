@@ -2,10 +2,13 @@
 // x 是数组时结果正确；是字符串、Set、Map、迭代器时会变成"只有一个元素"，
 // 2026-11-04 微信版所有文字宽度因此只算一个字，排版全部错位。这里用类型检查器找出非数组展开。
 const path = require('node:path');
+const fs = require('node:fs');
 const ts = require(process.env.COCOS_TS || '/Applications/Cocos/Creator/3.8.8/CocosCreator.app/Contents/Resources/resources/3d/engine/node_modules/typescript');
 const root = path.resolve(__dirname, '..');
 const config = ts.getParsedCommandLineOfConfigFile(path.join(root, 'tsconfig.json'), {}, {...ts.sys, onUnRecoverableConfigFileDiagnostic() {}});
-const program = ts.createProgram(config.fileNames.filter(f => f.includes('/assets/scripts/')), config.options);
+const openData = path.join(root,'build-templates/wechatgame/openDataContext');
+const openDataFiles=fs.existsSync(openData)?fs.readdirSync(openData).filter(n=>n.endsWith('.js')).map(n=>path.join(openData,n)):[];
+const program = ts.createProgram(config.fileNames.filter(f => f.includes('/assets/scripts/')).concat(openDataFiles), {...config.options,allowJs:true});
 const checker = program.getTypeChecker();
 
 // 类型是否是数组或元组（联合类型要求每一支都是）。
@@ -16,7 +19,7 @@ function arrayLike(type) {
 
 const bad = [];
 for (const file of program.getSourceFiles()) {
-  if (!file.fileName.includes('/assets/scripts/')) continue;
+  if (!file.fileName.includes('/assets/scripts/')&&!openDataFiles.includes(file.fileName)) continue;
   // 递归遍历语法树，只看数组字面量和函数调用参数里的展开。
   (function walk(node) {
     if (ts.isSpreadElement(node) && !arrayLike(checker.getTypeAtLocation(node.expression))) {

@@ -25,7 +25,7 @@ export class CloudServices {
   private sequence=0;
   // 埋点ID只用于重试去重，不是身份；session前缀不消费core随机数。
   private session=Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10);
-  constructor(readonly platform:Platform,readonly store:CloudStore){
+  constructor(readonly platform:Platform,readonly store:CloudStore,readonly onFriendsSynced?:(levels:number[])=>void){
     this.config=sanitizeConfig(this.read(CONFIG_KEY));
     if(platform.kind==='wechat'){
       const q=this.read(QUEUE_KEY);if(Array.isArray(q))this.queue=q.filter(v=>v&&typeof v.id==='string'&&typeof v.type==='string').slice(-CLOUD_QUEUE_LIMIT);
@@ -104,7 +104,8 @@ export class CloudServices {
     this.write(FRIEND_KEY,this.friends);
     const data=Object.entries(this.friends).map(([id,debt])=>({key:'sg_debt_v1_'+id,value:JSON.stringify({v:1,debt})}));
     if(!data.length)return;
-    this.friendFlight=(async()=>{await this.platform.setUserCloudStorage(data);})();try{await this.friendFlight;}finally{this.friendFlight=undefined;}
+    // 写入成功后再失效榜单缓存，避免玩家刚结算就打开时缓存到上传前的旧成绩。
+    this.friendFlight=(async()=>{const ok=await this.platform.setUserCloudStorage(data);if(ok&&this.alive)this.onFriendsSynced?.(Object.keys(this.friends).map(Number));})();try{await this.friendFlight;}finally{this.friendFlight=undefined;}
   }
   // 结算/切后台/回前台触发下一次同步；断网时保留本地，绝不定时轰炸网络。
   background():void{if(this.saveTimer){clearTimeout(this.saveTimer);this.saveTimer=undefined;}void this.syncSave();void this.flush();}
