@@ -25,6 +25,15 @@ export class UiPaint {
   image(name: string, x: number, y: number, w: number, h?: number): void {const p = this.c.assets.spr[name]; if (p) this.c.drawImage(p, x, y, w, h ?? w * p.h / p.w);}
   // 对应 object-fit:contain，不裁人物。
   contain(name: string, b: Box): void {const p = this.c.assets.spr[name]; if (!p) return; const s = Math.min(b.w / p.w, b.h / p.h); this.image(name, b.x + (b.w - p.w * s) / 2, b.y + (b.h - p.h * s) / 2, p.w * s, p.h * s);}
+  // DESIGN §7：九宫格保留素材四角，边缘按逻辑像素显示；切片由WorldAssets缓存。
+  sliced(name: string, b: Box, inset = 16, edge = 8): void {
+    const pic = this.c.assets.spr[name]; if (!pic) return;
+    const sx = [0, inset, pic.w - inset, pic.w], sy = [0, inset, pic.h - inset, pic.h];
+    const ex = Math.min(edge, b.w / 2), ey = Math.min(edge, b.h / 2);
+    const dx = [b.x, b.x + ex, b.x + b.w - ex, b.x + b.w], dy = [b.y, b.y + ey, b.y + b.h - ey, b.y + b.h];
+    for (let row = 0; row < 3; row++) for (let col = 0; col < 3; col++)
+      this.c.drawImage(pic, sx[col], sy[row], sx[col + 1] - sx[col], sy[row + 1] - sy[row], dx[col], dy[row], dx[col + 1] - dx[col], dy[row + 1] - dy[row]);
+  }
   // 深蓝 HUD 的 2px 描边、内高光和右下硬投影。
   panel(b: Box, fill = '#26324F', hot = false): void {const c = this.c; c.fillStyle = '#0F1628'; c.fillRect(b.x + 2, b.y + 2, b.w, b.h); c.fillRect(b.x, b.y, b.w, b.h); c.fillStyle = fill; c.fillRect(b.x + 2, b.y + 2, b.w - 4, b.h - 4); c.fillStyle = hot ? '#FF8A80' : '#3A4A70'; c.fillRect(b.x + 2, b.y + 2, b.w - 4, 2);}
   // 将原型 border-image 的源像素按九宫格伸缩成 Graphics；navy 源11格、黄色源9格。

@@ -1,6 +1,11 @@
 import {Asset, Rect, Size, SpriteFrame, Texture2D, TTFFont, resources} from 'cc';
 import {ATLAS} from './atlas-data';
 
+// 结算独立素材不回写原型图集；名称与阶段一交付的PNG一一对应。
+const RESULT_IMAGES = ['sky_clear', 'trophy', 'ribbon', 'ribbon_red', 'rays_left', 'rays_right',
+  'plane', 'grass_left', 'grass_right', 'frame_gold', 'frame_table', 'button_blue', 'button_gold',
+  'sky_overcast', 'sky_storm', 'overtime', 'crushed'];
+
 export interface Picture { frame: SpriteFrame; w: number; h: number; canvas: Picture }
 
 // 只加载编辑器已导入的资源，不触发编辑器构建。
@@ -29,6 +34,11 @@ export class WorldAssets {
       } catch (error) { console.warn('图集加载失败', sheet.file, error);if(strict)throw error; }
     }));
     const failed=sheets.find((s):s is PromiseRejectedResult=>s.status==='rejected');if(failed)throw failed.reason;
+    // 必需的结算美术跟随首屏加载；缺失直接报告加载失败，避免静默显示半张弹窗。
+    await Promise.all(RESULT_IMAGES.map(async name => {
+      const texture = await this.pixels(`result/ui_result_${name}/texture`);
+      this.spr[`ui_result_${name}`] = this.picture(texture, [0, 0, texture.width, texture.height]);
+    }));
     try {
       const texture = await this.pixels('fx/pot-cartoon-pow-bd83d9f0/texture');
       this.spr['pot-cartoon-pow-bd83d9f0'] = this.picture(texture, [0, 0, texture.width, texture.height]);

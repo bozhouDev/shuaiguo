@@ -114,7 +114,7 @@ export class AppView {
     else if(step.kind==='intro')await this.showIntro();
     else if(step.kind==='rank'){this.rank.selected=this.selected;this.screen='rank';}
     else if(step.kind!=='lobby'){
-      await this.startGame(step.kind==='tutorial');if(!this.alive||!this.world)return;
+      await this.startGame(step.kind==='tutorial',step.buff??null);if(!this.alive||!this.world)return;
       const world=this.world,m=world.match;world.frozen=true;
       if(step.kind==='tutorial'){for(let i=1;i<(step.step??1);i++)m.tutNext();world.flush();}
       if(step.kind==='match'){
@@ -136,6 +136,8 @@ export class AppView {
     if(!this.alive)return;this.real+=.4;
     if(this.world){this.world.real+=.4;this.world.render();}
     this.render();
+    // 长结算额外拍到底部，复用真实滚动范围与命中框，不删除原有顶端步骤。
+    if(step.bottom){this.scroll=this.maxScroll;this.render();}
   }
   // 加载卡先用系统字显示下载进度；失败时整张卡可点，首屏始终可见。
   private loadingStatus(title:string,detail:string):void {if(!this.alive)return;const labels=this.loading.getComponentsInChildren(Label);labels[0].string=title;labels[1].string=detail;for(const label of labels)label.useSystemFont=true;}

@@ -1,8 +1,8 @@
 import type {Match} from '../core/match';
 // 微信还原核对的纯数据/计时层：不依赖cc、平台、DOM或真实定时器；不改玩法。
 export type TourKind = 'lobby'|'rules'|'boss'|'intro'|'tutorial'|'match'|'pause'|'settings'|'result'|'revive'|'share'|'praise'|'rank';
-export type TourResult = 'three'|'one'|'fail'|'crush';
-export interface TourStep {kind:TourKind;name:string;hold:number;seed:number;level?:number;step?:number;seconds?:number;result?:TourResult;praise?:'calm'|'parry'|'rankup'}
+export type TourResult = 'three'|'two'|'one'|'fail'|'crush'|'revived'|'rescued';
+export interface TourStep {kind:TourKind;name:string;hold:number;seed:number;level?:number;step?:number;seconds?:number;result?:TourResult;praise?:'calm'|'parry'|'rankup';buff?:'trip'|'gold'|'news'|'legs';bottom?:boolean}
 const KINDS:TourKind[]=['lobby','rules','boss','intro','tutorial','match','pause','settings','result','revive','share','praise','rank'];
 // 原型P4-1截图：空存档，seed1001；结算数值见prepareTourResult，教学直接进第1/3步。
 const ALL:Partial<TourStep>[] = [
@@ -13,8 +13,16 @@ const ALL:Partial<TourStep>[] = [
   {kind:'match',name:'match-wednesday-60s',level:3,seconds:60},{kind:'match',name:'match-friday-150s',level:5,seconds:150},
   {kind:'pause',name:'pause',level:1},{kind:'settings',name:'settings',level:1},
   {kind:'result',name:'result-3star',level:1,result:'three'},{kind:'result',name:'result-1star',level:1,result:'one'},
+  {kind:'result',name:'result-2star',level:1,result:'two'},
   {kind:'result',name:'result-failed',level:2,result:'fail'},{kind:'result',name:'result-crushed',level:2,result:'crush'},
   {kind:'result',name:'result-friday-cert',level:5,result:'three'},
+  {kind:'result',name:'result-revived',level:2,result:'revived'},
+  {kind:'result',name:'result-rescued',level:2,result:'rescued'},
+  {kind:'result',name:'result-friday-helped-cert',level:5,result:'rescued'},
+  ...(['trip','gold','news','legs'] as const).map(buff=>({kind:'result' as const,name:`result-buff-${buff}`,level:2,result:'fail' as const,buff,bottom:true})),
+  {kind:'result',name:'result-failed-bottom',level:2,result:'fail',bottom:true},
+  {kind:'result',name:'result-crushed-bottom',level:2,result:'crush',bottom:true},
+  {kind:'result',name:'result-friday-cert-bottom',level:5,result:'three',bottom:true},
   {kind:'revive',name:'revived',level:2},{kind:'share',name:'share',level:5},
   ...(['calm','parry','rankup'] as const).map(praise=>({kind:'praise' as const,name:`praise-${praise}`,level:1,praise})),
   {kind:'rank',name:'friend-rank',level:1},
@@ -32,7 +40,9 @@ export function readTour(enabled:boolean,read:()=>unknown):TourStep[] {
     if(s.level!==undefined&&(!Number.isInteger(s.level)||s.level<1||s.level>5))throw Error('巡检关卡非法');
     if(s.kind==='tutorial'&&s.step!==1&&s.step!==3)throw Error('巡检教学只支持第1/3步');
     if(s.kind==='match'&&(!Number.isFinite(s.seconds)||s.seconds!<0||s.seconds!>180))throw Error('巡检对局秒数非法');
-    if(s.kind==='result'&&!['three','one','fail','crush'].includes(s.result!))throw Error('巡检结算类型非法');
+    if(s.kind==='result'&&!['three','two','one','fail','crush','revived','rescued'].includes(s.result!))throw Error('巡检结算类型非法');
+    if(s.buff!==undefined&&!['trip','gold','news','legs'].includes(s.buff))throw Error('巡检增益非法');
+    if(s.bottom!==undefined&&(typeof s.bottom!=='boolean'||s.kind!=='result'))throw Error('巡检滚动只支持结算');
     if(s.kind==='praise'&&!['calm','parry','rankup'].includes(s.praise!))throw Error('巡检贴纸类型非法');
     return s;
   });
@@ -57,6 +67,9 @@ export class TourRunner {
 // 与verify-peripheral.mjs的最终夹具相同；只是调试局的数据，结算仍由真实core计算。
 export function prepareTourResult(m:Match,type:TourResult):void {
   for(const [i,a]of m.S.agents.entries()){a.sn.segs=[];a.blames=i+1;a.crushed=false;}
-  const p=m.S.player;p.blames=type==='one'?3.5:type==='fail'?99:0;
+  const p=m.S.player;p.blames=type==='one'?3.5:type==='two'?2.5:type==='fail'?99:0;
   if(type==='crush')p.sn.segs=Array.from({length:12},()=>({due:50,label:'周报',hot:false}));
+  // 通过真实辅助入口制造后续结算，不伪造星级或广告资格；不改变正式对局。
+  if(type==='revived'){p.sn.segs=Array.from({length:12},()=>({due:50,label:'周报',hot:false}));m.revive();}
+  if(type==='rescued'){p.blames=3;m.rescue();}
 }
