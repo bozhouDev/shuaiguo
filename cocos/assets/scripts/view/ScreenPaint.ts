@@ -20,7 +20,7 @@ export class ScreenPaint extends UiPaint {
   // 当前日历的深蓝金边，保留阶梯切角。
   goldFrame(b:Box):void {this.box({...b,x:b.x+2,y:b.y+2,w:b.w-4,h:b.h-4},'#F0C000',6,false);this.box({...b,x:b.x+4,y:b.y+4,w:b.w-8,h:b.h-8},'#26324F',3,false);}
   // 原型CSS的SVG点阵转Graphics，小色块不依赖系统emoji。
-  icon(name: string, x: number, y: number, size = 30, color = '#1F2A44'): void {const colors: Record<string,string> = {'#': color, w: '#FFFFFF', y: '#FFD84D', o: '#C98A00'}; (PX_ICONS[name] || []).forEach((row, yy) => [...row].forEach((ch, xx) => {if (colors[ch]) {this.c.fillStyle = colors[ch]; this.c.fillRect(x + xx * size / 16, y + yy * size / 16, size / 16, size / 16);}}));}
+  icon(name: string, x: number, y: number, size = 30, color = '#1F2A44'): void {const colors: Record<string,string> = {'#': color, w: '#FFFFFF', y: '#FFD84D', o: '#C98A00'}; (PX_ICONS[name] || []).forEach((row, yy) => Array.from(row).forEach((ch, xx) => {if (colors[ch]) {this.c.fillStyle = colors[ch]; this.c.fillRect(x + xx * size / 16, y + yy * size / 16, size / 16, size / 16);}}));}
   // 居中单行，不自动改文案，尺寸按CSS指定。
   center(text: string, x: number, y: number, width: number, size: number, color = '#1F2A44', font = 'body-900', stroke?: string): void {this.text(text, x + (width - this.width(text, size, font)) / 2, y, size, color, font, false, stroke);}
   // 多行正文返回高度供下一块布局，默认原型系统正文字体对应400。

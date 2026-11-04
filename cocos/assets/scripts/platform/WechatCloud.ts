@@ -55,5 +55,5 @@ export class WechatCloud implements CloudAPI {
     });
   }
   // 释放本平台全部等待，不触碰用户或其他页面的资源。
-  dispose():void {this.closed=true;this.ready=false;for(const cancel of [...this.pending])cancel();}
+  dispose():void {this.closed=true;this.ready=false;for(const cancel of Array.from(this.pending))cancel();}
 }

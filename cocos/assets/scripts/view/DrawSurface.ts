@@ -163,7 +163,7 @@ export class DrawSurface {
   width = 375; height = 812; cull = true;
   // 字体宽度取 TTF cmap/hmtx 的预生成数据，不依赖网页 Canvas 测量。
   metrics: Record<string, number> = {};
-  measureText(text: string): {width: number} { const size = Number(this.font.match(/([\d.]+)px/)?.[1] || 16); return {width: [...displayText(text)].reduce((n, ch) => n + (this.metrics[ch] ?? 1), 0) * size}; }
+  measureText(text: string): {width: number} { const size = Number(this.font.match(/([\d.]+)px/)?.[1] || 16); return {width: Array.from(displayText(text)).reduce((n, ch) => n + (this.metrics[ch] ?? 1), 0) * size}; }
   strokeText(s: string, x: number, y: number): void { this.strokeTextValue = {s, x, y, color: this.strokeStyle, width: this.lineWidth}; }
   // 同内容/字号不重复写 Label；倒计时输入是 ceil 秒，只在整秒改变时重建文字纹理。
   fillText(s: string, x: number, y: number): void {
@@ -177,7 +177,7 @@ export class DrawSurface {
     const font = /900|body-900/.test(this.font) ? this.assets.body900 : /700|body-700/.test(this.font) ? this.assets.body700 : /body-400/.test(this.font) ? this.assets.body400 : this.assets.title;
     const key=/900|body-900/.test(this.font)?'body-900':/700|body-700/.test(this.font)?'body-700':/body-400/.test(this.font)?'body-400':'title';
     // 用户自定义称呼可能超出子集；整段回退系统字，避免方块和空名牌。
-    const fallback=[...s].some(ch=>!UI_METRICS[key]?.[ch]&&ch!=='\n');
+    const fallback=Array.from(s).some(ch=>!UI_METRICS[key]?.[ch]&&ch!=='\n');
     if(fallback){label.font=null;label.fontFamily='sans-serif';label.useSystemFont=true;}else{if(label.font!==font)label.font=font;label.useSystemFont=false;}
     label.isBold = /bold/.test(this.font);
     if (label.string !== s) label.string = s;

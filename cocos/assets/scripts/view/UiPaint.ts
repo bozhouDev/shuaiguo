@@ -11,7 +11,7 @@ export class UiPaint {
   // 用源字体 hmtx 算字宽；快乐体无tnum，数字按最宽数字占位，避免挤字或时钟跳宽。
   width(text: string, size: number, font = 'title', tabular = false): number {
     const metrics = UI_METRICS[font] || UI_METRICS.title;
-    return [...displayText(text)].reduce((n, ch) => n + (tabular && /\d/.test(ch) ? DIGIT_WIDTH[font] ?? DIGIT_WIDTH.title : metrics[ch] ?? 1), 0) * size;
+    return Array.from(displayText(text)).reduce((n, ch) => n + (tabular && /\d/.test(ch) ? DIGIT_WIDTH[font] ?? DIGIT_WIDTH.title : metrics[ch] ?? 1), 0) * size;
   }
   // 以左上角为坐标写字，Label 仅在显示内容变化时改 string（DrawSurface 池）。
   text(text: string, x: number, y: number, size: number, color: string, font = 'title', tabular = false, stroke?: string): void {

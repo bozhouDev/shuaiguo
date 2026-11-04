@@ -21,3 +21,10 @@ test('脚本不使用微信小游戏里没有的全局', () => {
   }
   assert.deepEqual(bad, []);
 });
+
+// 微信包用 Babel 宽松模式：[...字符串/Set] 会被编成 [].concat(x) 只剩一个元素，必须用 Array.from。
+test('展开和解构只作用于数组（宽松模式编译安全）', async () => {
+  const {execFileSync} = await import('node:child_process');
+  const out = execFileSync(process.execPath, [new URL('../../tools/check-spread.cjs', import.meta.url).pathname], {encoding: 'utf8'});
+  assert.match(out, /PASS/);
+});

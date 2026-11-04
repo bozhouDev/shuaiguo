@@ -8,6 +8,20 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT.parent / 'assets_pixel/fonts_src'
 
 
+# 微信小游戏里 Cocos 拼字体串不加引号（"24px ZCOOL KuaiLe"），带空格的名字会被画布忽略、退回系统字；
+# 三档正文原先同名还会互相覆盖。所以每个文件用一个不含空格、互不重复的字体名。
+FAMILIES = {'title.ttf': 'SGTitle', 'body-400.ttf': 'SGBody400', 'body-700.ttf': 'SGBody700', 'body-900.ttf': 'SGBody900'}
+
+
+def rename(font, family):
+    """把 name 表的家族名、全名、PostScript 名统一成同一个无空格名字，样式一律 Regular。"""
+    table = font['name']
+    table.names = [r for r in table.names if r.nameID not in (16, 17)]
+    for nid, value in {1: family, 2: 'Regular', 3: family, 4: family, 6: family}.items():
+        for platform, enc, lang in [(3, 1, 0x409), (1, 0, 0)]:
+            table.setName(value, nid, platform, enc, lang)
+
+
 def build(source, output, text, weight=None):
     """固定变量字重，同时修正变量字体遗留的 Thin 名称和 OS/2 标记。"""
     font = TTFont(SOURCE / source)
@@ -27,6 +41,7 @@ def build(source, output, text, weight=None):
     subset.populate(text=text)
     subset.subset(font)
     font.flavor = None
+    rename(font, FAMILIES[output])
     out = ROOT / 'assets/resources' / output
     font.save(out)
     return {'file': output, 'bytes': out.stat().st_size, 'weight': font['OS/2'].usWeightClass,

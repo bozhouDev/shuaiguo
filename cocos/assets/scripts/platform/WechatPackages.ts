@@ -36,5 +36,5 @@ export class WechatPackages {
     });
   }
   // 不试图关闭用户的全局微信任务，只取消本加载器等待及进度回调。
-  dispose():void {this.closed=true;for(const cancel of [...this.pending])cancel();}
+  dispose():void {this.closed=true;for(const cancel of Array.from(this.pending))cancel();}
 }
