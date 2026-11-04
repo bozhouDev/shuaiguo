@@ -66,3 +66,16 @@ test('介绍页节点池一次移交，新对局仍读新种子/进度且重建�
   const shape=m=>({t:m.S.t,rng:m.E.rngState(),agents:m.S.agents.map(a=>({x:a.sn.x,y:a.sn.y,pots:a.sn.segs,blames:a.blames})),leaders:m.S.leaders.map(l=>({x:l.x,y:l.y,state:l.state}))});assert.deepEqual(shape(next.match),shape(oracle));assert.equal(subscribed,1);
  }finally{next.destroy();}assert.equal(root.destroyed,true);assert.equal(subscribed,0);
 });
+// 真实画笔边界：移动同一批几何不应重新三角化，变形/变色/虚线和池槽复用必须失效。
+test('连续几何只平移时保留网格，真实形状变化重画且顺序不变',()=>{
+ const {cc,load}=require('./wechat/view-harness.cjs');let clears=0;
+ cc.Graphics.prototype.clear=function(){clears++;};
+ const {DrawSurface}=load('cocos/assets/scripts/view/DrawSurface'),root=new cc.Node(),c=new DrawSurface(root,{});
+ const frame=(x,w=20,ink='#1F2A44')=>{c.begin();c.fillStyle=ink;c.fillRect(x,30,w,10);c.end();};
+ frame(10);assert.equal(clears,1);const node=root.children[0];frame(50);assert.equal(clears,1,'仅移动时不能clear/重建网格');assert.equal(root.children[0],node);
+ frame(50,21);assert.equal(clears,2,'形状变化必须重建');frame(50,21,'#E8504A');assert.equal(clears,3,'颜色变化必须重建');
+ c.begin();c.end();assert.equal(node.active,false);frame(80,21,'#E8504A');assert.equal(node.active,true);assert.equal(clears,3,'隐藏后复用仍能保留网格');
+ const stroke=(dash,alpha=1)=>{c.begin();c.globalAlpha=alpha;c.setLineDash(dash);c.beginPath();c.moveTo(4,4);c.lineTo(20,20);c.stroke();c.end();};
+ stroke([2,3]);const n=clears;stroke([2,3]);assert.equal(clears,n);stroke([3,2]);assert.equal(clears,n+1);stroke([3,2],.5);assert.equal(clears,n+2);
+ delete cc.Graphics.prototype.clear;
+});
