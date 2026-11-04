@@ -3,7 +3,7 @@ import {Match} from '../core/match';
 import {LEVELS} from '../core/levels';
 import {BUFFS, LEADER_TYPES} from '../core/config';
 import {CoreEvent} from '../core/types';
-import {Platform, TopAvoidance} from '../platform/Platform';
+import {Platform, TopAvoidance, QueryParams} from '../platform/Platform';
 import {WebPlatform} from '../platform/WebPlatform';
 import {WechatPlatform} from '../platform/WechatPlatform';
 import {WechatPackages} from '../platform/WechatPackages';
@@ -35,7 +35,7 @@ export class AppView {
   private cloudTutorialStep = -1;
   // 环境在启动时读取一次，避免大厅逐帧调用微信同步接口。
   readonly debugEnabled = this.platform.debugEnabled();
-  readonly params = this.debugEnabled && this.platform.kind === 'web' && typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams();
+  readonly params = this.debugEnabled && this.platform.kind === 'web' && typeof location !== 'undefined' ? new QueryParams(location.search) : new QueryParams();
   readonly debug = new LobbyDebug();
   private debugField: 'seed'|'runs' = 'seed';
   private debugTimer?: ReturnType<typeof setTimeout>;

@@ -94,7 +94,7 @@ export const potsLogic = {
 // 飞行锅命中：收锅、记来源，并触发对应反馈。
   potHit(this: Match, a: Agent, f: FlyingPot): void {
     // 带教不计入复盘；只记录实际落到主角身上的锅。
-    if (a.isPlayer && !this.S.tut && Object.hasOwn(a.hitsBy, f.src)) a.hitsBy[f.src]++;
+    if (a.isPlayer && !this.S.tut && Object.prototype.hasOwnProperty.call(a.hitsBy, f.src)) a.hitsBy[f.src]++;
     this.spawnFx('fx_impact', a.sn.x, a.sn.y - 26, 54);
     this.receivePot(a, this.newPot(this.S.t, f.hot, f.label));   // 截止时间从落到身上开始算
     a.combo = 0;

@@ -86,10 +86,12 @@ export class CloudServices {
       }
     })();try{await this.flushFlight;}finally{this.flushFlight=undefined;}
   }
-  // 每次有星结算送排行；最好成绩更新由服务端事务保证。好友只写曾获得的最小总账。
+  // 全服榜不上线（2026-11-04 泊舟定）：关闭成绩上传，云函数 rank 保留，以后要开改成 true。
+  static readonly GLOBAL_RANK = false;
+  // 有星结算：好友榜写曾获得的最小总账；全服榜开关打开时才送云函数。
   settled(level:number,score:RankScore):void{
     if(!this.alive||this.platform.kind!=='wechat'||score.stars<=0)return;
-    void this.platform.cloud.call('rank',{action:'submit',level,score});
+    if(CloudServices.GLOBAL_RANK)void this.platform.cloud.call('rank',{action:'submit',level,score});
     this.friends[level]=Math.min(this.friends[level]??Infinity,score.debt);this.write(FRIEND_KEY,this.friends);void this.syncFriends();
   }
   // 读取留给后续排行榜界面，失败时返回不可用，不抛异常。

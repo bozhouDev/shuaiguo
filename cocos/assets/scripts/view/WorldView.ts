@@ -2,7 +2,7 @@ import {Game, Layers, Node, UITransform, game, sys, view} from 'cc';
 import {PREVIEW} from 'cc/env';
 import {Match} from '../core/match';
 import {CoreEvent, Progress, Level} from '../core/types';
-import {Platform, TopAvoidance} from '../platform/Platform';
+import {Platform, TopAvoidance, QueryParams} from '../platform/Platform';
 import {MatchUi} from './MatchUi';
 import {WebPlatform} from '../platform/WebPlatform';
 import {WechatPlatform} from '../platform/WechatPlatform';
@@ -12,7 +12,7 @@ import {createWorldPainter} from './WorldPainter';
 import {InputView} from './InputView';
 import {METRICS} from './visual-data';
 
-export interface WorldOptions {platform: Platform; params: URLSearchParams; level: number; levelParams?: Level; tutorial: boolean; progress: Progress; buff?: string | null; assets: WorldAssets; onEvent: (e: CoreEvent) => void; onAction: (name: string) => void; blocked: () => boolean; onHidden: (hidden: boolean) => void}
+export interface WorldOptions {platform: Platform; params: QueryParams; level: number; levelParams?: Level; tutorial: boolean; progress: Progress; buff?: string | null; assets: WorldAssets; onEvent: (e: CoreEvent) => void; onAction: (name: string) => void; blocked: () => boolean; onHidden: (hidden: boolean) => void}
 
 // 外围组织器创建普通/带教对局；只读 core 状态、消费事件，主循环的顺序和原型相同。
 export class WorldView {
@@ -32,14 +32,14 @@ export class WorldView {
   readonly timings: {dt: number; update: number; draw: number}[] = [];
 
   private platform: Platform;
-  private params: URLSearchParams;
+  private params: QueryParams;
   private realOrigin = performance.now();
   real = 0;
   ui!: MatchUi;
   constructor(parent: Node, readonly restart: () => void, initial = true, readonly options?: WorldOptions) {
     this.assets = options?.assets || new WorldAssets();
     const platform: Platform = this.platform = options?.platform || (sys.platform === sys.Platform.WECHAT_GAME ? new WechatPlatform() : new WebPlatform());
-    const params = this.params = options?.params || (PREVIEW && platform.debugEnabled() && platform.kind === 'web' && typeof location !== 'undefined' ? new URLSearchParams(location.search) : new URLSearchParams());
+    const params = this.params = options?.params || (PREVIEW && platform.debugEnabled() && platform.kind === 'web' && typeof location !== 'undefined' ? new QueryParams(location.search) : new QueryParams());
     const level = options?.level ?? (params.has('level') ? Math.min(4, Math.max(0, (Number(params.get('level')) || 1) - 1)) : 0);
     if (params.has('freeze')) this.freezeAt = Math.max(0, Math.floor(Number(params.get('freeze')) || 0));
     let progress: Progress;
