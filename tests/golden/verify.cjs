@@ -1,11 +1,11 @@
-// 用法：node tests/golden/verify.cjs；只读基准，任一差异退出 1，成功退出 0。
-// 将来 TS 版：node tests/golden/verify.cjs --adapter ./路径/ts-adapter.cjs
+// 用法：node tests/golden/verify.cjs --adapter cocos/tests/golden-adapter.cjs；只读基准。
 // 适配器导出 runCase(level, seed)，返回与 record.cjs 一致的结构；哈希仍由本脚本生成。
 // 完整录像报告字段路径、新旧值；精简录像报告首次不同的快照/事件哈希及对应时间。
 // 定向检查：--level 0 --seed 1001；--data /目录 可验证副本，不覆盖正式录像。
 const fs = require('node:fs');
 const path = require('node:path');
 const zlib = require('node:zlib');
+const crypto = require('node:crypto');
 const { runCase, compact } = require('./record.cjs');
 // 按保存顺序递归比较，长度、缺失字段和类型也必须相同。
 function firstDiff(old, fresh, field = '$') {
@@ -29,7 +29,10 @@ function verify() {
   if (!cases.length) throw new Error('没有匹配的录像');
   let count = 0;
   for (const c of cases) {
-    const old = JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, c.file))));
+    const bytes = fs.readFileSync(path.join(dir, c.file));
+    if (c.sha256 && crypto.createHash('sha256').update(bytes).digest('hex') !== c.sha256)
+      throw new Error(`录像 SHA-256 与 manifest 不一致：${c.file}`);
+    const old = JSON.parse(zlib.gunzipSync(bytes));
     const record = runner(c.level, c.seed), fresh = c.compact ? compact(record) : record;
     const diff = firstDiff(old, fresh);
     if (diff) {

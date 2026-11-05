@@ -1,21 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
 import { Match } from '../assets/scripts/core/match.ts';
-import { OFFICE, LEVELS } from '../assets/scripts/core/levels.ts';
-
-const require = createRequire(import.meta.url);
-const { setup } = require('../../tests/game-harness.cjs');
-const sourceDir = fileURLToPath(new URL('../../js/', import.meta.url));
-// JSON 去除 VM 里的跨上下文原型，字段、数值和数组顺序仍逐项比较。
 const plain = value => JSON.parse(JSON.stringify(value));
-
-test('地图与全部关卡字段、数值及顺序等于原型', () => {
-  const { ctx } = setup(false, { sourceDir });
-  assert.deepEqual(plain(OFFICE), plain(ctx.OFFICE));
-  assert.deepEqual(plain(LEVELS), plain(ctx.LEVELS));
-});
 
 // 取未四舍五入的玩法状态，包含轨迹、对象身份引用和所有事件，检验同时多局不串状态。
 function stateOf(m) {
@@ -40,9 +26,9 @@ function complete(m) {
 
 test('不同关卡和种子的两局交错推进，完整状态与分别单跑逐项一致', () => {
   const options = [{ level: 0, seed: 1001, auto: true, simulating: true }, { level: 4, seed: 1017, auto: true, simulating: true }];
-  const solo = options.map(o => { const events = []; const m = new Match({ ...o, onEvent: e => events.push(plain(e)) }); complete(m); return { state: stateOf(m), events }; });
+  const solo = options.map(o => { const events = []; const m = new Match({itemDrops:false, ...o, onEvent: e => events.push(e) }); complete(m); return { state: stateOf(m), events }; });
   const events = [[], []];
-  const pair = options.map((o, i) => new Match({ ...o, onEvent: e => events[i].push(plain(e)) }));
+  const pair = options.map((o, i) => new Match({itemDrops:false, ...o, onEvent: e => events[i].push(plain(e)) }));
   for (let step = 0; pair.some(m => !m.S.over) && step <= 10800; step++) {
     // 每帧反向交错，避免固定的先后次序掩盖共享随机流。
     for (const i of step % 2 ? [0, 1] : [1, 0]) if (!pair[i].S.over) pair[i].update(1 / 60);
@@ -52,17 +38,14 @@ test('不同关卡和种子的两局交错推进，完整状态与分别单跑�
 
 test('传入的进度和另一局不被本局结算修改，返回计算结果可由调用方保存', () => {
   const progress = { unlocked: 1, best: {} };
-  const first = new Match({ seed: 1001, level: 0, auto: true, simulating: true, progress });
-  const other = new Match({ seed: 1001, level: 0, progress });
+  const first = new Match({itemDrops:false, seed: 1001, level: 0, auto: true, simulating: true, progress });
+  const other = new Match({itemDrops:false, seed: 1001, level: 0, progress });
   complete(first);
   const result = first.calculateResult(first.S.over);
-  const { ctx, storage } = setup(true, { sourceDir });
-  ctx.E.seed(1001);
-  const original = ctx.TEST.init(0, true);
-  while (!original.over) ctx.TEST.update(1 / 60);
-  ctx.TEST.finish(original.over);
-  assert.deepEqual(result.prog, JSON.parse(storage.get('shuaiguo_v3')));
-  assert.deepEqual(result.rank.map(a => a.id), Array.from(ctx.TEST.ranking(), a => a.id));
+  const repeated = new Match({itemDrops:false, seed: 1001, level: 0, auto: true, simulating: true, progress });
+  complete(repeated);
+  assert.deepEqual(result, repeated.calculateResult(repeated.S.over));
+  assert.deepEqual(result.rank.map(a => a.id), Array.from(first.ranking(), a => a.id));
   assert.deepEqual(progress, { unlocked: 1, best: {} });
   assert.deepEqual(other.loadProgress(), progress);
   assert.deepEqual(first.loadProgress(), progress);

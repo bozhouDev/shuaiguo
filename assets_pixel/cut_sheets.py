@@ -42,9 +42,11 @@ NAMES = {
 WALKERS = ['player', 'pm', 'tester', 'designer', 'veteran', 'intern', 'boss', 'director', 'nephew', 'cashier', 'wife']
 for _who in WALKERS:
     NAMES['w_' + _who] = [f'{_who}_walk_{d}{i}' for d in 'dus' for i in range(4)]
+NAMES['w_player_diag'] = [f'player_walk_{d}{i}' for d in ('dr', 'ur') for i in range(4)]
 
 # 每张表每行有几个素材（用于在每行里挑最宽的几道空隙切开）
 ROWS = {
+    'w_player_diag': [4, 4],
     'ui_praise': [3],
     's10_nephew': [5], 's11_cashier': [4], 's12_pie': [2], 's13_wife': [4],
     's1_player': [4], 's2_pm_tester': [4, 4], 's3_designer_veteran': [4, 4],
@@ -104,11 +106,11 @@ def split_cols(profile, k):
     return bounds
 
 
-def walk_rows(mask):
-    """走路表是规整的 3 行：在三分线附近找投影最空的那一行切开（行距很窄，按空隙阈值会粘连）。"""
+def walk_rows(mask, count=3):
+    """走路表按登记行数等分，在分线附近找最空的投影，兼容两行斜向表。"""
     prof = mask.sum(axis=1)
     h = mask.shape[0]
-    cuts = [0] + [int(np.argmin(prof[c - 60:c + 60]) + c - 60) for c in (h // 3, 2 * h // 3)] + [h]
+    cuts = [0] + [int(np.argmin(prof[c - 60:c + 60]) + c - 60) for c in (h * i // count for i in range(1, count))] + [h]
     rows = []
     for y0, y1 in zip(cuts[:-1], cuts[1:]):
         ys = np.flatnonzero(mask[y0:y1].any(axis=1))
@@ -131,7 +133,7 @@ def cut(sheet):
     pieces = []
     rows = runs(mask.any(axis=1), ROW_GAP)
     if sheet.startswith('w_'):
-        rows = walk_rows(mask)
+        rows = walk_rows(mask, len(ROWS[sheet]))
     if len(rows) != len(ROWS[sheet]):
         raise SystemExit(f'{sheet}: 切出 {len(rows)} 行，预期 {len(ROWS[sheet])} 行')
     for r, ((y0, y1), k) in enumerate(zip(rows, ROWS[sheet])):
@@ -145,7 +147,14 @@ def cut(sheet):
             ys, xs = np.flatnonzero(cell.any(axis=1)), np.flatnonzero(cell.any(axis=0))
             if sheet.startswith('w_'):
                 # 走路帧：同一行共用上下边界，脚底对齐、高度一致，播放时人不会忽大忽小
-                pieces.append(rgba[y0:y1, x0 + xs[0]:x0 + xs[-1] + 1])
+                piece = rgba[y0:y1, x0 + xs[0]:x0 + xs[-1] + 1]
+                if sheet == 'w_player_diag':
+                    # 保持整行共用画布与缩放比例，只下移透明留白，让鞋底落在画布底边；不拉宽、不改步伐。
+                    shift = y1 - y0 - 1 - ys[-1]
+                    aligned = np.zeros_like(piece)
+                    aligned[shift:] = piece[:len(piece) - shift]
+                    piece = aligned
+                pieces.append(piece)
             else:
                 pieces.append(rgba[y0 + ys[0]:y0 + ys[-1] + 1, x0 + xs[0]:x0 + xs[-1] + 1])
     names = NAMES[sheet]

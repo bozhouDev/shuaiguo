@@ -1,21 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-import { fileURLToPath } from 'node:url';
 import { Mulberry32 } from '../assets/scripts/core/random.ts';
-
-const require = createRequire(import.meta.url);
-const { setup } = require('../../tests/game-harness.cjs');
-const sourceDir = fileURLToPath(new URL('../../js/', import.meta.url));
-
-// 使用真实原型引擎作对照，不能在测试里再抄一份随机算法。
-test('mulberry32 与原型 E.random 逐项一致（每种子 1000 次）', () => {
-  const { ctx } = setup(false, { sourceDir });
+// 对同一实现重置种子后复现完整随机序列，不再依赖原型随机数实现。
+test('mulberry32 同种子逐项复现（每种子 1000 次）', () => {
   for (const seed of [0, 1, 1001, 20261103, 0xffffffff]) {
-    const random = new Mulberry32(seed);
-    ctx.E.seed(seed);
-    for (let i = 0; i < 1000; i++) {
-      assert.equal(random.next(), ctx.E.random(), `seed=${seed}, index=${i}`);
-    }
+    const random = new Mulberry32(seed), first = Array.from({ length: 1000 }, () => random.next());
+    random.setState(seed);
+    assert.deepEqual(Array.from({ length: 1000 }, () => random.next()), first, `seed=${seed}`);
   }
 });

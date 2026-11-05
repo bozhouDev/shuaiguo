@@ -28,6 +28,8 @@ export class WorldView {
   private ownsVisuals=true; private mapReady=false;
   private freezeAt: number | null = null;
   private events: CoreEvent[] = [];
+  // 表现时窗按真实秒计；只缩放传入core的dt，绝不写入对局状态。
+  private slowUntil=0; private slowRate=1; private finishAfter=0; private pendingFinish?:CoreEvent;
   private alive = true;
   private pauseFrames=0; private lastPauseUI:string|null='';
   private offLifecycle?:()=>void;
@@ -51,7 +53,7 @@ export class WorldView {
     try {progress = JSON.parse(platform.getStorage('shuaiguo_v3') || 'null') || {unlocked: 1, best: {}};} catch {progress = {unlocked: 1, best: {}};}
     if (options) progress = options.progress;
     const tutorial = options?.tutorial ?? (level === 0 && params.get('auto') !== '1' && (!progress.tutDone || (initial && params.get('tut') === '1')));
-    this.match = new Match({level, levelParams:options?.levelParams, seed: params.has('seed') ? Number(params.get('seed')) : Date.now(), auto: params.get('auto') === '1',
+    this.match = new Match({itemDrops:params.has('itemDrops')?params.get('itemDrops')!=='0':undefined,level, levelParams:options?.levelParams, seed: params.has('seed') ? Number(params.get('seed')) : Date.now(), auto: params.get('auto') === '1',
       tutorial, progress, buff: options?.buff ?? (initial ? params.get('buff') : null), onEvent:event=>{if(!this.match?.simulating)this.events.push(event);}});
     // 只接管介绍页已预热的显示节点；Match仍按点击时的seed/进度/云参数重新创建。
     if(warm){this.root=warm.root;this.surfaces.push(...warm.surfaces);this.mapReady=warm.theme===this.match.L.theme;}
@@ -93,6 +95,7 @@ export class WorldView {
     this.real = (performance.now() - this.realOrigin) / 1000;
     if (this.hidden) return;
     if (this.paused) {
+      this.clearFeedback();
       const reduce=this.reducedMotion(),key=this.ui.pausedVisualKey(this.real,reduce);
       // 前两帧让走路/摇杆收成静止姿势；其后不再三角化人物、影子与视野。
       if(this.pauseFrames<2){this.render();this.pauseFrames++;}
@@ -107,12 +110,15 @@ export class WorldView {
   tick(dt: number, fixedReal = true): void {
     if (fixedReal) this.real += dt;
     const start = performance.now(), m = this.match;
+    // 跨截止的长帧只缩放仍在时窗内的部分，避免帧率改变定格总时长。
+    const slowed=Math.max(0,Math.min(dt,this.slowUntil-(this.real-dt))),coreDt=dt-slowed+slowed*this.slowRate;
+    if(this.real>=this.slowUntil){this.slowUntil=0;this.slowRate=1;}
     if (m.mode !== 'play') m.inp.fire = 0;
-    if (m.mode === 'play') {m.update(dt); if (m.S.over === 'time') m.startClosing(); else if (m.S.over) m.finish(m.S.over);}
-    else if (m.mode === 'closing') m.updateClosing(dt, this.hidden);
+    if (m.mode === 'play') {m.update(coreDt); if (m.S.over === 'time') m.startClosing(); else if (m.S.over) m.finish(m.S.over);}
+    else if (m.mode === 'closing') m.updateClosing(coreDt, this.hidden);
     // 原型draw只在有锅且未压垮时pickAim，空手时保留旧目标，不额外改状态。
     if (!m.S.player.crushed && m.potsOf(m.S.player)) m.frameAim();
-    m.updateBanners(m.mode === 'play' ? dt : 0);
+    m.updateBanners(m.mode === 'play' ? coreDt : 0);
     m.updateClosingNotice();
     this.consumeEvents();
     this.painter.advance(dt); this.clock += dt; this.steps++;
@@ -126,8 +132,34 @@ export class WorldView {
   // 网页尊重减少动态偏好，微信正式设置留给P5。
   private reducedMotion(): boolean {return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;}
   // 每条事件消费一次，进度事件持久化；绘制不回写core。
-  private consumeEvents(): void {if (!this.ui) return; this.ui.real = this.real; for (const event of this.events) {this.painter.event(event.kind, event.args); this.options?.onEvent(event); this.ui.event(event); if (!this.options && event.kind === 'progress') {try {this.platform.setStorage('shuaiguo_v3', JSON.stringify(event.args[0]));} catch { /* 原型静默。 */ }}} this.events.length = 0;}
+  private consumeEvents(): void {
+    if(!this.ui)return;this.ui.real=this.real;
+    for(const event of this.events){
+      if(event.kind==='ownedBoom')this.slow(.2,.15);
+      if(event.kind==='buzzer'){this.slow(.6,.2);this.finishAfter=Math.max(this.finishAfter||0,this.real+.6);}
+      if(event.kind==='finish'&&this.real<(this.finishAfter||0)){this.pendingFinish=event;continue;}
+      this.deliver(event);
+      // 沿用现有音频总线；爆炸旧声保留，只补明确要求的两声反馈。
+      if(event.kind==='ownedBoom'){if(!this.events.some(e=>e.kind==='sfx'&&e.args[0]==='boom'))this.options?.onEvent({...event,kind:'sfx',args:['boom']});this.options?.onEvent({...event,kind:'sfx',args:['praise']});}
+      if(event.kind==='revenge')this.options?.onEvent({...event,kind:'sfx',args:['parry']});
+    }
+    this.events.length=0;
+    if(this.pendingFinish&&this.real>=this.finishAfter){const event=this.pendingFinish;this.pendingFinish=undefined;this.deliver(event);}
+  }
+  // 同帧或重叠定格合并成一个窗口，倍率取更慢，截止取更晚。
+  private slow(duration:number,rate:number):void {this.slowRate=this.real<(this.slowUntil||0)?Math.min(this.slowRate,rate):rate;this.slowUntil=Math.max(this.slowUntil||0,this.real+duration);}
+  // finish外发前完成画面展示；旧核心事件本身与录制顺序均不改。
+  private deliver(event:CoreEvent):void {this.painter.event(event.kind,event.args);this.options?.onEvent(event);this.ui.event(event);if(event.kind==='finish'){this.slowUntil=0;this.slowRate=1;this.finishAfter=0;}if(!this.options&&event.kind==='progress'){try{this.platform.setStorage('shuaiguo_v3',JSON.stringify(event.args[0]));}catch{/* 原型静默。 */}}}
+  // 暂停、后台和销毁不遗留定格；已完成的结果仍正常交给外围。
+  private clearFeedback(deliverFinish=true):void {this.slowUntil=0;this.slowRate=1;this.finishAfter=0;if(this.pendingFinish){const event=this.pendingFinish;this.pendingFinish=undefined;if(deliverFinish)this.deliver(event);}this.ui?.clearFeedback?.();}
+
   flush(): void {this.consumeEvents(); if (this.ready) this.render();}
+  // 重来参数只留在本局画面，以key优先、名字兜底；起点在1秒提示结束之后。
+  markRetryRival(target:{key:string;name:string}):void {
+    const bots=this.match.S.bots,rival=bots.find(a=>a.key===target.key)??bots.find(a=>a.name===target.name);
+    const nodes=this.painter.nodes;if(!nodes)return;
+    nodes.retryRival=rival;nodes.retryRivalUntil=this.match.S.t+3;this.render();
+  }
   clearInput(): void {this.controls?.clear();}
   // 按钮只调用已有core教学API；暂停不改mode，收尾不能恢复成play。
   private action(name: string): void {
@@ -139,11 +171,11 @@ export class WorldView {
     if (name === 'settings' && this.match.mode === 'play') console.log('[P3-2] 设置面板留给P4');
     this.consumeEvents(); this.render();
   }
-  private hide(): void {this.hidden = true; if (this.match.mode === 'play') this.paused = true; this.controls?.clear(true); this.options?.onHidden(true);}
+  private hide(): void {this.clearFeedback();this.hidden = true; if (this.match.mode === 'play') this.paused = true; this.controls?.clear(true); this.options?.onHidden(true);}
   // 回前台保持占位暂停，点继续或P/Esc恢复，首帧丢弃后台时间。
   private show(): void {this.hidden = false; this.skipFrame = true; this.options?.onHidden(false);}
   // 一次性移交池所有权；旧World照常解绑输入/生命周期，新World负责最终释放节点。
   takeVisuals():WorldVisuals {if(!this.ready||!this.ownsVisuals||!this.options)throw Error('对局显示节点不可移交');this.ownsVisuals=false;return {root:this.root,surfaces:this.surfaces,theme:this.match.L.theme};}
   // 销毁场景时解除监听，释放运行时帧和本任务节点。
-  destroy(): void {this.alive = false;this.offLifecycle?.(); view.off('canvas-resize', this.resize, this); game.off(Game.EVENT_HIDE, this.hide, this); game.off(Game.EVENT_SHOW, this.show, this); this.controls?.destroy(); this.ui?.destroy();this.painter?.destroy(); if(this.ownsVisuals)this.root.destroy(); if (!this.options){this.assets.destroy();this.platform.dispose?.();}}
+  destroy(): void {this.clearFeedback(false);this.alive = false;this.offLifecycle?.(); view.off('canvas-resize', this.resize, this); game.off(Game.EVENT_HIDE, this.hide, this); game.off(Game.EVENT_SHOW, this.show, this); this.controls?.destroy(); this.ui?.destroy();this.painter?.destroy(); if(this.ownsVisuals)this.root.destroy(); if (!this.options){this.assets.destroy();this.platform.dispose?.();}}
 }

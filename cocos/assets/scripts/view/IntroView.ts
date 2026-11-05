@@ -24,7 +24,7 @@ export class IntroView {
     rows.slice(0,3).forEach((row,i)=>{const ry=y+h*[.3575,.4465,.5315][i],rw=w*.63;if(row.icon){c.fillStyle='#FDFAF3';c.fillRect(x+w*.076,y+h*[.3561,.4451,.5301][i],w*.17,h*.0728);p.contain(row.icon,{x:x+w*.10,y:ry,w:w*.12,h:h*.064});}const fs=w*.033,lines=p.wrap([{text:m.bossText(row.text).replace('{life}',String(m.potLife())),color:'#080E32'}],rw,fs,'body-900');p.lines(lines,x+w*.293,ry+(h*.07-lines.length*fs*1.48)/2,fs,'body-900',fs*1.48);});
     if(m.L.news){c.fillStyle='#FDFAF3';c.fillRect(x+w*.19,y+h*.341,w*.05,h*.016);c.fillStyle='#EBDBC8';c.fillRect(x+w*.19,y+h*(.341+.016*.56),w*.05,h*.016*.07);}
     if(m.passRank()===2){const b={x:x+w*.28,y:y+h*.63,w:w*.675,h:h*.10};c.fillStyle='#FFFDF5';c.fillRect(b.x,b.y,b.w,b.h);c.strokeStyle='#1F2A44';c.lineWidth=2;c.strokeRect(b.x,b.y,b.w,b.h);p.text('18:00 前两名下班，过关就是三星',b.x+w*.02,b.y+h*.008,w*.029,'#1F2A44','body-900');p.paragraph('小舅子占 1 个名额\n把他压垮，空出 1 个',{x:b.x+w*.02,y:b.y+h*.04,w:b.w-w*.04,h:0},w*.03,'#1F2A44','body-900',1.45);}
-    else{p.text('18:00 按总账排名（炸了的锅 + 身上锅 ×½，少的在前）：',x+w*.295,y+h*.6375,w*.0315,'#080E32','body-900');[.2965,.526,.736].forEach((xx,i)=>p.center(String(i+1),x+w*xx,y+h*.6765,w*.067,w*.044,['#A06A0A','#526276','#7C3618'][i]));}
+    else{p.text('18:00 手里的锅也算，背锅少的排前面：',x+w*.295,y+h*.6375,w*.0315,'#080E32','body-900');[.2965,.526,.736].forEach((xx,i)=>p.center(String(i+1),x+w*xx,y+h*.6765,w*.067,w*.044,['#A06A0A','#526276','#7C3618'][i]));}
     // 最好成绩的星级独立用Sprite，前后正文按图集实际比例居中，不让字体提供星形。
     const best=prog.best[m.L.id];if(best){
       const size=w*.02,star=c.assets.spr.ui_star||{w:96,h:93},sw=best.stars*size*star.w/star.h+Math.max(0,best.stars-1)*2;

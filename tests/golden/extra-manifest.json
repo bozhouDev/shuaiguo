@@ -2,7 +2,7 @@
   "version": 1,
   "dt": 0.016666666666666666,
   "perFrame": true,
-  "bytes": 178357190,
+  "bytes": 176038430,
   "cases": [
     {
       "config": {
@@ -12,21 +12,21 @@
         "aim": true
       },
       "file": "input/input-0-2001-aim.json.gz",
-      "bytes": 364521,
-      "frames": 4200,
+      "bytes": 317595,
+      "frames": 3600,
       "coverage": {
-        "presses": 174,
-        "whiffs": 77,
-        "coolPresses": 33,
-        "light": 2745,
-        "releases": 144,
-        "turns": 63,
-        "launched": 41,
-        "thrown": 23,
-        "parries": 4,
-        "caught": 4
+        "presses": 147,
+        "whiffs": 81,
+        "coolPresses": 16,
+        "light": 1921,
+        "releases": 120,
+        "turns": 37,
+        "launched": 25,
+        "thrown": 16,
+        "parries": 3,
+        "caught": 0
       },
-      "sha256": "fcb231dd0bb58a4e48e0652508eb32f0bc9452926d456067555307a817dc390a"
+      "sha256": "76e44cd85120bf43b9b58103033806b4bc61670c8086968cf0d9ccc9340e183e"
     },
     {
       "config": {
@@ -36,21 +36,21 @@
         "aim": false
       },
       "file": "input/input-0-2001-noaim.json.gz",
-      "bytes": 366027,
-      "frames": 4200,
+      "bytes": 317515,
+      "frames": 3600,
       "coverage": {
-        "presses": 174,
-        "whiffs": 79,
-        "coolPresses": 35,
-        "light": 2745,
-        "releases": 144,
-        "turns": 63,
-        "launched": 42,
-        "thrown": 13,
-        "parries": 1,
-        "caught": 4
+        "presses": 147,
+        "whiffs": 81,
+        "coolPresses": 16,
+        "light": 1921,
+        "releases": 120,
+        "turns": 37,
+        "launched": 25,
+        "thrown": 16,
+        "parries": 3,
+        "caught": 0
       },
-      "sha256": "2ff8b6e7d51501af8c3b20177f51962355fee1784a8ba6b74b4ab5ce7694ef2e"
+      "sha256": "034466c9bd3422c3c45a657c0697b0d164ddf779dcb3734ff55523d23da317dd"
     },
     {
       "config": {
@@ -60,21 +60,21 @@
         "aim": true
       },
       "file": "input/input-0-2002-aim.json.gz",
-      "bytes": 363930,
-      "frames": 4200,
+      "bytes": 314910,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 93,
+        "presses": 147,
+        "whiffs": 84,
         "coolPresses": 16,
-        "light": 2689,
-        "releases": 96,
-        "turns": 54,
-        "launched": 27,
-        "thrown": 15,
-        "parries": 1,
-        "caught": 3
+        "light": 2159,
+        "releases": 72,
+        "turns": 36,
+        "launched": 22,
+        "thrown": 13,
+        "parries": 3,
+        "caught": 0
       },
-      "sha256": "7bb7c03568e17033d01cedbc2bda2788206011936abb348c3530277222f5e086"
+      "sha256": "ebeb8f120146063c03026e0efc1f9cca5557d4e87350bd28d3e4fd0fec960766"
     },
     {
       "config": {
@@ -84,21 +84,21 @@
         "aim": false
       },
       "file": "input/input-0-2002-noaim.json.gz",
-      "bytes": 363802,
-      "frames": 4200,
+      "bytes": 314817,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 93,
+        "presses": 147,
+        "whiffs": 84,
         "coolPresses": 16,
-        "light": 2689,
-        "releases": 96,
-        "turns": 54,
-        "launched": 27,
-        "thrown": 15,
-        "parries": 1,
-        "caught": 3
+        "light": 2159,
+        "releases": 72,
+        "turns": 36,
+        "launched": 22,
+        "thrown": 13,
+        "parries": 3,
+        "caught": 0
       },
-      "sha256": "243d54faf04ce4a048843c0e67a1447373ad81811f355b4d963f6cfbbdf01fc8"
+      "sha256": "90a1c8adc2af1ad2264209eb5ad18d3a12c2298ccc2eb5a5182c169c3de93b9a"
     },
     {
       "config": {
@@ -108,21 +108,21 @@
         "aim": true
       },
       "file": "input/input-0-2003-aim.json.gz",
-      "bytes": 364460,
-      "frames": 4200,
+      "bytes": 313486,
+      "frames": 3600,
       "coverage": {
-        "presses": 176,
-        "whiffs": 88,
-        "coolPresses": 32,
-        "light": 2547,
-        "releases": 168,
-        "turns": 38,
-        "launched": 36,
-        "thrown": 18,
-        "parries": 6,
-        "caught": 1
+        "presses": 145,
+        "whiffs": 82,
+        "coolPresses": 10,
+        "light": 1954,
+        "releases": 144,
+        "turns": 36,
+        "launched": 24,
+        "thrown": 12,
+        "parries": 1,
+        "caught": 0
       },
-      "sha256": "35c709fadcb8d6ba4aebb253ca87492a4640fc5a32eb9da04e66915cc6614150"
+      "sha256": "443aa33a77152014643efe2d789a3147738a44122657667d4ff77363b1b8c350"
     },
     {
       "config": {
@@ -132,21 +132,21 @@
         "aim": false
       },
       "file": "input/input-0-2003-noaim.json.gz",
-      "bytes": 364365,
-      "frames": 4200,
+      "bytes": 313300,
+      "frames": 3600,
       "coverage": {
-        "presses": 176,
-        "whiffs": 88,
-        "coolPresses": 32,
-        "light": 2547,
-        "releases": 168,
-        "turns": 38,
-        "launched": 36,
-        "thrown": 18,
-        "parries": 6,
-        "caught": 1
+        "presses": 145,
+        "whiffs": 82,
+        "coolPresses": 10,
+        "light": 1954,
+        "releases": 144,
+        "turns": 36,
+        "launched": 24,
+        "thrown": 12,
+        "parries": 1,
+        "caught": 0
       },
-      "sha256": "9e5612530b858158f0115db10d543134065b05a45168dead4ef3e42cda6b6ecd"
+      "sha256": "9afe6edadfe07404a8b467f679a34db21686d1bb3525cd035d0f855d92e86760"
     },
     {
       "config": {
@@ -156,21 +156,21 @@
         "aim": true
       },
       "file": "input/input-0-2004-aim.json.gz",
-      "bytes": 366045,
-      "frames": 4200,
+      "bytes": 319138,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 105,
-        "coolPresses": 12,
-        "light": 2631,
-        "releases": 144,
-        "turns": 47,
-        "launched": 17,
-        "thrown": 12,
-        "parries": 1,
+        "presses": 146,
+        "whiffs": 79,
+        "coolPresses": 21,
+        "light": 2203,
+        "releases": 120,
+        "turns": 41,
+        "launched": 27,
+        "thrown": 18,
+        "parries": 2,
         "caught": 0
       },
-      "sha256": "da940ca921744bf82db54952435cf9d9e2e61ccdf7b80d87a59ee7b7698bb09a"
+      "sha256": "afb820ebf4b16d3878edf47a70255ba93b1c7c7decc84008066f9fbc8f8aecf2"
     },
     {
       "config": {
@@ -180,21 +180,21 @@
         "aim": false
       },
       "file": "input/input-0-2004-noaim.json.gz",
-      "bytes": 366112,
-      "frames": 4200,
+      "bytes": 319149,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 105,
-        "coolPresses": 12,
-        "light": 2631,
-        "releases": 144,
-        "turns": 47,
-        "launched": 17,
-        "thrown": 12,
-        "parries": 1,
+        "presses": 146,
+        "whiffs": 79,
+        "coolPresses": 21,
+        "light": 2203,
+        "releases": 120,
+        "turns": 41,
+        "launched": 27,
+        "thrown": 18,
+        "parries": 2,
         "caught": 0
       },
-      "sha256": "13a3f2eff6a02b88257b3c208f92ddd43edf9c63731c972b3062a1306617f416"
+      "sha256": "dfcf0b2f5337e19315a1e5398eb8c53c40020d22cf924f29518d74259627c8f8"
     },
     {
       "config": {
@@ -204,21 +204,21 @@
         "aim": true
       },
       "file": "input/input-0-2005-aim.json.gz",
-      "bytes": 365391,
-      "frames": 4200,
+      "bytes": 322903,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 88,
-        "coolPresses": 21,
-        "light": 2346,
-        "releases": 240,
-        "turns": 48,
-        "launched": 30,
-        "thrown": 14,
-        "parries": 1,
-        "caught": 4
+        "presses": 148,
+        "whiffs": 60,
+        "coolPresses": 30,
+        "light": 1987,
+        "releases": 216,
+        "turns": 40,
+        "launched": 44,
+        "thrown": 23,
+        "parries": 4,
+        "caught": 2
       },
-      "sha256": "e170724d196af71e246cc65dd81d0e1c0ffd7586c8416aad66e416b56a8daaea"
+      "sha256": "2dc588a2e647b5f0dc2a53de6f24d9eb8de351b5b8a2ad597f8e3d4e843fa11a"
     },
     {
       "config": {
@@ -228,21 +228,21 @@
         "aim": false
       },
       "file": "input/input-0-2005-noaim.json.gz",
-      "bytes": 365292,
-      "frames": 4200,
+      "bytes": 322819,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 88,
-        "coolPresses": 21,
-        "light": 2346,
-        "releases": 240,
-        "turns": 48,
-        "launched": 30,
-        "thrown": 14,
-        "parries": 1,
-        "caught": 4
+        "presses": 148,
+        "whiffs": 60,
+        "coolPresses": 30,
+        "light": 1987,
+        "releases": 216,
+        "turns": 40,
+        "launched": 44,
+        "thrown": 23,
+        "parries": 4,
+        "caught": 2
       },
-      "sha256": "457cd9ba157a2770fbf7187d77f2bf7109cdf2fe35b3c305d318051f4bad64be"
+      "sha256": "46120554a7a9b4694eb38963b6d0211b3683500f89b36fca5b60310f39861591"
     },
     {
       "config": {
@@ -252,21 +252,21 @@
         "aim": true
       },
       "file": "input/input-0-2006-aim.json.gz",
-      "bytes": 365813,
-      "frames": 4200,
+      "bytes": 324146,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 83,
-        "coolPresses": 28,
-        "light": 1660,
-        "releases": 216,
-        "turns": 36,
-        "launched": 40,
-        "thrown": 19,
-        "parries": 1,
-        "caught": 0
+        "presses": 149,
+        "whiffs": 53,
+        "coolPresses": 41,
+        "light": 1892,
+        "releases": 192,
+        "turns": 34,
+        "launched": 46,
+        "thrown": 28,
+        "parries": 5,
+        "caught": 6
       },
-      "sha256": "50d9f19d32db36e0fda65f024da3a7919a11ace1655acc6f2eef10a6e932eb4f"
+      "sha256": "7b9c106f936dca8775656d5b147c45b15b63e85a40178ca9e1739a34c6ed921a"
     },
     {
       "config": {
@@ -276,21 +276,21 @@
         "aim": false
       },
       "file": "input/input-0-2006-noaim.json.gz",
-      "bytes": 365556,
-      "frames": 4200,
+      "bytes": 324112,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 83,
-        "coolPresses": 28,
-        "light": 1660,
-        "releases": 216,
-        "turns": 36,
-        "launched": 40,
-        "thrown": 19,
-        "parries": 1,
-        "caught": 0
+        "presses": 149,
+        "whiffs": 53,
+        "coolPresses": 41,
+        "light": 1892,
+        "releases": 192,
+        "turns": 34,
+        "launched": 46,
+        "thrown": 28,
+        "parries": 5,
+        "caught": 6
       },
-      "sha256": "8165c5c9dcb2d6514e45a97dede1bf7e67750c0101d1bc1d87d5705e632b25e2"
+      "sha256": "994ce8d30122d8a67cd8e145d32d606edfcc0573d42b8daebf05f87f04d97e67"
     },
     {
       "config": {
@@ -300,21 +300,21 @@
         "aim": true
       },
       "file": "input/input-0-2007-aim.json.gz",
-      "bytes": 369093,
-      "frames": 4200,
+      "bytes": 317016,
+      "frames": 3600,
       "coverage": {
-        "presses": 173,
-        "whiffs": 84,
-        "coolPresses": 39,
-        "light": 2143,
+        "presses": 147,
+        "whiffs": 82,
+        "coolPresses": 16,
+        "light": 2071,
         "releases": 120,
-        "turns": 57,
-        "launched": 37,
-        "thrown": 23,
+        "turns": 51,
+        "launched": 24,
+        "thrown": 15,
         "parries": 3,
-        "caught": 3
+        "caught": 0
       },
-      "sha256": "1feb94b47f0bdb8b7513120a8089295dccd9dfd547a7bb38540615f58e7828eb"
+      "sha256": "1e153c1e442d3095bbc9bed7d1e4518dec27f51a2693c4a42a2b32a0481dbf4d"
     },
     {
       "config": {
@@ -324,21 +324,21 @@
         "aim": false
       },
       "file": "input/input-0-2007-noaim.json.gz",
-      "bytes": 369126,
-      "frames": 4200,
+      "bytes": 316917,
+      "frames": 3600,
       "coverage": {
-        "presses": 173,
-        "whiffs": 84,
-        "coolPresses": 39,
-        "light": 2143,
+        "presses": 147,
+        "whiffs": 82,
+        "coolPresses": 16,
+        "light": 2071,
         "releases": 120,
-        "turns": 57,
-        "launched": 37,
-        "thrown": 23,
+        "turns": 51,
+        "launched": 24,
+        "thrown": 15,
         "parries": 3,
-        "caught": 3
+        "caught": 0
       },
-      "sha256": "ee130ca8def8dbf0c08ebaac3a4adb645a0a5e6504152e1b1886eaba542a4dba"
+      "sha256": "35758fc8884e85690597d2e6fa6488877dd79719d395ea39ce3ade76b31d20d2"
     },
     {
       "config": {
@@ -348,21 +348,21 @@
         "aim": true
       },
       "file": "input/input-0-2008-aim.json.gz",
-      "bytes": 364894,
-      "frames": 4200,
+      "bytes": 320827,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 90,
-        "coolPresses": 28,
-        "light": 2747,
+        "presses": 144,
+        "whiffs": 62,
+        "coolPresses": 34,
+        "light": 1538,
         "releases": 192,
-        "turns": 57,
-        "launched": 29,
-        "thrown": 21,
-        "parries": 1,
-        "caught": 4
+        "turns": 43,
+        "launched": 34,
+        "thrown": 11,
+        "parries": 0,
+        "caught": 9
       },
-      "sha256": "8d399346ec6df0246e2524729be3b253951c1d84e873d3f71cea1064eaa65598"
+      "sha256": "bef57343a28e1f587e4fb5c46045297c2f6a0bbc967fd6b43cf2e62d15f5c2f3"
     },
     {
       "config": {
@@ -372,21 +372,21 @@
         "aim": false
       },
       "file": "input/input-0-2008-noaim.json.gz",
-      "bytes": 362923,
-      "frames": 4200,
+      "bytes": 320379,
+      "frames": 3600,
       "coverage": {
-        "presses": 171,
-        "whiffs": 96,
-        "coolPresses": 22,
-        "light": 2747,
+        "presses": 144,
+        "whiffs": 66,
+        "coolPresses": 30,
+        "light": 1538,
         "releases": 192,
-        "turns": 57,
-        "launched": 29,
+        "turns": 43,
+        "launched": 38,
         "thrown": 11,
         "parries": 0,
         "caught": 0
       },
-      "sha256": "5e6f3a5cdf6cbb7d9b4b3e01362cdb25e309d8db407a2c95515668f9aeaa920d"
+      "sha256": "9a43733100d59be7ff6af6f580136d29acd600c0b955160902484ee710a406b9"
     },
     {
       "config": {
@@ -396,21 +396,21 @@
         "aim": true
       },
       "file": "input/input-0-2009-aim.json.gz",
-      "bytes": 359312,
-      "frames": 4200,
+      "bytes": 319898,
+      "frames": 3600,
       "coverage": {
-        "presses": 170,
-        "whiffs": 104,
-        "coolPresses": 15,
-        "light": 2691,
-        "releases": 168,
-        "turns": 44,
-        "launched": 18,
-        "thrown": 10,
-        "parries": 0,
-        "caught": 0
+        "presses": 145,
+        "whiffs": 76,
+        "coolPresses": 20,
+        "light": 1292,
+        "releases": 120,
+        "turns": 32,
+        "launched": 26,
+        "thrown": 15,
+        "parries": 1,
+        "caught": 3
       },
-      "sha256": "612467dde40f32d6231492c99a66c3cb19f4b2ab159e4b08c3ca95226f341419"
+      "sha256": "8fa4059b23675663ebc1e705a998dd7d418e8d3157d13cdafe7bf4c6cfdce3d7"
     },
     {
       "config": {
@@ -420,21 +420,21 @@
         "aim": false
       },
       "file": "input/input-0-2009-noaim.json.gz",
-      "bytes": 359326,
-      "frames": 4200,
+      "bytes": 319686,
+      "frames": 3600,
       "coverage": {
-        "presses": 170,
-        "whiffs": 104,
-        "coolPresses": 15,
-        "light": 2691,
-        "releases": 168,
-        "turns": 44,
-        "launched": 18,
-        "thrown": 10,
-        "parries": 0,
-        "caught": 0
+        "presses": 145,
+        "whiffs": 76,
+        "coolPresses": 20,
+        "light": 1292,
+        "releases": 120,
+        "turns": 32,
+        "launched": 26,
+        "thrown": 15,
+        "parries": 1,
+        "caught": 3
       },
-      "sha256": "aa6c37294ce84c4d5d13d3b9f93a0d53bb9c9d0d5e8ec9a518354db7baa84fa6"
+      "sha256": "5329297bb92d30afe1220ada8d743a77108bf79808471332ce65a7030cacbb37"
     },
     {
       "config": {
@@ -444,21 +444,21 @@
         "aim": true
       },
       "file": "input/input-0-2010-aim.json.gz",
-      "bytes": 367736,
-      "frames": 4200,
+      "bytes": 317223,
+      "frames": 3600,
       "coverage": {
-        "presses": 173,
-        "whiffs": 70,
-        "coolPresses": 43,
-        "light": 2365,
-        "releases": 240,
-        "turns": 60,
-        "launched": 50,
-        "thrown": 22,
-        "parries": 3,
-        "caught": 3
+        "presses": 146,
+        "whiffs": 78,
+        "coolPresses": 23,
+        "light": 1829,
+        "releases": 216,
+        "turns": 51,
+        "launched": 28,
+        "thrown": 12,
+        "parries": 2,
+        "caught": 0
       },
-      "sha256": "b0f339c054b30af167c59ec37cb98e8070922460b95aedecd68ffe2312fc5ff9"
+      "sha256": "867819ecd9f2e0677c87677de7efc2e8ee37a33b4e037221ee2531ce4cacd911"
     },
     {
       "config": {
@@ -468,21 +468,21 @@
         "aim": false
       },
       "file": "input/input-0-2010-noaim.json.gz",
-      "bytes": 367698,
-      "frames": 4200,
+      "bytes": 317167,
+      "frames": 3600,
       "coverage": {
-        "presses": 173,
-        "whiffs": 70,
-        "coolPresses": 43,
-        "light": 2365,
-        "releases": 240,
-        "turns": 60,
-        "launched": 50,
-        "thrown": 22,
-        "parries": 3,
-        "caught": 3
+        "presses": 146,
+        "whiffs": 78,
+        "coolPresses": 23,
+        "light": 1829,
+        "releases": 216,
+        "turns": 51,
+        "launched": 28,
+        "thrown": 12,
+        "parries": 2,
+        "caught": 0
       },
-      "sha256": "2a85eb72bbd230f1a1f59ac16a059d4f072d66b82eb09623e696ab070686746e"
+      "sha256": "ddd1a6bca2573690068c6a079491c7ca5d6ea92be5e44bf8db9e8e7c8dfe659a"
     },
     {
       "config": {
@@ -492,21 +492,21 @@
         "aim": true
       },
       "file": "input/input-1-2001-aim.json.gz",
-      "bytes": 630408,
-      "frames": 7200,
+      "bytes": 476960,
+      "frames": 5400,
       "coverage": {
-        "presses": 310,
-        "whiffs": 140,
-        "coolPresses": 59,
-        "light": 4400,
-        "releases": 288,
-        "turns": 91,
-        "launched": 70,
-        "thrown": 32,
-        "parries": 19,
-        "caught": 3
+        "presses": 225,
+        "whiffs": 73,
+        "coolPresses": 65,
+        "light": 3211,
+        "releases": 216,
+        "turns": 75,
+        "launched": 64,
+        "thrown": 31,
+        "parries": 7,
+        "caught": 20
       },
-      "sha256": "553f5892401d382d3f2f732e1266b60085f9d57624e14236de205f404c841d51"
+      "sha256": "77f888cf41d2ac7493b34fe911618d0c2cdaf084ad6c1a08d2be2f26235643d4"
     },
     {
       "config": {
@@ -516,21 +516,21 @@
         "aim": false
       },
       "file": "input/input-1-2001-noaim.json.gz",
-      "bytes": 630350,
-      "frames": 7200,
+      "bytes": 476931,
+      "frames": 5400,
       "coverage": {
-        "presses": 310,
-        "whiffs": 140,
-        "coolPresses": 59,
-        "light": 4400,
-        "releases": 288,
-        "turns": 91,
-        "launched": 70,
-        "thrown": 32,
-        "parries": 19,
-        "caught": 3
+        "presses": 225,
+        "whiffs": 73,
+        "coolPresses": 65,
+        "light": 3211,
+        "releases": 216,
+        "turns": 75,
+        "launched": 64,
+        "thrown": 31,
+        "parries": 7,
+        "caught": 20
       },
-      "sha256": "6ba1c83e62155ae8f8807941fb477b1275fb6d00e30fc264dbb9383c1653cf04"
+      "sha256": "db6d48db9b9f26739c3f626519c501eda7ca9a55fe4451139ea6033ed0307462"
     },
     {
       "config": {
@@ -540,21 +540,21 @@
         "aim": true
       },
       "file": "input/input-1-2002-aim.json.gz",
-      "bytes": 620218,
-      "frames": 7200,
+      "bytes": 485706,
+      "frames": 5400,
       "coverage": {
-        "presses": 303,
-        "whiffs": 144,
-        "coolPresses": 55,
-        "light": 4649,
-        "releases": 264,
-        "turns": 87,
-        "launched": 64,
-        "thrown": 31,
-        "parries": 12,
-        "caught": 4
+        "presses": 233,
+        "whiffs": 94,
+        "coolPresses": 59,
+        "light": 3012,
+        "releases": 192,
+        "turns": 68,
+        "launched": 61,
+        "thrown": 26,
+        "parries": 14,
+        "caught": 3
       },
-      "sha256": "c5cba942a43fe71e341fa0d9658578826d8f74255a458210ba31a3dfe1f0dfd9"
+      "sha256": "bdb42890e4e738d4f48ec69fdb0473e64f90369218c4bacc9d3d5f854168903d"
     },
     {
       "config": {
@@ -564,21 +564,21 @@
         "aim": false
       },
       "file": "input/input-1-2002-noaim.json.gz",
-      "bytes": 620089,
-      "frames": 7200,
+      "bytes": 485473,
+      "frames": 5400,
       "coverage": {
-        "presses": 303,
-        "whiffs": 144,
-        "coolPresses": 55,
-        "light": 4649,
-        "releases": 264,
-        "turns": 87,
-        "launched": 64,
-        "thrown": 31,
-        "parries": 12,
-        "caught": 4
+        "presses": 233,
+        "whiffs": 94,
+        "coolPresses": 59,
+        "light": 3012,
+        "releases": 192,
+        "turns": 68,
+        "launched": 61,
+        "thrown": 26,
+        "parries": 14,
+        "caught": 3
       },
-      "sha256": "23f82331dfabbc803497e152fc3764e12d9451fa6e1379e50df237ee5c93bee7"
+      "sha256": "e4bb4902cfbfc0e14b2ddab403edbdd55a72c12ec2efa8919c544fe23ba8edf8"
     },
     {
       "config": {
@@ -588,21 +588,21 @@
         "aim": true
       },
       "file": "input/input-1-2003-aim.json.gz",
-      "bytes": 570943,
-      "frames": 6477,
+      "bytes": 488500,
+      "frames": 5400,
       "coverage": {
-        "presses": 276,
-        "whiffs": 124,
-        "coolPresses": 58,
-        "light": 3594,
-        "releases": 264,
-        "turns": 74,
-        "launched": 51,
-        "thrown": 27,
-        "parries": 14,
-        "caught": 16
+        "presses": 226,
+        "whiffs": 94,
+        "coolPresses": 45,
+        "light": 2902,
+        "releases": 240,
+        "turns": 57,
+        "launched": 50,
+        "thrown": 26,
+        "parries": 7,
+        "caught": 14
       },
-      "sha256": "3c42485ab1b6fc5c483119d10bf4dbfdab7cbd4fdfc93635f2d272b49945c96c"
+      "sha256": "f99f8cf2bab9aaf64ab054d20fed549f590eae73eb9adc7fc94ae1357d785e65"
     },
     {
       "config": {
@@ -612,21 +612,21 @@
         "aim": false
       },
       "file": "input/input-1-2003-noaim.json.gz",
-      "bytes": 570931,
-      "frames": 6477,
+      "bytes": 488200,
+      "frames": 5400,
       "coverage": {
-        "presses": 276,
-        "whiffs": 124,
-        "coolPresses": 58,
-        "light": 3594,
-        "releases": 264,
-        "turns": 74,
-        "launched": 51,
-        "thrown": 27,
-        "parries": 14,
-        "caught": 16
+        "presses": 226,
+        "whiffs": 94,
+        "coolPresses": 45,
+        "light": 2902,
+        "releases": 240,
+        "turns": 57,
+        "launched": 50,
+        "thrown": 26,
+        "parries": 7,
+        "caught": 14
       },
-      "sha256": "9f4e5f78f8f446bc4207b521b01e3d881f3f3a7a4f014eb7a5563615e1f27c46"
+      "sha256": "d1e1a0270e0c9885cf4306a2797da92b9c0c0c2479ac829cf681c456dee32f7d"
     },
     {
       "config": {
@@ -636,21 +636,21 @@
         "aim": true
       },
       "file": "input/input-1-2004-aim.json.gz",
-      "bytes": 629134,
-      "frames": 7200,
+      "bytes": 481463,
+      "frames": 5400,
       "coverage": {
-        "presses": 299,
-        "whiffs": 146,
-        "coolPresses": 57,
-        "light": 4004,
-        "releases": 264,
-        "turns": 86,
-        "launched": 67,
-        "thrown": 29,
-        "parries": 8,
-        "caught": 3
+        "presses": 231,
+        "whiffs": 122,
+        "coolPresses": 30,
+        "light": 3462,
+        "releases": 168,
+        "turns": 79,
+        "launched": 37,
+        "thrown": 28,
+        "parries": 13,
+        "caught": 1
       },
-      "sha256": "8dc826c5300352079b179554d34e09b4bd3a7233ef22937ab10849c9a6b64f6d"
+      "sha256": "edbaabf49b60a144bad2591e4e729c72ee18ed7694b9e45457c3e361d58d21ef"
     },
     {
       "config": {
@@ -660,21 +660,21 @@
         "aim": false
       },
       "file": "input/input-1-2004-noaim.json.gz",
-      "bytes": 628884,
-      "frames": 7200,
+      "bytes": 481343,
+      "frames": 5400,
       "coverage": {
-        "presses": 299,
-        "whiffs": 146,
-        "coolPresses": 57,
-        "light": 4004,
-        "releases": 264,
-        "turns": 86,
-        "launched": 67,
-        "thrown": 29,
-        "parries": 8,
-        "caught": 3
+        "presses": 231,
+        "whiffs": 122,
+        "coolPresses": 30,
+        "light": 3462,
+        "releases": 168,
+        "turns": 79,
+        "launched": 37,
+        "thrown": 28,
+        "parries": 13,
+        "caught": 1
       },
-      "sha256": "56e2753c146972d2852b61edf96257a0eb104271ef33df7823a799dd733f247b"
+      "sha256": "2fc71740d47e308eb44db90f6cbb46701a482824e76abf01e6d66d32c1f5a722"
     },
     {
       "config": {
@@ -684,21 +684,21 @@
         "aim": true
       },
       "file": "input/input-1-2005-aim.json.gz",
-      "bytes": 622699,
-      "frames": 7200,
+      "bytes": 494424,
+      "frames": 5400,
       "coverage": {
-        "presses": 307,
-        "whiffs": 134,
-        "coolPresses": 64,
-        "light": 4113,
-        "releases": 480,
-        "turns": 92,
-        "launched": 72,
-        "thrown": 35,
-        "parries": 17,
-        "caught": 7
+        "presses": 225,
+        "whiffs": 64,
+        "coolPresses": 69,
+        "light": 2617,
+        "releases": 336,
+        "turns": 60,
+        "launched": 82,
+        "thrown": 27,
+        "parries": 6,
+        "caught": 11
       },
-      "sha256": "66c26fc22b876a0195c9e86fd371f49672ebe6672b9d264a24028ea9b77c1c82"
+      "sha256": "39e627fae60c8730286a3ad6440d860067c553c3820aaa35c13d0bbeb32f65c4"
     },
     {
       "config": {
@@ -708,21 +708,21 @@
         "aim": false
       },
       "file": "input/input-1-2005-noaim.json.gz",
-      "bytes": 622463,
-      "frames": 7200,
+      "bytes": 494275,
+      "frames": 5400,
       "coverage": {
-        "presses": 307,
-        "whiffs": 134,
-        "coolPresses": 64,
-        "light": 4113,
-        "releases": 480,
-        "turns": 92,
-        "launched": 72,
-        "thrown": 35,
-        "parries": 17,
-        "caught": 7
+        "presses": 225,
+        "whiffs": 64,
+        "coolPresses": 69,
+        "light": 2617,
+        "releases": 336,
+        "turns": 60,
+        "launched": 82,
+        "thrown": 27,
+        "parries": 6,
+        "caught": 11
       },
-      "sha256": "1fc335b6a6cb8587ed786457946a493714b81f5945a8b0ae436dbc7e9ce8dbda"
+      "sha256": "0b4b8933ec325b01a9e9d02b151c5d9110eb0b86bf5b768c03b47a3a275a9eb0"
     },
     {
       "config": {
@@ -732,21 +732,21 @@
         "aim": true
       },
       "file": "input/input-1-2006-aim.json.gz",
-      "bytes": 619972,
-      "frames": 7200,
+      "bytes": 488404,
+      "frames": 5400,
       "coverage": {
-        "presses": 308,
-        "whiffs": 106,
-        "coolPresses": 95,
-        "light": 3729,
-        "releases": 360,
-        "turns": 88,
-        "launched": 93,
-        "thrown": 34,
-        "parries": 18,
-        "caught": 14
+        "presses": 223,
+        "whiffs": 91,
+        "coolPresses": 51,
+        "light": 2768,
+        "releases": 264,
+        "turns": 68,
+        "launched": 60,
+        "thrown": 22,
+        "parries": 4,
+        "caught": 6
       },
-      "sha256": "07a5242b941e9dcaf45aeddc3cfc787059e455f58ccf389efda8daf2d76974dc"
+      "sha256": "c3d029352fa3eac241eee3806bdb41a0752f74055afb833b5d87217f9e394672"
     },
     {
       "config": {
@@ -756,21 +756,21 @@
         "aim": false
       },
       "file": "input/input-1-2006-noaim.json.gz",
-      "bytes": 619644,
-      "frames": 7200,
+      "bytes": 488303,
+      "frames": 5400,
       "coverage": {
-        "presses": 308,
-        "whiffs": 106,
-        "coolPresses": 95,
-        "light": 3729,
-        "releases": 360,
-        "turns": 88,
-        "launched": 93,
-        "thrown": 34,
-        "parries": 18,
-        "caught": 14
+        "presses": 223,
+        "whiffs": 91,
+        "coolPresses": 51,
+        "light": 2768,
+        "releases": 264,
+        "turns": 68,
+        "launched": 60,
+        "thrown": 22,
+        "parries": 4,
+        "caught": 6
       },
-      "sha256": "581d0ad5daca20acea2261302edcba975cd457d4d9cff0ae9e26db302d0ea8ef"
+      "sha256": "622f2ec40e555520affe0899d79e7c45fea9aa8cd2c142adfe1694ddaec02826"
     },
     {
       "config": {
@@ -780,21 +780,21 @@
         "aim": true
       },
       "file": "input/input-1-2007-aim.json.gz",
-      "bytes": 617858,
-      "frames": 7200,
+      "bytes": 487479,
+      "frames": 5400,
       "coverage": {
-        "presses": 305,
-        "whiffs": 113,
-        "coolPresses": 71,
-        "light": 3599,
-        "releases": 264,
-        "turns": 83,
-        "launched": 90,
-        "thrown": 36,
-        "parries": 14,
+        "presses": 223,
+        "whiffs": 80,
+        "coolPresses": 68,
+        "light": 3072,
+        "releases": 120,
+        "turns": 80,
+        "launched": 69,
+        "thrown": 28,
+        "parries": 4,
         "caught": 12
       },
-      "sha256": "a13a392a491dbb5c2f98813d9caa5930e10742f1c40a37175e1976a9d640f68d"
+      "sha256": "0a9ee776104b2ec4b40196a5cb0fce513b9b663da8c6287ab41d7aa85fc737d0"
     },
     {
       "config": {
@@ -804,21 +804,21 @@
         "aim": false
       },
       "file": "input/input-1-2007-noaim.json.gz",
-      "bytes": 617862,
-      "frames": 7200,
+      "bytes": 487442,
+      "frames": 5400,
       "coverage": {
-        "presses": 305,
-        "whiffs": 113,
-        "coolPresses": 71,
-        "light": 3599,
-        "releases": 264,
-        "turns": 83,
-        "launched": 90,
-        "thrown": 36,
-        "parries": 14,
+        "presses": 223,
+        "whiffs": 80,
+        "coolPresses": 68,
+        "light": 3072,
+        "releases": 120,
+        "turns": 80,
+        "launched": 69,
+        "thrown": 28,
+        "parries": 4,
         "caught": 12
       },
-      "sha256": "888d8723998067bdf1285606b8da15501487a4945846e27543faeef23ebe05e6"
+      "sha256": "90d04a2c4e55a55a576267580605480c4e37700c3a9b84470db91f1a28554976"
     },
     {
       "config": {
@@ -828,21 +828,21 @@
         "aim": true
       },
       "file": "input/input-1-2008-aim.json.gz",
-      "bytes": 628669,
-      "frames": 7200,
+      "bytes": 470309,
+      "frames": 5400,
       "coverage": {
-        "presses": 302,
-        "whiffs": 136,
-        "coolPresses": 58,
-        "light": 4656,
-        "releases": 336,
-        "turns": 108,
-        "launched": 64,
-        "thrown": 34,
-        "parries": 12,
-        "caught": 17
+        "presses": 228,
+        "whiffs": 109,
+        "coolPresses": 37,
+        "light": 3283,
+        "releases": 264,
+        "turns": 93,
+        "launched": 44,
+        "thrown": 19,
+        "parries": 9,
+        "caught": 4
       },
-      "sha256": "a8fd502f1f5ffb89d9b0504c747517847da0e2820952c9db3d666b7ac2398656"
+      "sha256": "cfbd9c2235a3d70a86a1372daa28adce007ebfc63f5341deab63aaa45cd51be3"
     },
     {
       "config": {
@@ -852,21 +852,21 @@
         "aim": false
       },
       "file": "input/input-1-2008-noaim.json.gz",
-      "bytes": 630696,
-      "frames": 7200,
+      "bytes": 470254,
+      "frames": 5400,
       "coverage": {
-        "presses": 302,
-        "whiffs": 121,
-        "coolPresses": 73,
-        "light": 4656,
-        "releases": 336,
-        "turns": 108,
-        "launched": 86,
-        "thrown": 20,
-        "parries": 6,
-        "caught": 15
+        "presses": 228,
+        "whiffs": 109,
+        "coolPresses": 37,
+        "light": 3283,
+        "releases": 264,
+        "turns": 93,
+        "launched": 44,
+        "thrown": 19,
+        "parries": 9,
+        "caught": 4
       },
-      "sha256": "1478439336f8bfcacec69d554321bb987468ea173a2eaeb301e7cdbe756b5394"
+      "sha256": "427f2ae7ca124fe2bfa5f11afaee3d9f797d28ec48f6dbcb451c4ea24ef94519"
     },
     {
       "config": {
@@ -876,21 +876,21 @@
         "aim": true
       },
       "file": "input/input-1-2009-aim.json.gz",
-      "bytes": 630074,
-      "frames": 7200,
+      "bytes": 472565,
+      "frames": 5400,
       "coverage": {
-        "presses": 300,
-        "whiffs": 148,
-        "coolPresses": 54,
-        "light": 4291,
-        "releases": 456,
-        "turns": 84,
-        "launched": 53,
-        "thrown": 26,
-        "parries": 9,
-        "caught": 14
+        "presses": 226,
+        "whiffs": 103,
+        "coolPresses": 48,
+        "light": 3565,
+        "releases": 312,
+        "turns": 66,
+        "launched": 45,
+        "thrown": 22,
+        "parries": 8,
+        "caught": 9
       },
-      "sha256": "d93fc1dab6acd8f4efcccc9f083edbded8af532f5d3e4aa16889ee8612197e3a"
+      "sha256": "f0743f15895308c87cb19854f13a141cc1c2b74fe8707d416ba2a554ff72897a"
     },
     {
       "config": {
@@ -900,21 +900,21 @@
         "aim": false
       },
       "file": "input/input-1-2009-noaim.json.gz",
-      "bytes": 629815,
-      "frames": 7200,
+      "bytes": 472321,
+      "frames": 5400,
       "coverage": {
-        "presses": 300,
-        "whiffs": 148,
-        "coolPresses": 54,
-        "light": 4291,
-        "releases": 456,
-        "turns": 84,
-        "launched": 53,
-        "thrown": 26,
-        "parries": 9,
-        "caught": 14
+        "presses": 226,
+        "whiffs": 103,
+        "coolPresses": 48,
+        "light": 3565,
+        "releases": 312,
+        "turns": 66,
+        "launched": 45,
+        "thrown": 22,
+        "parries": 8,
+        "caught": 9
       },
-      "sha256": "e3274e309c77a7bfea6cefd2e12e912695de4f26b2d1e2e55b279c84ff189c45"
+      "sha256": "9520226a6fde7a9ffe5b5886b77da8df466d02fe08ca1e76da959ad27d486091"
     },
     {
       "config": {
@@ -924,21 +924,21 @@
         "aim": true
       },
       "file": "input/input-1-2010-aim.json.gz",
-      "bytes": 624711,
-      "frames": 7200,
+      "bytes": 477881,
+      "frames": 5400,
       "coverage": {
-        "presses": 310,
-        "whiffs": 163,
-        "coolPresses": 44,
-        "light": 5335,
-        "releases": 432,
-        "turns": 126,
-        "launched": 48,
-        "thrown": 28,
-        "parries": 20,
-        "caught": 4
+        "presses": 223,
+        "whiffs": 120,
+        "coolPresses": 35,
+        "light": 3009,
+        "releases": 312,
+        "turns": 75,
+        "launched": 31,
+        "thrown": 16,
+        "parries": 4,
+        "caught": 9
       },
-      "sha256": "0f923333dccd03cda056f06a8de8a5cd4bc56e461eb50d51969181111cc330bd"
+      "sha256": "d176f154e4043765adda46398bf782543d77bf92b6da4b752fff483b4694de7c"
     },
     {
       "config": {
@@ -948,21 +948,21 @@
         "aim": false
       },
       "file": "input/input-1-2010-noaim.json.gz",
-      "bytes": 624503,
-      "frames": 7200,
+      "bytes": 477732,
+      "frames": 5400,
       "coverage": {
-        "presses": 310,
-        "whiffs": 163,
-        "coolPresses": 44,
-        "light": 5335,
-        "releases": 432,
-        "turns": 126,
-        "launched": 48,
-        "thrown": 28,
-        "parries": 20,
-        "caught": 4
+        "presses": 223,
+        "whiffs": 120,
+        "coolPresses": 35,
+        "light": 3009,
+        "releases": 312,
+        "turns": 75,
+        "launched": 31,
+        "thrown": 16,
+        "parries": 4,
+        "caught": 9
       },
-      "sha256": "e97c7290b0db2f114ca3fb6af2ec4b22492aaea2d014c77420fc0705acce1bfa"
+      "sha256": "b724564e4cb11e216eb5d762f77842bfe2723d37e7736aa870c5cdf38b20e8d3"
     },
     {
       "config": {
@@ -972,21 +972,21 @@
         "aim": true
       },
       "file": "input/input-2-2001-aim.json.gz",
-      "bytes": 1612317,
-      "frames": 7200,
+      "bytes": 621965,
+      "frames": 5400,
       "coverage": {
-        "presses": 313,
-        "whiffs": 84,
-        "coolPresses": 115,
-        "light": 4720,
-        "releases": 288,
-        "turns": 105,
-        "launched": 121,
-        "thrown": 43,
-        "parries": 25,
-        "caught": 10
+        "presses": 228,
+        "whiffs": 110,
+        "coolPresses": 49,
+        "light": 3718,
+        "releases": 216,
+        "turns": 77,
+        "launched": 45,
+        "thrown": 25,
+        "parries": 10,
+        "caught": 2
       },
-      "sha256": "b3b30ef28f13d98cd57aab91938e78a88c69b502deddaa8b4b57b0ea84ff6391"
+      "sha256": "49d9cf3e123c9767f0d4cedd939747715a64f0fe3f8ea8280a03a393e077a78e"
     },
     {
       "config": {
@@ -996,21 +996,21 @@
         "aim": false
       },
       "file": "input/input-2-2001-noaim.json.gz",
-      "bytes": 1612499,
-      "frames": 7200,
+      "bytes": 621764,
+      "frames": 5400,
       "coverage": {
-        "presses": 313,
-        "whiffs": 84,
-        "coolPresses": 115,
-        "light": 4720,
-        "releases": 288,
-        "turns": 105,
-        "launched": 121,
-        "thrown": 43,
-        "parries": 25,
-        "caught": 10
+        "presses": 228,
+        "whiffs": 110,
+        "coolPresses": 49,
+        "light": 3718,
+        "releases": 216,
+        "turns": 77,
+        "launched": 45,
+        "thrown": 25,
+        "parries": 10,
+        "caught": 2
       },
-      "sha256": "927e3cd0a2b4c911f4139a689105d823b94744d9380865366b07082beec5b3a5"
+      "sha256": "40eb9d4f9d1c62f8ff8d1462e3c1b85dc899de901f4a6c8ca107555438f071c0"
     },
     {
       "config": {
@@ -1020,21 +1020,21 @@
         "aim": true
       },
       "file": "input/input-2-2002-aim.json.gz",
-      "bytes": 863421,
-      "frames": 7200,
+      "bytes": 630215,
+      "frames": 5400,
       "coverage": {
-        "presses": 301,
-        "whiffs": 78,
-        "coolPresses": 107,
-        "light": 5097,
-        "releases": 264,
-        "turns": 97,
-        "launched": 126,
-        "thrown": 36,
-        "parries": 10,
-        "caught": 14
+        "presses": 223,
+        "whiffs": 98,
+        "coolPresses": 50,
+        "light": 3037,
+        "releases": 192,
+        "turns": 59,
+        "launched": 53,
+        "thrown": 21,
+        "parries": 4,
+        "caught": 10
       },
-      "sha256": "5aaa60afcb7daa1cccf87762f3c27b6cc4bc98a272322937327f0586ad455e47"
+      "sha256": "639931f3c4a9b343c21f4989b4ac58bf5d52824a081198c5cdc49ca206e7e418"
     },
     {
       "config": {
@@ -1044,21 +1044,21 @@
         "aim": false
       },
       "file": "input/input-2-2002-noaim.json.gz",
-      "bytes": 842025,
-      "frames": 7200,
+      "bytes": 630279,
+      "frames": 5400,
       "coverage": {
-        "presses": 301,
-        "whiffs": 69,
-        "coolPresses": 116,
-        "light": 5097,
-        "releases": 264,
-        "turns": 97,
-        "launched": 142,
-        "thrown": 7,
-        "parries": 1,
-        "caught": 15
+        "presses": 223,
+        "whiffs": 98,
+        "coolPresses": 50,
+        "light": 3037,
+        "releases": 192,
+        "turns": 59,
+        "launched": 53,
+        "thrown": 21,
+        "parries": 4,
+        "caught": 10
       },
-      "sha256": "eb8a2b9258d8b2b19f8c5cd9e501c47805c0d09848fcb80f001c64eb83848120"
+      "sha256": "9e62a5f9a48fd0b557caccdb9d3c9836593b0f2a199c821aa061efb99da4e8d4"
     },
     {
       "config": {
@@ -1068,21 +1068,21 @@
         "aim": true
       },
       "file": "input/input-2-2003-aim.json.gz",
-      "bytes": 458086,
-      "frames": 3813,
+      "bytes": 631852,
+      "frames": 5400,
       "coverage": {
-        "presses": 165,
-        "whiffs": 44,
-        "coolPresses": 58,
-        "light": 2193,
-        "releases": 168,
-        "turns": 45,
-        "launched": 64,
-        "thrown": 15,
-        "parries": 10,
-        "caught": 5
+        "presses": 227,
+        "whiffs": 88,
+        "coolPresses": 61,
+        "light": 3432,
+        "releases": 240,
+        "turns": 77,
+        "launched": 56,
+        "thrown": 28,
+        "parries": 8,
+        "caught": 13
       },
-      "sha256": "4185970ef22e8d36df3823583bd128b00e32dbb2ba51a57863cdb838b9c5a9be"
+      "sha256": "67567f4fc538641d6734cb9fd4cdb1e91a2180c01d1b1b93926d15a5ce6420c0"
     },
     {
       "config": {
@@ -1092,21 +1092,21 @@
         "aim": false
       },
       "file": "input/input-2-2003-noaim.json.gz",
-      "bytes": 458061,
-      "frames": 3813,
+      "bytes": 631633,
+      "frames": 5400,
       "coverage": {
-        "presses": 165,
-        "whiffs": 44,
-        "coolPresses": 58,
-        "light": 2193,
-        "releases": 168,
-        "turns": 45,
-        "launched": 64,
-        "thrown": 15,
-        "parries": 10,
-        "caught": 5
+        "presses": 227,
+        "whiffs": 88,
+        "coolPresses": 61,
+        "light": 3432,
+        "releases": 240,
+        "turns": 77,
+        "launched": 56,
+        "thrown": 28,
+        "parries": 8,
+        "caught": 13
       },
-      "sha256": "5acf9a74131450466a4a912fb8b1ed07e7c13504c930d58661df2035d468fb7d"
+      "sha256": "7a758ecf1b9d79d44be12e3b1fa77c6b8394081bb01dfa81e620e7192452fe3f"
     },
     {
       "config": {
@@ -1116,21 +1116,21 @@
         "aim": true
       },
       "file": "input/input-2-2004-aim.json.gz",
-      "bytes": 122405,
-      "frames": 1045,
+      "bytes": 1397494,
+      "frames": 5400,
       "coverage": {
-        "presses": 44,
-        "whiffs": 15,
-        "coolPresses": 13,
-        "light": 648,
-        "releases": 24,
-        "turns": 14,
-        "launched": 6,
-        "thrown": 3,
-        "parries": 1,
-        "caught": 10
+        "presses": 237,
+        "whiffs": 70,
+        "coolPresses": 79,
+        "light": 3347,
+        "releases": 168,
+        "turns": 69,
+        "launched": 75,
+        "thrown": 25,
+        "parries": 19,
+        "caught": 13
       },
-      "sha256": "7ae182a8b853e7e47e382ad8fb76b9c69a8bbeb50394e77582209829fcb98aa2"
+      "sha256": "e68c2ddcff0d4272f8c9f6aafac6477242de97fbad7d2776a9c97ab496f0a3a3"
     },
     {
       "config": {
@@ -1140,21 +1140,21 @@
         "aim": false
       },
       "file": "input/input-2-2004-noaim.json.gz",
-      "bytes": 122297,
-      "frames": 1045,
+      "bytes": 1396272,
+      "frames": 5400,
       "coverage": {
-        "presses": 44,
-        "whiffs": 15,
-        "coolPresses": 13,
-        "light": 648,
-        "releases": 24,
-        "turns": 14,
-        "launched": 6,
-        "thrown": 3,
-        "parries": 1,
-        "caught": 10
+        "presses": 237,
+        "whiffs": 70,
+        "coolPresses": 79,
+        "light": 3347,
+        "releases": 168,
+        "turns": 69,
+        "launched": 75,
+        "thrown": 25,
+        "parries": 19,
+        "caught": 13
       },
-      "sha256": "9c98e6171e6c1945fa9ec8f286716b92a472efe7bb2359269f9817c516e53a3d"
+      "sha256": "f7a41fec96abd21961c7fd05e75d18bd15320790a033a45cfc17766ce57cdbca"
     },
     {
       "config": {
@@ -1164,21 +1164,21 @@
         "aim": true
       },
       "file": "input/input-2-2005-aim.json.gz",
-      "bytes": 860786,
-      "frames": 7200,
+      "bytes": 632039,
+      "frames": 5400,
       "coverage": {
-        "presses": 307,
-        "whiffs": 78,
-        "coolPresses": 116,
-        "light": 4275,
-        "releases": 480,
-        "turns": 98,
-        "launched": 114,
-        "thrown": 42,
-        "parries": 16,
-        "caught": 24
+        "presses": 231,
+        "whiffs": 89,
+        "coolPresses": 59,
+        "light": 3081,
+        "releases": 336,
+        "turns": 76,
+        "launched": 54,
+        "thrown": 32,
+        "parries": 13,
+        "caught": 15
       },
-      "sha256": "fd8ef7f81b674d2a4b8a5236453008a46bd698642017053d0316fd6ce22ff4eb"
+      "sha256": "f7fef1b3f6470de127691a03573cdf02e1b25eab220fa81b019d85fabb3a2f7c"
     },
     {
       "config": {
@@ -1188,21 +1188,21 @@
         "aim": false
       },
       "file": "input/input-2-2005-noaim.json.gz",
-      "bytes": 162954,
-      "frames": 1353,
+      "bytes": 631910,
+      "frames": 5400,
       "coverage": {
-        "presses": 54,
-        "whiffs": 18,
-        "coolPresses": 16,
-        "light": 775,
-        "releases": 48,
-        "turns": 19,
-        "launched": 12,
-        "thrown": 3,
-        "parries": 1,
-        "caught": 10
+        "presses": 231,
+        "whiffs": 89,
+        "coolPresses": 59,
+        "light": 3081,
+        "releases": 336,
+        "turns": 76,
+        "launched": 54,
+        "thrown": 32,
+        "parries": 13,
+        "caught": 15
       },
-      "sha256": "b8b0c61be46cfd8512452fb3549c8fd0adc0d6a6e2226211295b9e12951d8cbd"
+      "sha256": "b549275463cad81fcdd0175094da44b906ab0a54283d7e66c8b94c74da8b6cef"
     },
     {
       "config": {
@@ -1212,21 +1212,21 @@
         "aim": true
       },
       "file": "input/input-2-2006-aim.json.gz",
-      "bytes": 1711615,
-      "frames": 7200,
+      "bytes": 638558,
+      "frames": 5400,
       "coverage": {
-        "presses": 309,
-        "whiffs": 88,
-        "coolPresses": 109,
-        "light": 4060,
-        "releases": 360,
-        "turns": 86,
-        "launched": 108,
-        "thrown": 49,
-        "parries": 18,
-        "caught": 20
+        "presses": 226,
+        "whiffs": 81,
+        "coolPresses": 70,
+        "light": 2955,
+        "releases": 264,
+        "turns": 67,
+        "launched": 59,
+        "thrown": 26,
+        "parries": 7,
+        "caught": 18
       },
-      "sha256": "9cebaf7d68f1c0280daa7db43eac7c622413aa1a15833e84f2be2604f980ecfa"
+      "sha256": "81ba0a59d870b29de503a2bd5fb5b2d4007daeda54f4920b67bac4386c0601a1"
     },
     {
       "config": {
@@ -1236,21 +1236,21 @@
         "aim": false
       },
       "file": "input/input-2-2006-noaim.json.gz",
-      "bytes": 1573591,
-      "frames": 6846,
+      "bytes": 763586,
+      "frames": 5400,
       "coverage": {
-        "presses": 295,
-        "whiffs": 88,
-        "coolPresses": 108,
-        "light": 3826,
-        "releases": 360,
-        "turns": 76,
-        "launched": 100,
-        "thrown": 42,
-        "parries": 13,
-        "caught": 22
+        "presses": 226,
+        "whiffs": 78,
+        "coolPresses": 72,
+        "light": 2955,
+        "releases": 264,
+        "turns": 67,
+        "launched": 67,
+        "thrown": 16,
+        "parries": 1,
+        "caught": 21
       },
-      "sha256": "c30bb54e08024ad8e86cc17d2d916305840d0d479becf06bc54c842dd454a715"
+      "sha256": "80c80d00e46cb27701418323c5ae75fb24dabafc894bfeb14afad06175014ce7"
     },
     {
       "config": {
@@ -1260,21 +1260,21 @@
         "aim": true
       },
       "file": "input/input-2-2007-aim.json.gz",
-      "bytes": 377118,
-      "frames": 3075,
+      "bytes": 641756,
+      "frames": 5400,
       "coverage": {
-        "presses": 129,
-        "whiffs": 34,
-        "coolPresses": 42,
-        "light": 1868,
+        "presses": 226,
+        "whiffs": 79,
+        "coolPresses": 58,
+        "light": 3117,
         "releases": 120,
-        "turns": 47,
-        "launched": 40,
-        "thrown": 18,
-        "parries": 6,
-        "caught": 16
+        "turns": 69,
+        "launched": 63,
+        "thrown": 24,
+        "parries": 7,
+        "caught": 19
       },
-      "sha256": "95aa28be40d57ff80c552df2411f033dab2386fd7199b61c687ec1123410e8b2"
+      "sha256": "89263dc82a8e61919856eaf911090c05aa908f718f5c4de4d2efa2fdeb1df941"
     },
     {
       "config": {
@@ -1284,21 +1284,21 @@
         "aim": false
       },
       "file": "input/input-2-2007-noaim.json.gz",
-      "bytes": 732612,
-      "frames": 6389,
+      "bytes": 641509,
+      "frames": 5400,
       "coverage": {
-        "presses": 129,
-        "whiffs": 43,
-        "coolPresses": 45,
-        "light": 1868,
-        "releases": 3434,
-        "turns": 48,
-        "launched": 43,
-        "thrown": 19,
-        "parries": 2,
-        "caught": 10
+        "presses": 226,
+        "whiffs": 79,
+        "coolPresses": 58,
+        "light": 3117,
+        "releases": 120,
+        "turns": 69,
+        "launched": 63,
+        "thrown": 24,
+        "parries": 7,
+        "caught": 19
       },
-      "sha256": "d283e37366f380dfb81c7d611b37ad094d073cf06fdef6a636da1e4bb741d7d5"
+      "sha256": "2b34679bea1158cff4ea1e73dc5a7cc31c37d2acddb3c975fa2117b8926a37d8"
     },
     {
       "config": {
@@ -1308,21 +1308,21 @@
         "aim": true
       },
       "file": "input/input-2-2008-aim.json.gz",
-      "bytes": 140261,
-      "frames": 1176,
+      "bytes": 1024679,
+      "frames": 5400,
       "coverage": {
-        "presses": 46,
-        "whiffs": 17,
-        "coolPresses": 9,
-        "light": 756,
-        "releases": 72,
-        "turns": 12,
-        "launched": 5,
-        "thrown": 2,
-        "parries": 0,
-        "caught": 12
+        "presses": 230,
+        "whiffs": 71,
+        "coolPresses": 78,
+        "light": 3426,
+        "releases": 264,
+        "turns": 78,
+        "launched": 68,
+        "thrown": 27,
+        "parries": 11,
+        "caught": 21
       },
-      "sha256": "91b10e76804e2c3f9b879c05c5988262775edfe3ed749c1ca31a3a0380dac974"
+      "sha256": "e08aae3eec07ed8184caf00d5f8ee4bff3d1bb9fd2658e5e43a4628f421a5b42"
     },
     {
       "config": {
@@ -1332,21 +1332,21 @@
         "aim": false
       },
       "file": "input/input-2-2008-noaim.json.gz",
-      "bytes": 140276,
-      "frames": 1176,
+      "bytes": 1024604,
+      "frames": 5400,
       "coverage": {
-        "presses": 46,
-        "whiffs": 17,
-        "coolPresses": 9,
-        "light": 756,
-        "releases": 72,
-        "turns": 12,
-        "launched": 5,
-        "thrown": 2,
-        "parries": 0,
-        "caught": 12
+        "presses": 230,
+        "whiffs": 71,
+        "coolPresses": 78,
+        "light": 3426,
+        "releases": 264,
+        "turns": 78,
+        "launched": 68,
+        "thrown": 27,
+        "parries": 11,
+        "caught": 21
       },
-      "sha256": "18f47c50b5f7945eedc321e55a86251b813dc716a17f135653686784721e852e"
+      "sha256": "86b4d1114b4eb09b095069c355b08479af115e92cf14f1914699caa300fed1b7"
     },
     {
       "config": {
@@ -1356,21 +1356,21 @@
         "aim": true
       },
       "file": "input/input-2-2009-aim.json.gz",
-      "bytes": 484713,
-      "frames": 4069,
+      "bytes": 628557,
+      "frames": 5400,
       "coverage": {
-        "presses": 169,
-        "whiffs": 41,
-        "coolPresses": 57,
-        "light": 2596,
-        "releases": 168,
-        "turns": 56,
-        "launched": 60,
-        "thrown": 16,
+        "presses": 224,
+        "whiffs": 111,
+        "coolPresses": 48,
+        "light": 3421,
+        "releases": 312,
+        "turns": 80,
+        "launched": 35,
+        "thrown": 13,
         "parries": 5,
-        "caught": 18
+        "caught": 11
       },
-      "sha256": "43ae8fdaa33904a55e93c09fb737acce08ca2143854256bf3db20306c2db761a"
+      "sha256": "059d239229b988585e1db99dccef01c6cce830271d94b8d1cab50b394f704068"
     },
     {
       "config": {
@@ -1380,21 +1380,21 @@
         "aim": false
       },
       "file": "input/input-2-2009-noaim.json.gz",
-      "bytes": 484622,
-      "frames": 4069,
+      "bytes": 628420,
+      "frames": 5400,
       "coverage": {
-        "presses": 169,
-        "whiffs": 41,
-        "coolPresses": 57,
-        "light": 2596,
-        "releases": 168,
-        "turns": 56,
-        "launched": 60,
-        "thrown": 16,
+        "presses": 224,
+        "whiffs": 111,
+        "coolPresses": 48,
+        "light": 3421,
+        "releases": 312,
+        "turns": 80,
+        "launched": 35,
+        "thrown": 13,
         "parries": 5,
-        "caught": 18
+        "caught": 11
       },
-      "sha256": "33bf5e04412e89be84b30075eed991f2ee6d1c10b6be96e75dfed8e202a95036"
+      "sha256": "04d1c747e902222bdfa627e2af790d33f3aa67d00abb8e8a14b4d445552e6727"
     },
     {
       "config": {
@@ -1404,21 +1404,21 @@
         "aim": true
       },
       "file": "input/input-2-2010-aim.json.gz",
-      "bytes": 851573,
-      "frames": 7200,
+      "bytes": 667376,
+      "frames": 5400,
       "coverage": {
-        "presses": 307,
-        "whiffs": 115,
-        "coolPresses": 85,
-        "light": 3932,
-        "releases": 432,
-        "turns": 110,
-        "launched": 79,
-        "thrown": 18,
-        "parries": 16,
-        "caught": 18
+        "presses": 231,
+        "whiffs": 73,
+        "coolPresses": 84,
+        "light": 2846,
+        "releases": 312,
+        "turns": 63,
+        "launched": 75,
+        "thrown": 22,
+        "parries": 12,
+        "caught": 10
       },
-      "sha256": "9fa8ee1e8566f66ec36f2d01cf404b51fbd4a23a1bcb86525c1de5e5bfc6296f"
+      "sha256": "1a74eb82c6cee833ec4e7a60a15ee2a728f84d5c4fca57a42eabfc619ab024ce"
     },
     {
       "config": {
@@ -1428,21 +1428,21 @@
         "aim": false
       },
       "file": "input/input-2-2010-noaim.json.gz",
-      "bytes": 851399,
-      "frames": 7200,
+      "bytes": 667111,
+      "frames": 5400,
       "coverage": {
-        "presses": 307,
-        "whiffs": 115,
-        "coolPresses": 85,
-        "light": 3932,
-        "releases": 432,
-        "turns": 110,
-        "launched": 79,
-        "thrown": 18,
-        "parries": 16,
-        "caught": 18
+        "presses": 231,
+        "whiffs": 73,
+        "coolPresses": 84,
+        "light": 2846,
+        "releases": 312,
+        "turns": 63,
+        "launched": 75,
+        "thrown": 22,
+        "parries": 12,
+        "caught": 10
       },
-      "sha256": "f3c21446afda55bad34b0f88d7133e23dfbb4b732c1e3c4957bc1c11ee464355"
+      "sha256": "58f53552b2aacb564d4b994310add9c1f9d983e05bebc3719cdef337d5340497"
     },
     {
       "config": {
@@ -1452,21 +1452,21 @@
         "aim": true
       },
       "file": "input/input-3-2001-aim.json.gz",
-      "bytes": 1862491,
-      "frames": 7200,
+      "bytes": 1073625,
+      "frames": 3747,
       "coverage": {
-        "presses": 311,
-        "whiffs": 92,
-        "coolPresses": 96,
-        "light": 4522,
-        "releases": 288,
-        "turns": 110,
-        "launched": 116,
-        "thrown": 36,
-        "parries": 21,
-        "caught": 9
+        "presses": 165,
+        "whiffs": 63,
+        "coolPresses": 43,
+        "light": 2088,
+        "releases": 120,
+        "turns": 48,
+        "launched": 37,
+        "thrown": 19,
+        "parries": 14,
+        "caught": 10
       },
-      "sha256": "2ce9d0fa14fef36748fefac60c37b7b5177e7a32b953d268f987fdf7651c66ef"
+      "sha256": "cb1b64034eb644e84c1a6f90fbaca4b616bf5ae4767bb6f30861af832b1bddff"
     },
     {
       "config": {
@@ -1476,21 +1476,21 @@
         "aim": false
       },
       "file": "input/input-3-2001-noaim.json.gz",
-      "bytes": 1862150,
-      "frames": 7200,
+      "bytes": 1073536,
+      "frames": 3747,
       "coverage": {
-        "presses": 311,
-        "whiffs": 92,
-        "coolPresses": 96,
-        "light": 4522,
-        "releases": 288,
-        "turns": 110,
-        "launched": 116,
-        "thrown": 36,
-        "parries": 21,
-        "caught": 9
+        "presses": 165,
+        "whiffs": 63,
+        "coolPresses": 43,
+        "light": 2088,
+        "releases": 120,
+        "turns": 48,
+        "launched": 37,
+        "thrown": 19,
+        "parries": 14,
+        "caught": 10
       },
-      "sha256": "e80b3b4f5683a76bac5c8aefb8b31e5c73ac8724c34da993980374f7d1fb7239"
+      "sha256": "22bd8b95e88add1f28d7bab59274ad690708d2aa2a1be9c2aabdcfeee067597d"
     },
     {
       "config": {
@@ -1500,21 +1500,21 @@
         "aim": true
       },
       "file": "input/input-3-2002-aim.json.gz",
-      "bytes": 1106462,
-      "frames": 7200,
+      "bytes": 1730920,
+      "frames": 6300,
       "coverage": {
-        "presses": 310,
-        "whiffs": 128,
-        "coolPresses": 70,
-        "light": 4049,
-        "releases": 264,
-        "turns": 80,
-        "launched": 75,
-        "thrown": 28,
-        "parries": 19,
-        "caught": 10
+        "presses": 264,
+        "whiffs": 103,
+        "coolPresses": 66,
+        "light": 3835,
+        "releases": 240,
+        "turns": 74,
+        "launched": 71,
+        "thrown": 27,
+        "parries": 9,
+        "caught": 14
       },
-      "sha256": "da94d6c872c6e8c2e649d961363fc3e2e87a761cc5308443727cdc55f9bda86b"
+      "sha256": "b178c82c8e9a2fd0d1b4cfbae950fff2a595bac962e477a65ce51b7cec427a23"
     },
     {
       "config": {
@@ -1524,21 +1524,21 @@
         "aim": false
       },
       "file": "input/input-3-2002-noaim.json.gz",
-      "bytes": 1427518,
-      "frames": 7200,
+      "bytes": 1889381,
+      "frames": 6300,
       "coverage": {
-        "presses": 310,
-        "whiffs": 99,
-        "coolPresses": 106,
-        "light": 4049,
-        "releases": 264,
-        "turns": 80,
-        "launched": 121,
-        "thrown": 8,
-        "parries": 1,
-        "caught": 11
+        "presses": 264,
+        "whiffs": 71,
+        "coolPresses": 92,
+        "light": 3835,
+        "releases": 240,
+        "turns": 74,
+        "launched": 98,
+        "thrown": 24,
+        "parries": 8,
+        "caught": 17
       },
-      "sha256": "664d3484dc79e18b879edea064c58880a4de56375493b78510a14633db5bd53f"
+      "sha256": "5b91e5cc3c0d9b3d2c22ce8636108396d2d74da614d9c3306485bc856dfb552a"
     },
     {
       "config": {
@@ -1548,21 +1548,21 @@
         "aim": true
       },
       "file": "input/input-3-2003-aim.json.gz",
-      "bytes": 1517057,
-      "frames": 4473,
+      "bytes": 1707417,
+      "frames": 6300,
       "coverage": {
-        "presses": 181,
-        "whiffs": 52,
-        "coolPresses": 58,
-        "light": 2460,
-        "releases": 216,
-        "turns": 51,
-        "launched": 52,
-        "thrown": 14,
-        "parries": 4,
-        "caught": 26
+        "presses": 262,
+        "whiffs": 129,
+        "coolPresses": 48,
+        "light": 3882,
+        "releases": 264,
+        "turns": 79,
+        "launched": 44,
+        "thrown": 26,
+        "parries": 13,
+        "caught": 10
       },
-      "sha256": "91bed8a10e7310307351d58b11ea5a519fd15388f7483a915a9a84db1f9b6f35"
+      "sha256": "a058b7116eb979c1d6557e57d1692e52144090863906e027c9b1eeae7ef128a3"
     },
     {
       "config": {
@@ -1572,21 +1572,21 @@
         "aim": false
       },
       "file": "input/input-3-2003-noaim.json.gz",
-      "bytes": 1517031,
-      "frames": 4473,
+      "bytes": 1708144,
+      "frames": 6300,
       "coverage": {
-        "presses": 181,
-        "whiffs": 52,
-        "coolPresses": 58,
-        "light": 2460,
-        "releases": 216,
-        "turns": 51,
-        "launched": 52,
-        "thrown": 14,
-        "parries": 4,
-        "caught": 26
+        "presses": 262,
+        "whiffs": 129,
+        "coolPresses": 48,
+        "light": 3882,
+        "releases": 264,
+        "turns": 79,
+        "launched": 44,
+        "thrown": 26,
+        "parries": 13,
+        "caught": 10
       },
-      "sha256": "ebcd5f98e1676e24ee88c4e5cb5085d60409a0b4564020a3b33458ae12968d58"
+      "sha256": "7f2d195379c1962102b002552520e23f65d54cd268fabaa67d796470b6d024cc"
     },
     {
       "config": {
@@ -1596,21 +1596,21 @@
         "aim": true
       },
       "file": "input/input-3-2004-aim.json.gz",
-      "bytes": 1410085,
-      "frames": 7200,
+      "bytes": 1136002,
+      "frames": 3626,
       "coverage": {
-        "presses": 311,
-        "whiffs": 76,
-        "coolPresses": 111,
-        "light": 3914,
-        "releases": 264,
-        "turns": 82,
-        "launched": 126,
-        "thrown": 41,
-        "parries": 20,
-        "caught": 13
+        "presses": 156,
+        "whiffs": 51,
+        "coolPresses": 42,
+        "light": 2461,
+        "releases": 120,
+        "turns": 43,
+        "launched": 47,
+        "thrown": 23,
+        "parries": 14,
+        "caught": 10
       },
-      "sha256": "5a247fc1facc02e9769ca0ffdca473b5d8e805b74e47c33337692ea7756b35e6"
+      "sha256": "0dc37ca221c15401048c9fd89d0c4c63747ffce13614c9f3769189773bc6ebcf"
     },
     {
       "config": {
@@ -1620,21 +1620,21 @@
         "aim": false
       },
       "file": "input/input-3-2004-noaim.json.gz",
-      "bytes": 2295420,
-      "frames": 7200,
+      "bytes": 1136539,
+      "frames": 3626,
       "coverage": {
-        "presses": 311,
-        "whiffs": 78,
-        "coolPresses": 120,
-        "light": 3914,
-        "releases": 264,
-        "turns": 82,
-        "launched": 143,
-        "thrown": 22,
-        "parries": 7,
-        "caught": 9
+        "presses": 156,
+        "whiffs": 51,
+        "coolPresses": 42,
+        "light": 2461,
+        "releases": 120,
+        "turns": 43,
+        "launched": 47,
+        "thrown": 23,
+        "parries": 14,
+        "caught": 10
       },
-      "sha256": "ea85b76a145cc20d2365fdd7393127736b221ce2239b6e85b2a9ee36286f3cb6"
+      "sha256": "be7cc3c55959de059eef737241ad3fd47c3722fb1ce606a377937833bf544bef"
     },
     {
       "config": {
@@ -1644,21 +1644,21 @@
         "aim": true
       },
       "file": "input/input-3-2005-aim.json.gz",
-      "bytes": 1201900,
-      "frames": 4079,
+      "bytes": 1384633,
+      "frames": 6300,
       "coverage": {
-        "presses": 169,
-        "whiffs": 53,
-        "coolPresses": 62,
-        "light": 2730,
-        "releases": 240,
-        "turns": 57,
-        "launched": 58,
-        "thrown": 18,
-        "parries": 5,
-        "caught": 8
+        "presses": 267,
+        "whiffs": 101,
+        "coolPresses": 70,
+        "light": 3245,
+        "releases": 384,
+        "turns": 78,
+        "launched": 71,
+        "thrown": 29,
+        "parries": 13,
+        "caught": 13
       },
-      "sha256": "2ca49650f90c646c7a73d9e4ac5a7b2ebf0c15d3ccff0229957c3ca3199ccf13"
+      "sha256": "0b936ba0769d46476d821c4b5f426032573567b53ec9b6974abf29a4a4492cbe"
     },
     {
       "config": {
@@ -1668,21 +1668,21 @@
         "aim": false
       },
       "file": "input/input-3-2005-noaim.json.gz",
-      "bytes": 1202282,
-      "frames": 4079,
+      "bytes": 1384956,
+      "frames": 6300,
       "coverage": {
-        "presses": 169,
-        "whiffs": 53,
-        "coolPresses": 62,
-        "light": 2730,
-        "releases": 240,
-        "turns": 57,
-        "launched": 58,
-        "thrown": 18,
-        "parries": 5,
-        "caught": 8
+        "presses": 267,
+        "whiffs": 101,
+        "coolPresses": 70,
+        "light": 3245,
+        "releases": 384,
+        "turns": 78,
+        "launched": 71,
+        "thrown": 29,
+        "parries": 13,
+        "caught": 13
       },
-      "sha256": "50251001986b9194e27c369dd13328502ffc11c6e2924751b427ae8dd5e1fea2"
+      "sha256": "a49df6e80c9f20fe25f6b29851bc6d45039b6e6ad195b6c1a2fe1dd5eda2b0a2"
     },
     {
       "config": {
@@ -1692,21 +1692,21 @@
         "aim": true
       },
       "file": "input/input-3-2006-aim.json.gz",
-      "bytes": 1718161,
-      "frames": 7200,
+      "bytes": 1914232,
+      "frames": 6300,
       "coverage": {
-        "presses": 301,
-        "whiffs": 128,
-        "coolPresses": 76,
-        "light": 4114,
+        "presses": 269,
+        "whiffs": 116,
+        "coolPresses": 58,
+        "light": 3504,
         "releases": 360,
-        "turns": 101,
-        "launched": 76,
-        "thrown": 28,
-        "parries": 10,
-        "caught": 11
+        "turns": 77,
+        "launched": 64,
+        "thrown": 25,
+        "parries": 16,
+        "caught": 2
       },
-      "sha256": "cda0f8ad0c0303086f962eda7f21861edec9980993f56e5b389838a3e3d2d59f"
+      "sha256": "ad435ad3daa7e71e29a7ab9b240a18407bf78ff7aef4fdc969d8a7fa67e4e63e"
     },
     {
       "config": {
@@ -1716,21 +1716,21 @@
         "aim": false
       },
       "file": "input/input-3-2006-noaim.json.gz",
-      "bytes": 154031,
-      "frames": 1195,
+      "bytes": 1913919,
+      "frames": 6300,
       "coverage": {
-        "presses": 48,
-        "whiffs": 14,
-        "coolPresses": 20,
-        "light": 821,
-        "releases": 48,
-        "turns": 14,
-        "launched": 14,
-        "thrown": 3,
-        "parries": 1,
-        "caught": 7
+        "presses": 269,
+        "whiffs": 116,
+        "coolPresses": 58,
+        "light": 3504,
+        "releases": 360,
+        "turns": 77,
+        "launched": 64,
+        "thrown": 25,
+        "parries": 16,
+        "caught": 2
       },
-      "sha256": "c4640ca8733f7963986f0224339c002a59bf187505cb1916cd2fa25b8cf832f5"
+      "sha256": "b83595b847cabee37d92f747c9bbb74658023ce068a965e53f17cf3c58b6c28a"
     },
     {
       "config": {
@@ -1740,21 +1740,21 @@
         "aim": true
       },
       "file": "input/input-3-2007-aim.json.gz",
-      "bytes": 2297363,
-      "frames": 7200,
+      "bytes": 2094605,
+      "frames": 6300,
       "coverage": {
-        "presses": 300,
-        "whiffs": 118,
-        "coolPresses": 72,
-        "light": 4269,
-        "releases": 264,
-        "turns": 82,
-        "launched": 88,
-        "thrown": 31,
-        "parries": 9,
-        "caught": 9
+        "presses": 265,
+        "whiffs": 131,
+        "coolPresses": 41,
+        "light": 3981,
+        "releases": 168,
+        "turns": 96,
+        "launched": 50,
+        "thrown": 30,
+        "parries": 10,
+        "caught": 2
       },
-      "sha256": "ded9c0320d79e1188b40ebc91573eda5ccdb8a9bfd708733e9edd002a0f01fed"
+      "sha256": "d48ff792614006c6ae6f312795a66ab42397271239bd72bbd40b3c2165dc8302"
     },
     {
       "config": {
@@ -1764,21 +1764,21 @@
         "aim": false
       },
       "file": "input/input-3-2007-noaim.json.gz",
-      "bytes": 2297391,
-      "frames": 7200,
+      "bytes": 2094558,
+      "frames": 6300,
       "coverage": {
-        "presses": 300,
-        "whiffs": 118,
-        "coolPresses": 72,
-        "light": 4269,
-        "releases": 264,
-        "turns": 82,
-        "launched": 88,
-        "thrown": 31,
-        "parries": 9,
-        "caught": 9
+        "presses": 265,
+        "whiffs": 131,
+        "coolPresses": 41,
+        "light": 3981,
+        "releases": 168,
+        "turns": 96,
+        "launched": 50,
+        "thrown": 30,
+        "parries": 10,
+        "caught": 2
       },
-      "sha256": "1827dd30ac773376cedc6d237f23461d9d2e17cf7511c5ae28b9545c12c5fe7f"
+      "sha256": "ad2598a402de9fd8025cae71fb69aa8166c4da2b9f341cbe343fce25d60e9add"
     },
     {
       "config": {
@@ -1788,21 +1788,21 @@
         "aim": true
       },
       "file": "input/input-3-2008-aim.json.gz",
-      "bytes": 1651579,
-      "frames": 7200,
+      "bytes": 1914660,
+      "frames": 6300,
       "coverage": {
-        "presses": 309,
-        "whiffs": 94,
-        "coolPresses": 105,
-        "light": 4851,
-        "releases": 336,
-        "turns": 119,
-        "launched": 101,
-        "thrown": 41,
-        "parries": 19,
-        "caught": 21
+        "presses": 264,
+        "whiffs": 87,
+        "coolPresses": 85,
+        "light": 3935,
+        "releases": 312,
+        "turns": 102,
+        "launched": 74,
+        "thrown": 36,
+        "parries": 9,
+        "caught": 27
       },
-      "sha256": "2eebb61b75f54c1b06d715352dc52473f6c06e9a42559316c1c3356b6b08ca2c"
+      "sha256": "e1977c752e1cc2b1e16ddb38954fb73a5c7e06bba78dd2191461f59950777521"
     },
     {
       "config": {
@@ -1812,21 +1812,21 @@
         "aim": false
       },
       "file": "input/input-3-2008-noaim.json.gz",
-      "bytes": 1653834,
-      "frames": 7200,
+      "bytes": 1909652,
+      "frames": 6300,
       "coverage": {
-        "presses": 309,
-        "whiffs": 95,
-        "coolPresses": 108,
-        "light": 4851,
-        "releases": 336,
-        "turns": 119,
-        "launched": 100,
-        "thrown": 38,
-        "parries": 18,
-        "caught": 21
+        "presses": 264,
+        "whiffs": 87,
+        "coolPresses": 85,
+        "light": 3935,
+        "releases": 312,
+        "turns": 102,
+        "launched": 78,
+        "thrown": 33,
+        "parries": 7,
+        "caught": 25
       },
-      "sha256": "67e207c7d8d71541946b45d6fcd1548bf7f8c18648fe6fd93bf2ba8a30c7bd5d"
+      "sha256": "3d1637508958af9943f0feb611ded7455df6d3c4e9e07e8149cff5976b85858a"
     },
     {
       "config": {
@@ -1836,21 +1836,21 @@
         "aim": true
       },
       "file": "input/input-3-2009-aim.json.gz",
-      "bytes": 1355069,
-      "frames": 7200,
+      "bytes": 1206482,
+      "frames": 6300,
       "coverage": {
-        "presses": 308,
-        "whiffs": 113,
-        "coolPresses": 78,
-        "light": 4116,
-        "releases": 456,
-        "turns": 93,
-        "launched": 97,
-        "thrown": 35,
-        "parries": 17,
-        "caught": 7
+        "presses": 266,
+        "whiffs": 105,
+        "coolPresses": 77,
+        "light": 4026,
+        "releases": 432,
+        "turns": 96,
+        "launched": 72,
+        "thrown": 29,
+        "parries": 13,
+        "caught": 6
       },
-      "sha256": "967ff78b1866e88b32894fd620fd1a510dd76556afa760c32c7ebaee1d2d24bc"
+      "sha256": "87317342996a0c30afca79df413b790de86ec391359f196e3ef38e6d08dd3330"
     },
     {
       "config": {
@@ -1860,21 +1860,21 @@
         "aim": false
       },
       "file": "input/input-3-2009-noaim.json.gz",
-      "bytes": 1338363,
-      "frames": 7200,
+      "bytes": 1158248,
+      "frames": 6300,
       "coverage": {
-        "presses": 308,
-        "whiffs": 97,
-        "coolPresses": 100,
-        "light": 4116,
-        "releases": 456,
-        "turns": 93,
-        "launched": 123,
-        "thrown": 23,
-        "parries": 13,
-        "caught": 4
+        "presses": 266,
+        "whiffs": 98,
+        "coolPresses": 80,
+        "light": 4026,
+        "releases": 432,
+        "turns": 96,
+        "launched": 89,
+        "thrown": 22,
+        "parries": 8,
+        "caught": 3
       },
-      "sha256": "4842c66dadbfabfe671df923cfb682af54105234ea2b1ea5e4bb11e801f342b6"
+      "sha256": "b5ed3879e356074651bfad96768058b03b938938f225e44d3c7d64acfd53ec54"
     },
     {
       "config": {
@@ -1884,21 +1884,21 @@
         "aim": true
       },
       "file": "input/input-3-2010-aim.json.gz",
-      "bytes": 1125099,
-      "frames": 7200,
+      "bytes": 1219337,
+      "frames": 6300,
       "coverage": {
-        "presses": 300,
-        "whiffs": 97,
-        "coolPresses": 89,
-        "light": 4441,
-        "releases": 432,
-        "turns": 121,
-        "launched": 97,
-        "thrown": 31,
-        "parries": 10,
-        "caught": 18
+        "presses": 268,
+        "whiffs": 105,
+        "coolPresses": 76,
+        "light": 3623,
+        "releases": 384,
+        "turns": 82,
+        "launched": 58,
+        "thrown": 26,
+        "parries": 14,
+        "caught": 21
       },
-      "sha256": "75ec32f9924b303a38e7cca4b2d46dc3b116bc8a8c2db3b76b7e360d5f1d0fa6"
+      "sha256": "0870f5278844e4b907f38d25a52d3a4b50b1037ec7baaaccd523881730d6098b"
     },
     {
       "config": {
@@ -1908,21 +1908,21 @@
         "aim": false
       },
       "file": "input/input-3-2010-noaim.json.gz",
-      "bytes": 1844812,
-      "frames": 7200,
+      "bytes": 1219515,
+      "frames": 6300,
       "coverage": {
-        "presses": 300,
-        "whiffs": 96,
-        "coolPresses": 89,
-        "light": 4441,
-        "releases": 432,
-        "turns": 121,
-        "launched": 100,
-        "thrown": 16,
-        "parries": 5,
+        "presses": 268,
+        "whiffs": 105,
+        "coolPresses": 76,
+        "light": 3623,
+        "releases": 384,
+        "turns": 82,
+        "launched": 58,
+        "thrown": 26,
+        "parries": 14,
         "caught": 21
       },
-      "sha256": "b3044519330800161f0bcc618a30cafdead689685f72f08d19dcef176dbb949a"
+      "sha256": "e5cb02fbec5251feb74228c23f256c904194dcc97294ee59c110e57cf5f46bb4"
     },
     {
       "config": {
@@ -1932,21 +1932,21 @@
         "aim": true
       },
       "file": "input/input-4-2001-aim.json.gz",
-      "bytes": 1208736,
-      "frames": 4782,
+      "bytes": 2074041,
+      "frames": 7200,
       "coverage": {
-        "presses": 216,
-        "whiffs": 37,
-        "coolPresses": 97,
-        "light": 2754,
-        "releases": 192,
-        "turns": 69,
-        "launched": 71,
-        "thrown": 28,
-        "parries": 24,
-        "caught": 30
+        "presses": 295,
+        "whiffs": 150,
+        "coolPresses": 39,
+        "light": 4875,
+        "releases": 288,
+        "turns": 115,
+        "launched": 48,
+        "thrown": 23,
+        "parries": 4,
+        "caught": 15
       },
-      "sha256": "53bc1bb512179d50ff8524f1bdbb6245d8848c97b888f7ab8bdda602866c833b"
+      "sha256": "29ad0e8aec43b9551b7408114cf43d52154fb5a741831fce9faceee9eb4e6f76"
     },
     {
       "config": {
@@ -1956,21 +1956,21 @@
         "aim": false
       },
       "file": "input/input-4-2001-noaim.json.gz",
-      "bytes": 1208783,
-      "frames": 4782,
+      "bytes": 1758408,
+      "frames": 7200,
       "coverage": {
-        "presses": 216,
-        "whiffs": 37,
-        "coolPresses": 97,
-        "light": 2754,
-        "releases": 192,
-        "turns": 69,
-        "launched": 71,
-        "thrown": 28,
-        "parries": 24,
-        "caught": 30
+        "presses": 295,
+        "whiffs": 146,
+        "coolPresses": 48,
+        "light": 4875,
+        "releases": 288,
+        "turns": 115,
+        "launched": 51,
+        "thrown": 11,
+        "parries": 1,
+        "caught": 15
       },
-      "sha256": "099538e1a6fe969376ccdc5b5da3a7aa8e4cb28b35cbbb8f2a50d0f05170de92"
+      "sha256": "849b1a7c71f81b193cd4b98ed4b8bb65db2fcfff856a2e3296c6a4a509df74a7"
     },
     {
       "config": {
@@ -1980,21 +1980,21 @@
         "aim": true
       },
       "file": "input/input-4-2002-aim.json.gz",
-      "bytes": 1298859,
-      "frames": 4167,
+      "bytes": 2101099,
+      "frames": 7200,
       "coverage": {
-        "presses": 177,
-        "whiffs": 48,
-        "coolPresses": 72,
-        "light": 2716,
-        "releases": 96,
-        "turns": 69,
-        "launched": 56,
-        "thrown": 18,
-        "parries": 8,
-        "caught": 19
+        "presses": 296,
+        "whiffs": 147,
+        "coolPresses": 47,
+        "light": 4727,
+        "releases": 264,
+        "turns": 98,
+        "launched": 58,
+        "thrown": 21,
+        "parries": 7,
+        "caught": 7
       },
-      "sha256": "77a4a300826564c4308e4d21e58f48e5c6deab22ca039d51e03ffa1b6248b9c3"
+      "sha256": "c21596b981378c9101e1fbf814e9cdbe9975d67e83ff4f8702254d256f45d4e2"
     },
     {
       "config": {
@@ -2004,21 +2004,21 @@
         "aim": false
       },
       "file": "input/input-4-2002-noaim.json.gz",
-      "bytes": 1390657,
-      "frames": 4340,
+      "bytes": 2134622,
+      "frames": 7200,
       "coverage": {
-        "presses": 177,
-        "whiffs": 48,
-        "coolPresses": 75,
-        "light": 2716,
-        "releases": 269,
-        "turns": 69,
-        "launched": 65,
-        "thrown": 13,
-        "parries": 4,
-        "caught": 13
+        "presses": 296,
+        "whiffs": 135,
+        "coolPresses": 51,
+        "light": 4727,
+        "releases": 264,
+        "turns": 98,
+        "launched": 73,
+        "thrown": 12,
+        "parries": 3,
+        "caught": 9
       },
-      "sha256": "aac43b6320c49906d3d1c0aff5c0b82808a5a0b4a90d144477e7e68cd11aa990"
+      "sha256": "9b5a4c585c01e18014e8b6ed11f7a6b7d95fe7b9ff2325cfd5611a50bb83892d"
     },
     {
       "config": {
@@ -2028,21 +2028,21 @@
         "aim": true
       },
       "file": "input/input-4-2003-aim.json.gz",
-      "bytes": 1140214,
-      "frames": 4329,
+      "bytes": 2577071,
+      "frames": 7200,
       "coverage": {
-        "presses": 190,
-        "whiffs": 58,
-        "coolPresses": 55,
-        "light": 2764,
-        "releases": 216,
-        "turns": 64,
-        "launched": 53,
-        "thrown": 22,
-        "parries": 14,
-        "caught": 16
+        "presses": 320,
+        "whiffs": 94,
+        "coolPresses": 102,
+        "light": 4703,
+        "releases": 264,
+        "turns": 94,
+        "launched": 94,
+        "thrown": 57,
+        "parries": 31,
+        "caught": 25
       },
-      "sha256": "1dd7f490bdd65513fdcd0c5bacd3dc6925ac208e3d58a9f292ba64534b953c46"
+      "sha256": "169007152fa8a202597300263700cd2cd6cd2da6b725ff169c1cf8f13a61c056"
     },
     {
       "config": {
@@ -2052,21 +2052,21 @@
         "aim": false
       },
       "file": "input/input-4-2003-noaim.json.gz",
-      "bytes": 1120975,
-      "frames": 4278,
+      "bytes": 2577161,
+      "frames": 7200,
       "coverage": {
-        "presses": 186,
-        "whiffs": 57,
-        "coolPresses": 52,
-        "light": 2731,
-        "releases": 216,
-        "turns": 64,
-        "launched": 53,
-        "thrown": 22,
-        "parries": 14,
-        "caught": 15
+        "presses": 320,
+        "whiffs": 94,
+        "coolPresses": 102,
+        "light": 4703,
+        "releases": 264,
+        "turns": 94,
+        "launched": 94,
+        "thrown": 57,
+        "parries": 31,
+        "caught": 25
       },
-      "sha256": "3e8651977decc89db53325c294789f47cdf2c729b96f6617231dc370d62e2b64"
+      "sha256": "3b97a98d438043c4baadf3863f37b17899ba8076b6fac46d082d5d88b5878e0c"
     },
     {
       "config": {
@@ -2076,21 +2076,21 @@
         "aim": true
       },
       "file": "input/input-4-2004-aim.json.gz",
-      "bytes": 2548356,
+      "bytes": 1710789,
       "frames": 7200,
       "coverage": {
-        "presses": 304,
-        "whiffs": 82,
-        "coolPresses": 104,
-        "light": 4729,
+        "presses": 300,
+        "whiffs": 126,
+        "coolPresses": 65,
+        "light": 4066,
         "releases": 264,
-        "turns": 93,
-        "launched": 113,
-        "thrown": 35,
-        "parries": 14,
-        "caught": 20
+        "turns": 92,
+        "launched": 63,
+        "thrown": 24,
+        "parries": 10,
+        "caught": 22
       },
-      "sha256": "51ff6b31e3e3d52958e83f2cfca14e1bcfc40f3f9cd79cdcedef4128d5a9fc2d"
+      "sha256": "bf2fd8c47e1ebb169e75eeef31dc857a9ff8d51cecfe4e3d5bbe08b31b41a2b3"
     },
     {
       "config": {
@@ -2100,21 +2100,21 @@
         "aim": false
       },
       "file": "input/input-4-2004-noaim.json.gz",
-      "bytes": 2155814,
-      "frames": 6253,
+      "bytes": 1610009,
+      "frames": 7200,
       "coverage": {
-        "presses": 265,
-        "whiffs": 71,
-        "coolPresses": 98,
-        "light": 4133,
-        "releases": 240,
-        "turns": 80,
-        "launched": 97,
-        "thrown": 28,
+        "presses": 300,
+        "whiffs": 114,
+        "coolPresses": 68,
+        "light": 4066,
+        "releases": 264,
+        "turns": 92,
+        "launched": 78,
+        "thrown": 25,
         "parries": 10,
-        "caught": 19
+        "caught": 22
       },
-      "sha256": "8247767e62985eba3168d12de1ce734a12d758ee66e19e91bd95081dd3da9f26"
+      "sha256": "7959215447708e5e229947173b03be3866b8d7befb61c5c61f4a03e0ffdaa2b9"
     },
     {
       "config": {
@@ -2124,21 +2124,21 @@
         "aim": true
       },
       "file": "input/input-4-2005-aim.json.gz",
-      "bytes": 2932649,
+      "bytes": 2139004,
       "frames": 7200,
       "coverage": {
-        "presses": 309,
-        "whiffs": 82,
-        "coolPresses": 103,
-        "light": 4240,
+        "presses": 305,
+        "whiffs": 125,
+        "coolPresses": 70,
+        "light": 4233,
         "releases": 480,
-        "turns": 97,
-        "launched": 112,
-        "thrown": 40,
-        "parries": 19,
-        "caught": 23
+        "turns": 100,
+        "launched": 79,
+        "thrown": 27,
+        "parries": 14,
+        "caught": 9
       },
-      "sha256": "f52358e8a947522c856576cd9ce3e76043dea5203f8cf78d914034e683a733b8"
+      "sha256": "27761dc784485998f3d3867e255fa7d9d5c83696fb166e6649d9f6bb0b4d02a3"
     },
     {
       "config": {
@@ -2148,21 +2148,21 @@
         "aim": false
       },
       "file": "input/input-4-2005-noaim.json.gz",
-      "bytes": 2434655,
-      "frames": 5908,
+      "bytes": 2139279,
+      "frames": 7200,
       "coverage": {
-        "presses": 258,
-        "whiffs": 67,
-        "coolPresses": 95,
-        "light": 3590,
-        "releases": 336,
-        "turns": 77,
-        "launched": 86,
+        "presses": 305,
+        "whiffs": 125,
+        "coolPresses": 70,
+        "light": 4233,
+        "releases": 480,
+        "turns": 100,
+        "launched": 79,
         "thrown": 27,
-        "parries": 15,
-        "caught": 23
+        "parries": 14,
+        "caught": 9
       },
-      "sha256": "57953774b07dba40eaa5e93b9a43cab05d8be24b88510910117d2548850ce07d"
+      "sha256": "68c3dc0cc24e929086646355e9c04181f58a8bc124c7ed8c82f2a40294f14656"
     },
     {
       "config": {
@@ -2172,21 +2172,21 @@
         "aim": true
       },
       "file": "input/input-4-2006-aim.json.gz",
-      "bytes": 1552436,
+      "bytes": 3023139,
       "frames": 7200,
       "coverage": {
-        "presses": 310,
-        "whiffs": 109,
-        "coolPresses": 85,
-        "light": 4919,
+        "presses": 319,
+        "whiffs": 96,
+        "coolPresses": 102,
+        "light": 4876,
         "releases": 360,
-        "turns": 111,
-        "launched": 96,
-        "thrown": 34,
-        "parries": 19,
-        "caught": 10
+        "turns": 94,
+        "launched": 105,
+        "thrown": 52,
+        "parries": 28,
+        "caught": 15
       },
-      "sha256": "5d587e5c97ec46754e0ef3e657a9a70d1ba8e8b5a2783edab37ef968830e75cc"
+      "sha256": "c17805aff46a0d2128a03c21a4f5a7311e42c92243d53960e54bd0eac8328a8d"
     },
     {
       "config": {
@@ -2196,21 +2196,21 @@
         "aim": false
       },
       "file": "input/input-4-2006-noaim.json.gz",
-      "bytes": 2370249,
+      "bytes": 3022524,
       "frames": 7200,
       "coverage": {
-        "presses": 310,
-        "whiffs": 86,
-        "coolPresses": 119,
-        "light": 4919,
+        "presses": 319,
+        "whiffs": 96,
+        "coolPresses": 102,
+        "light": 4876,
         "releases": 360,
-        "turns": 111,
-        "launched": 130,
-        "thrown": 13,
-        "parries": 3,
+        "turns": 94,
+        "launched": 105,
+        "thrown": 52,
+        "parries": 28,
         "caught": 15
       },
-      "sha256": "6c11b0a20940d29f30b08699237a7bc8d0d7706a09803ca59cb97620a6e4434d"
+      "sha256": "02b147ed04846eed79f9551d07e5b59cbe3f32e63eba1e9af254ba5969f0156a"
     },
     {
       "config": {
@@ -2220,21 +2220,21 @@
         "aim": true
       },
       "file": "input/input-4-2007-aim.json.gz",
-      "bytes": 1721051,
-      "frames": 6004,
+      "bytes": 1524488,
+      "frames": 6017,
       "coverage": {
-        "presses": 257,
-        "whiffs": 78,
-        "coolPresses": 92,
-        "light": 3890,
+        "presses": 258,
+        "whiffs": 97,
+        "coolPresses": 77,
+        "light": 4150,
         "releases": 144,
-        "turns": 77,
-        "launched": 82,
-        "thrown": 33,
+        "turns": 93,
+        "launched": 72,
+        "thrown": 35,
         "parries": 16,
-        "caught": 14
+        "caught": 9
       },
-      "sha256": "c7c4112a5ad253e981f134152158ec590d260fdba1aa369387303b457a929c1d"
+      "sha256": "45622556ba735f24713e59126965569312a18300f527e2a519036c3093df6243"
     },
     {
       "config": {
@@ -2244,21 +2244,21 @@
         "aim": false
       },
       "file": "input/input-4-2007-noaim.json.gz",
-      "bytes": 1721071,
-      "frames": 6004,
+      "bytes": 1522443,
+      "frames": 6017,
       "coverage": {
-        "presses": 257,
-        "whiffs": 78,
-        "coolPresses": 92,
-        "light": 3890,
+        "presses": 258,
+        "whiffs": 97,
+        "coolPresses": 77,
+        "light": 4150,
         "releases": 144,
-        "turns": 77,
-        "launched": 82,
-        "thrown": 33,
+        "turns": 93,
+        "launched": 72,
+        "thrown": 35,
         "parries": 16,
-        "caught": 14
+        "caught": 9
       },
-      "sha256": "a78c37fe531a5df3b26166aa8d95a9274f04b0dde712dff2af0a9a3f750113c7"
+      "sha256": "604039892dbff790eda1276e385feb12892dadf1b86cd8f89dcf94b1e6d80642"
     },
     {
       "config": {
@@ -2268,21 +2268,21 @@
         "aim": true
       },
       "file": "input/input-4-2008-aim.json.gz",
-      "bytes": 2624781,
-      "frames": 7158,
+      "bytes": 2488587,
+      "frames": 7200,
       "coverage": {
-        "presses": 306,
-        "whiffs": 83,
-        "coolPresses": 107,
-        "light": 4097,
+        "presses": 309,
+        "whiffs": 112,
+        "coolPresses": 79,
+        "light": 4486,
         "releases": 336,
-        "turns": 99,
-        "launched": 102,
-        "thrown": 33,
-        "parries": 16,
-        "caught": 30
+        "turns": 118,
+        "launched": 86,
+        "thrown": 40,
+        "parries": 19,
+        "caught": 18
       },
-      "sha256": "29994154d47423685430697897ce8b52fc060eaa433de1f75fd0b6265111097f"
+      "sha256": "91915e7553a3a606a8cb20299be834398bbaccb1a6e96f28d79b30012c6a42b8"
     },
     {
       "config": {
@@ -2292,21 +2292,21 @@
         "aim": false
       },
       "file": "input/input-4-2008-noaim.json.gz",
-      "bytes": 2624851,
-      "frames": 7158,
+      "bytes": 2487604,
+      "frames": 7200,
       "coverage": {
-        "presses": 306,
-        "whiffs": 83,
-        "coolPresses": 107,
-        "light": 4097,
+        "presses": 309,
+        "whiffs": 112,
+        "coolPresses": 79,
+        "light": 4486,
         "releases": 336,
-        "turns": 99,
-        "launched": 102,
-        "thrown": 33,
-        "parries": 16,
-        "caught": 30
+        "turns": 118,
+        "launched": 86,
+        "thrown": 40,
+        "parries": 19,
+        "caught": 18
       },
-      "sha256": "aed0da6d7f87703c18905729f5b354686bf4ca6dd0fd3268772b9b50ce002dbc"
+      "sha256": "b726eb2beaa1cc2d96a4ded4dae16545d5ab82bee9a202587af2b720b3c19db6"
     },
     {
       "config": {
@@ -2316,21 +2316,21 @@
         "aim": true
       },
       "file": "input/input-4-2009-aim.json.gz",
-      "bytes": 2487202,
+      "bytes": 2654762,
       "frames": 7200,
       "coverage": {
-        "presses": 310,
-        "whiffs": 83,
-        "coolPresses": 102,
-        "light": 4965,
+        "presses": 315,
+        "whiffs": 112,
+        "coolPresses": 84,
+        "light": 4109,
         "releases": 456,
-        "turns": 109,
-        "launched": 105,
-        "thrown": 45,
-        "parries": 25,
-        "caught": 25
+        "turns": 96,
+        "launched": 94,
+        "thrown": 42,
+        "parries": 29,
+        "caught": 8
       },
-      "sha256": "233af1acfe37e83e1c42c5b83ea7c471f7feef4240ea9f73fe615676d9ea6b42"
+      "sha256": "0f7e6f60872046008c2cef8540aa7dc6f2e9488c531216183aca7b276648392f"
     },
     {
       "config": {
@@ -2340,21 +2340,21 @@
         "aim": false
       },
       "file": "input/input-4-2009-noaim.json.gz",
-      "bytes": 2156825,
-      "frames": 5695,
+      "bytes": 1853465,
+      "frames": 6101,
       "coverage": {
-        "presses": 240,
-        "whiffs": 56,
-        "coolPresses": 99,
-        "light": 4020,
-        "releases": 360,
-        "turns": 91,
-        "launched": 100,
-        "thrown": 16,
-        "parries": 5,
-        "caught": 20
+        "presses": 266,
+        "whiffs": 101,
+        "coolPresses": 86,
+        "light": 3379,
+        "releases": 384,
+        "turns": 81,
+        "launched": 95,
+        "thrown": 13,
+        "parries": 2,
+        "caught": 3
       },
-      "sha256": "7d5fd4cecb3e061d0e71571617c9700f2ed8c9fc130cc1c4f297625560c2abbc"
+      "sha256": "ee6bfed5fbf56a80a624f3408bcc6775385b3e848db919d438fe80d9e320f382"
     },
     {
       "config": {
@@ -2364,21 +2364,21 @@
         "aim": true
       },
       "file": "input/input-4-2010-aim.json.gz",
-      "bytes": 382232,
-      "frames": 1304,
+      "bytes": 2302027,
+      "frames": 7200,
       "coverage": {
-        "presses": 56,
-        "whiffs": 15,
-        "coolPresses": 16,
-        "light": 958,
-        "releases": 24,
-        "turns": 22,
-        "launched": 19,
-        "thrown": 8,
-        "parries": 4,
-        "caught": 4
+        "presses": 301,
+        "whiffs": 99,
+        "coolPresses": 97,
+        "light": 4317,
+        "releases": 432,
+        "turns": 108,
+        "launched": 100,
+        "thrown": 31,
+        "parries": 11,
+        "caught": 11
       },
-      "sha256": "38e7c904ec2317e641c4c4f10cd4568272dd0c11168758acb214e2fec7ca2229"
+      "sha256": "138aa7ffa658556667ad594eaecbb277121e66ae5043f28e5e9fa3d1f9c50212"
     },
     {
       "config": {
@@ -2388,21 +2388,21 @@
         "aim": false
       },
       "file": "input/input-4-2010-noaim.json.gz",
-      "bytes": 178043,
-      "frames": 849,
+      "bytes": 2358257,
+      "frames": 7200,
       "coverage": {
-        "presses": 35,
-        "whiffs": 12,
-        "coolPresses": 6,
-        "light": 636,
-        "releases": 9,
-        "turns": 11,
-        "launched": 12,
-        "thrown": 6,
-        "parries": 3,
-        "caught": 0
+        "presses": 301,
+        "whiffs": 93,
+        "coolPresses": 101,
+        "light": 4317,
+        "releases": 432,
+        "turns": 108,
+        "launched": 111,
+        "thrown": 26,
+        "parries": 10,
+        "caught": 11
       },
-      "sha256": "3f99a7a1963af2ba5bc38968243167862a79b4fe5578ab4253ff8080fbde960d"
+      "sha256": "11bba4832e074de151e4cff835202bbd0d972a4abd800e17fb3c690defad0f1c"
     },
     {
       "config": {
@@ -2412,21 +2412,21 @@
         "aim": true
       },
       "file": "tutorial/tutorial-0-3001-aim.json.gz",
-      "bytes": 385210,
-      "frames": 5295,
+      "bytes": 302712,
+      "frames": 4140,
       "coverage": {
         "presses": 2,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 109,
-        "releases": 5052,
+        "releases": 3897,
         "turns": 0,
         "launched": 2,
         "thrown": 2,
         "parries": 0,
         "caught": 0
       },
-      "sha256": "e67c8a5b0ef12c026b29f82c25ad0a1dbc66ec85e5a4c8b169fd33fc0653d45c"
+      "sha256": "a76587252f66714c8aabcc775fdea051d0173eb46b321e35ef0c8c451fc2a3aa"
     },
     {
       "config": {
@@ -2437,21 +2437,21 @@
         "skip": true
       },
       "file": "tutorial/tutorial-0-3002-skip.json.gz",
-      "bytes": 319444,
-      "frames": 4230,
+      "bytes": 277772,
+      "frames": 3630,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
         "launched": 0,
         "thrown": 0,
         "parries": 0,
         "caught": 0
       },
-      "sha256": "1ac28be119beeadc187a70ade82e5c54b9e1407adf8ca68ab508417c9d836352"
+      "sha256": "eb4227bc00c191c7d47d18d554ae41fbba3124be8922bb1e0ee6bb7540dc29ef"
     },
     {
       "config": {
@@ -2462,21 +2462,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-0-4001-noaim.json.gz",
-      "bytes": 348487,
-      "frames": 4200,
+      "bytes": 299235,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 9,
-        "thrown": 11,
-        "parries": 3,
+        "launched": 5,
+        "thrown": 7,
+        "parries": 2,
         "caught": 0
       },
-      "sha256": "2b3c7a5f9adf0ed448a60ba73c87a01f470fab2aaee34bfefae77c79dc258650"
+      "sha256": "b6cfa272e84356da730666d6388df21906554ea2280de8fdd9168097110d6070"
     },
     {
       "config": {
@@ -2487,21 +2487,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-0-4002-noaim.json.gz",
-      "bytes": 348595,
-      "frames": 4200,
+      "bytes": 302663,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 8,
-        "thrown": 8,
-        "parries": 1,
+        "launched": 11,
+        "thrown": 11,
+        "parries": 5,
         "caught": 0
       },
-      "sha256": "0c062130e39dfa3ecca818b5fd2b720c318d8472fad6fec82913cd3d674d1fc6"
+      "sha256": "b80862f90c7b48771e5f430163ae17679a2a9c60ee02d5b960bf7f33f81fc43b"
     },
     {
       "config": {
@@ -2512,21 +2512,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-0-4003-noaim.json.gz",
-      "bytes": 348497,
-      "frames": 4200,
+      "bytes": 300415,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 14,
-        "thrown": 11,
+        "launched": 8,
+        "thrown": 10,
         "parries": 2,
         "caught": 0
       },
-      "sha256": "737b3de0b637464982f7515a428d4d10c696af9883d8befe8a435aaa3c86f5c6"
+      "sha256": "323e71171643dccf4847063dab4a64d0841e31d7c08669e09b1a417773bb05f3"
     },
     {
       "config": {
@@ -2537,21 +2537,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-1-4001-noaim.json.gz",
-      "bytes": 599265,
-      "frames": 7200,
+      "bytes": 453670,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 20,
-        "thrown": 19,
-        "parries": 10,
+        "launched": 14,
+        "thrown": 7,
+        "parries": 2,
         "caught": 0
       },
-      "sha256": "988d40354f895fb92f62540fe0ab72ad3f0a825635c20c6d6cb211e8586de3e6"
+      "sha256": "4a24e86ec0cedefb2a809297a7f2d4582f2a7f480ebaf40d0704c120e86c5921"
     },
     {
       "config": {
@@ -2562,21 +2562,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-1-4002-noaim.json.gz",
-      "bytes": 602404,
-      "frames": 7200,
+      "bytes": 453126,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 21,
-        "thrown": 24,
-        "parries": 11,
-        "caught": 1
+        "launched": 12,
+        "thrown": 13,
+        "parries": 6,
+        "caught": 0
       },
-      "sha256": "6b9945fa2d57bbf762fc9ac6559fc7953dc4340088d198ae821a9d125bee8676"
+      "sha256": "2e46aea326fcde34e256f12fe4547f447b845c94897c390033dd20ae444d2dbe"
     },
     {
       "config": {
@@ -2587,21 +2587,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-1-4003-noaim.json.gz",
-      "bytes": 599451,
-      "frames": 7200,
+      "bytes": 455320,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 25,
-        "thrown": 23,
-        "parries": 10,
+        "launched": 10,
+        "thrown": 13,
+        "parries": 7,
         "caught": 0
       },
-      "sha256": "5595a6bf9d078d3f767f100f4201e6b7af3c279e46ac26d6adb48b5506c919ed"
+      "sha256": "ae5594a7f3b2efe17a891c169e0e1e0a76a2edc8c9720f7965934b22378fc28e"
     },
     {
       "config": {
@@ -2612,21 +2612,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-2-4001-noaim.json.gz",
-      "bytes": 620621,
-      "frames": 5432,
+      "bytes": 616216,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 5432,
+        "releases": 5400,
         "turns": 0,
-        "launched": 14,
-        "thrown": 20,
-        "parries": 15,
-        "caught": 0
+        "launched": 24,
+        "thrown": 21,
+        "parries": 11,
+        "caught": 1
       },
-      "sha256": "78a6812ef0e4d2db44ab4a0e69d546ae8edafc37e7da1e7f568882cb13855c1c"
+      "sha256": "094ccf134a571907279080ef63fd41f5ba0c52705928d319da83a9c254005f00"
     },
     {
       "config": {
@@ -2637,21 +2637,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-2-4002-noaim.json.gz",
-      "bytes": 828487,
-      "frames": 7200,
+      "bytes": 838153,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 54,
-        "thrown": 40,
-        "parries": 21,
+        "launched": 30,
+        "thrown": 20,
+        "parries": 9,
         "caught": 0
       },
-      "sha256": "34a2e3c8c1d25bb0f46be068937eb1fb9c638c938f15f284e2b92de32fbea580"
+      "sha256": "b845c12221003b086eaf4510a8e035cff6e85667ae3001cd955a1e7a4dd2e8d5"
     },
     {
       "config": {
@@ -2662,21 +2662,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-2-4003-noaim.json.gz",
-      "bytes": 830976,
-      "frames": 7200,
+      "bytes": 621319,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 38,
-        "thrown": 36,
-        "parries": 30,
+        "launched": 21,
+        "thrown": 24,
+        "parries": 12,
         "caught": 0
       },
-      "sha256": "a08faaba3a37ffa52340c1fdcbd3fa980559c3e2e4863745f05bc6a55903b014"
+      "sha256": "af09ec801a47b078c5fd520d820f95b92dd87091b040a8e26f2d88eac01ca0c2"
     },
     {
       "config": {
@@ -2687,21 +2687,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-3-4001-noaim.json.gz",
-      "bytes": 1399384,
-      "frames": 7200,
+      "bytes": 1356079,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 6300,
         "turns": 0,
-        "launched": 29,
-        "thrown": 30,
-        "parries": 16,
-        "caught": 1
+        "launched": 19,
+        "thrown": 19,
+        "parries": 12,
+        "caught": 0
       },
-      "sha256": "bee5877ca2e3745422e2b90aa62382727b2110c793443300bba24d66badf78d1"
+      "sha256": "26fc15b56d00d1dad5721e70d478171fcdb6e132614b3fa3e58104c33302d114"
     },
     {
       "config": {
@@ -2712,21 +2712,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-3-4002-noaim.json.gz",
-      "bytes": 626735,
-      "frames": 4841,
+      "bytes": 832568,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4841,
+        "releases": 6300,
         "turns": 0,
-        "launched": 16,
-        "thrown": 14,
-        "parries": 12,
-        "caught": 1
+        "launched": 18,
+        "thrown": 20,
+        "parries": 15,
+        "caught": 0
       },
-      "sha256": "a7807c56da0b62f0988f27df36127c3edaa7d6bb8156205e7cf8d43546dfaed4"
+      "sha256": "8e9fafc0883f69bb18591fae4a17f5697527e5f65665eebd7590e09e7feceb53"
     },
     {
       "config": {
@@ -2737,21 +2737,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-3-4003-noaim.json.gz",
-      "bytes": 1298289,
-      "frames": 7200,
+      "bytes": 862760,
+      "frames": 4475,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 4475,
         "turns": 0,
-        "launched": 47,
-        "thrown": 32,
-        "parries": 25,
-        "caught": 0
+        "launched": 15,
+        "thrown": 10,
+        "parries": 6,
+        "caught": 1
       },
-      "sha256": "1e9afa6f18bf8a441d911e11393a31dab1213870929ce5eeec836d7c9fdf253b"
+      "sha256": "13a34b4a4877a800b7d0274c2911d518fe58048f62126700eb4bc50bdbd93ea2"
     },
     {
       "config": {
@@ -2762,7 +2762,7 @@
         "aim": false
       },
       "file": "buffs/buff-trip-4-4001-noaim.json.gz",
-      "bytes": 2221664,
+      "bytes": 2116984,
       "frames": 7200,
       "coverage": {
         "presses": 0,
@@ -2771,12 +2771,12 @@
         "light": 0,
         "releases": 7200,
         "turns": 0,
-        "launched": 37,
-        "thrown": 39,
-        "parries": 32,
+        "launched": 18,
+        "thrown": 38,
+        "parries": 38,
         "caught": 0
       },
-      "sha256": "134793c98a53ff89655aac189f7b1f48db49906567550ac912988172e8c4ab91"
+      "sha256": "beba45ebb30db20eea18eac44510ed9cd922d8d10776ac3d06642cd24a718962"
     },
     {
       "config": {
@@ -2787,7 +2787,7 @@
         "aim": false
       },
       "file": "buffs/buff-trip-4-4002-noaim.json.gz",
-      "bytes": 1834606,
+      "bytes": 1947980,
       "frames": 7200,
       "coverage": {
         "presses": 0,
@@ -2796,12 +2796,12 @@
         "light": 0,
         "releases": 7200,
         "turns": 0,
-        "launched": 39,
-        "thrown": 35,
-        "parries": 32,
+        "launched": 42,
+        "thrown": 44,
+        "parries": 29,
         "caught": 0
       },
-      "sha256": "0b2fa578c924c0a0fa01da13aa36ca1d40d7e5a50d7c874123a195402f96a000"
+      "sha256": "1d290d98c36ff9b6214ba455d7b9594ba8d3f76df2d68a12f01fd5daff29a132"
     },
     {
       "config": {
@@ -2812,21 +2812,21 @@
         "aim": false
       },
       "file": "buffs/buff-trip-4-4003-noaim.json.gz",
-      "bytes": 1666666,
-      "frames": 6131,
+      "bytes": 1928283,
+      "frames": 5165,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 6131,
+        "releases": 5165,
         "turns": 0,
-        "launched": 27,
-        "thrown": 28,
-        "parries": 18,
+        "launched": 21,
+        "thrown": 26,
+        "parries": 22,
         "caught": 0
       },
-      "sha256": "1d53abbc5b027d2027ba020a64b155315e88f5d2afe5f10db4f4afc1b8ce17c3"
+      "sha256": "a39502932cf24ff5bdf236c14c59c555222193a9f9d4931de59b8c3024b27132"
     },
     {
       "config": {
@@ -2837,21 +2837,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-0-4001-noaim.json.gz",
-      "bytes": 355424,
-      "frames": 4200,
+      "bytes": 305954,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
         "launched": 20,
-        "thrown": 15,
-        "parries": 4,
+        "thrown": 20,
+        "parries": 9,
         "caught": 0
       },
-      "sha256": "deb8e832d6845885ca5627d30cfec67ac3cf8d2335d88798af5cf5e3f8b6d1f8"
+      "sha256": "c5973c3d13697c99bb8f518ffcbf7593181624ca68dcaec4b9a42a50c6dbf5ff"
     },
     {
       "config": {
@@ -2862,21 +2862,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-0-4002-noaim.json.gz",
-      "bytes": 346837,
-      "frames": 4200,
+      "bytes": 305856,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 7,
-        "thrown": 8,
-        "parries": 1,
+        "launched": 13,
+        "thrown": 14,
+        "parries": 6,
         "caught": 0
       },
-      "sha256": "ae19cd153599ba31aa8a76fff87157f8a479efbefb6d5d8f26a4212d49e72105"
+      "sha256": "e9f464c4ef3464fae9c7bb375ca4879dfa20b829d147feb51c8408d903fded9f"
     },
     {
       "config": {
@@ -2887,21 +2887,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-0-4003-noaim.json.gz",
-      "bytes": 346832,
-      "frames": 4200,
+      "bytes": 301156,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 6,
-        "thrown": 6,
-        "parries": 1,
+        "launched": 4,
+        "thrown": 8,
+        "parries": 4,
         "caught": 0
       },
-      "sha256": "ed93fccbfea14576790addf170f870fca37d9c42d30e42d58298d9885437245f"
+      "sha256": "0e0ec04f976e5f3dc172467c644cb0edd1856d238c9eb4ba26db725d984a758d"
     },
     {
       "config": {
@@ -2912,21 +2912,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-1-4001-noaim.json.gz",
-      "bytes": 596726,
-      "frames": 7200,
+      "bytes": 458902,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 25,
-        "thrown": 22,
-        "parries": 6,
+        "launched": 14,
+        "thrown": 10,
+        "parries": 4,
         "caught": 0
       },
-      "sha256": "883791d4d7f943157497dd9f21dd46cf62aa58c3cba62051eab54942c680fc69"
+      "sha256": "a626765b677a055eeb5cb3bbf053801a9fe99df52c42d7dd532284337763f92f"
     },
     {
       "config": {
@@ -2937,21 +2937,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-1-4002-noaim.json.gz",
-      "bytes": 600267,
-      "frames": 7200,
+      "bytes": 460975,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 37,
-        "thrown": 30,
-        "parries": 13,
-        "caught": 1
+        "launched": 12,
+        "thrown": 12,
+        "parries": 6,
+        "caught": 0
       },
-      "sha256": "55defee0e95ad4c872b6dc9595765e2d8d68a844b64cc5b4df47f41e09dfdb73"
+      "sha256": "43eb58d6e4cf27f0191abca228ad9a4691b6f72aa9329607d8eb76aaab502462"
     },
     {
       "config": {
@@ -2962,21 +2962,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-1-4003-noaim.json.gz",
-      "bytes": 599286,
-      "frames": 7200,
+      "bytes": 458704,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 24,
-        "thrown": 25,
-        "parries": 11,
+        "launched": 9,
+        "thrown": 16,
+        "parries": 9,
         "caught": 0
       },
-      "sha256": "d41fd9329c5eda95af6fa01ea3fcd2d90d5e8b4a045e5d9b526f396272aad6a2"
+      "sha256": "c967f2f4575cd941f292b0539dd88ffabdc4955930277c250aa36de3ebf595ed"
     },
     {
       "config": {
@@ -2987,21 +2987,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-2-4001-noaim.json.gz",
-      "bytes": 830869,
-      "frames": 7200,
+      "bytes": 644800,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 46,
-        "thrown": 33,
-        "parries": 23,
+        "launched": 29,
+        "thrown": 20,
+        "parries": 10,
         "caught": 0
       },
-      "sha256": "d21c33f51782604efbf2fdf5099882e6bfe60931c933d7374daf100785d72265"
+      "sha256": "52493cf5c9d7cad87dafe94429be230b80377ab61aed0cd28dc6bd1aa3ac5a15"
     },
     {
       "config": {
@@ -3012,21 +3012,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-2-4002-noaim.json.gz",
-      "bytes": 825258,
-      "frames": 7200,
+      "bytes": 611202,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 47,
-        "thrown": 37,
-        "parries": 24,
+        "launched": 16,
+        "thrown": 20,
+        "parries": 11,
         "caught": 0
       },
-      "sha256": "4fa34a551f3cb27ca2a2dcc45164301aae7b12abc03efecd158002e3c4789737"
+      "sha256": "d1f6e0f0a272c9086e782dc7543abc6050d62e60dd8d78a2269c809550090662"
     },
     {
       "config": {
@@ -3037,21 +3037,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-2-4003-noaim.json.gz",
-      "bytes": 1066988,
-      "frames": 7200,
+      "bytes": 616780,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 32,
-        "thrown": 32,
-        "parries": 17,
+        "launched": 30,
+        "thrown": 36,
+        "parries": 24,
         "caught": 0
       },
-      "sha256": "8815d2a6f645ae6f6900f81b4f5006ecfddc42a9d20675035d0c390a6ae50aec"
+      "sha256": "ea3b955c4510df39f09812b9f13548f3069b0866870a41160440023fa2cec4cb"
     },
     {
       "config": {
@@ -3062,21 +3062,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-3-4001-noaim.json.gz",
-      "bytes": 1212118,
-      "frames": 7200,
+      "bytes": 1001047,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 6300,
         "turns": 0,
-        "launched": 47,
-        "thrown": 31,
-        "parries": 21,
+        "launched": 22,
+        "thrown": 21,
+        "parries": 8,
         "caught": 0
       },
-      "sha256": "a74b5a755972264751924308bc78d635f34d29dea5903f5bb41fd1f7fb77f9f0"
+      "sha256": "656588a0e49bcbb68d6b02746b66546c2880b2b5e4acf847e6a78888f0ee8883"
     },
     {
       "config": {
@@ -3087,21 +3087,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-3-4002-noaim.json.gz",
-      "bytes": 1110801,
-      "frames": 7200,
+      "bytes": 877590,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 6300,
         "turns": 0,
-        "launched": 42,
-        "thrown": 33,
-        "parries": 24,
+        "launched": 45,
+        "thrown": 41,
+        "parries": 23,
         "caught": 0
       },
-      "sha256": "453c5850bab668d7e69a011b3b52038df7dc558b45b69fb94eb94c622e86997f"
+      "sha256": "55ed1b04727d60f80ffb37266f98e868cda0b01533434b702eb379017cb89245"
     },
     {
       "config": {
@@ -3112,21 +3112,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-3-4003-noaim.json.gz",
-      "bytes": 1821874,
-      "frames": 7200,
+      "bytes": 1379967,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 6300,
         "turns": 0,
-        "launched": 57,
-        "thrown": 39,
-        "parries": 26,
-        "caught": 1
+        "launched": 24,
+        "thrown": 21,
+        "parries": 14,
+        "caught": 0
       },
-      "sha256": "22baaa5e38f16470a047b2dfe9778a15fc243e0dd6c6e1fa15a250e938f432bf"
+      "sha256": "904a95200c72856c4127cc41308bccbcefe07f783f6e222f83fc550382298faa"
     },
     {
       "config": {
@@ -3137,21 +3137,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-4-4001-noaim.json.gz",
-      "bytes": 1994172,
-      "frames": 7200,
+      "bytes": 1967554,
+      "frames": 5633,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5633,
         "turns": 0,
-        "launched": 46,
-        "thrown": 35,
+        "launched": 28,
+        "thrown": 31,
         "parries": 27,
         "caught": 0
       },
-      "sha256": "85ed9c469f45a8b65e0106a5e57f917322f1671ee5c0377f379fc580e2b537d0"
+      "sha256": "8493f9505ed1bed91af7afb9c2d95d3c424684ab6a0c0e93e7c03d223a9186c7"
     },
     {
       "config": {
@@ -3162,21 +3162,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-4-4002-noaim.json.gz",
-      "bytes": 2342819,
-      "frames": 7200,
+      "bytes": 1544787,
+      "frames": 5103,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5103,
         "turns": 0,
-        "launched": 39,
-        "thrown": 42,
-        "parries": 34,
+        "launched": 28,
+        "thrown": 23,
+        "parries": 12,
         "caught": 0
       },
-      "sha256": "cf5d6998e90984a3121a44570cde8e079bb3ce262717745862ae084dfc85e50c"
+      "sha256": "bf1ad0cc19a4499461d6ef00df2bc1a6d76583a5b88a32577dd0a29ab8820155"
     },
     {
       "config": {
@@ -3187,21 +3187,21 @@
         "aim": false
       },
       "file": "buffs/buff-gold-4-4003-noaim.json.gz",
-      "bytes": 1839208,
-      "frames": 5197,
+      "bytes": 2023200,
+      "frames": 5662,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 5197,
+        "releases": 5662,
         "turns": 0,
-        "launched": 22,
-        "thrown": 29,
-        "parries": 24,
+        "launched": 23,
+        "thrown": 40,
+        "parries": 25,
         "caught": 0
       },
-      "sha256": "390cb2973131c5199b685edcde73a79c7ed4728f75878447873a50164dc7aac7"
+      "sha256": "4566c6fca394caf1dca09c7cb3f6364e4b81a5dfd219c7cc8bd06e9ab5d9d44c"
     },
     {
       "config": {
@@ -3212,21 +3212,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-0-4001-noaim.json.gz",
-      "bytes": 355361,
-      "frames": 4200,
+      "bytes": 305867,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
         "launched": 20,
-        "thrown": 15,
-        "parries": 4,
+        "thrown": 20,
+        "parries": 9,
         "caught": 0
       },
-      "sha256": "ada3e6ad6833fe0081f03930f9fd081fbfacc658e12b094eecab9bddb4215ea5"
+      "sha256": "9fc6636d21d8774a758b2dd8774c5c6d9855a689752dc3859c06af9ee1b571e3"
     },
     {
       "config": {
@@ -3237,21 +3237,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-0-4002-noaim.json.gz",
-      "bytes": 346815,
-      "frames": 4200,
+      "bytes": 305704,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 7,
-        "thrown": 8,
-        "parries": 1,
+        "launched": 13,
+        "thrown": 14,
+        "parries": 6,
         "caught": 0
       },
-      "sha256": "473fda75c63c5b6b7b2247f86ba405ffb37873e9788a06e9c5423bebb518b210"
+      "sha256": "5f11f9d3034380572a659f059e898f62fa6bf249d33c42681215c831b263d665"
     },
     {
       "config": {
@@ -3262,21 +3262,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-0-4003-noaim.json.gz",
-      "bytes": 346929,
-      "frames": 4200,
+      "bytes": 301088,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 6,
-        "thrown": 6,
-        "parries": 1,
+        "launched": 4,
+        "thrown": 8,
+        "parries": 4,
         "caught": 0
       },
-      "sha256": "0110b6788c0818de16d53d06424b1da951774dc0e7e4673179558878d2f6074d"
+      "sha256": "bf1b82b8be9e4fde93cc3a01094ec5263d359c26814d29abf1c28f36b02ad1c6"
     },
     {
       "config": {
@@ -3287,21 +3287,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-1-4001-noaim.json.gz",
-      "bytes": 596537,
-      "frames": 7200,
+      "bytes": 458892,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 25,
-        "thrown": 22,
-        "parries": 6,
+        "launched": 14,
+        "thrown": 10,
+        "parries": 4,
         "caught": 0
       },
-      "sha256": "f79b8d9ddd841980079e1c612220c234204fec0bb2fe17b2fb5cffcb2253c148"
+      "sha256": "4170a219aa5d99239d69eb44166fe8baaa8862c09996d1a611c37d403c53686f"
     },
     {
       "config": {
@@ -3312,21 +3312,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-1-4002-noaim.json.gz",
-      "bytes": 599851,
-      "frames": 7200,
+      "bytes": 461009,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 38,
-        "thrown": 29,
-        "parries": 11,
-        "caught": 1
+        "launched": 12,
+        "thrown": 12,
+        "parries": 6,
+        "caught": 0
       },
-      "sha256": "c0e31cae5c62761f5b9996dd2c5805d44a71afba236876bf682362f5b5b76961"
+      "sha256": "f17b8555d5b9e32b9c57acb423c72011fe170b42d4772fbfcc59c4001ba491ea"
     },
     {
       "config": {
@@ -3337,21 +3337,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-1-4003-noaim.json.gz",
-      "bytes": 599478,
-      "frames": 7200,
+      "bytes": 458687,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 24,
-        "thrown": 25,
-        "parries": 11,
+        "launched": 9,
+        "thrown": 16,
+        "parries": 9,
         "caught": 0
       },
-      "sha256": "accb246c5f6001a37437f5855d008f99609fc7bee03e77acec0710c36a421596"
+      "sha256": "9c6e770af873548a9c2513fa927a88fc95c942a79e968cd65e14851e8e83bc72"
     },
     {
       "config": {
@@ -3362,21 +3362,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-2-4001-noaim.json.gz",
-      "bytes": 822057,
-      "frames": 7200,
+      "bytes": 644860,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 34,
-        "thrown": 32,
-        "parries": 21,
-        "caught": 1
+        "launched": 29,
+        "thrown": 20,
+        "parries": 10,
+        "caught": 0
       },
-      "sha256": "f800158a1fec15e34a10eb3a04448227b8f7f871ae49faef95158409df325b6f"
+      "sha256": "7ee390e2d40a371caef9c67e19e4a0956f68625bf87559ea5e4979f7d0c74d7f"
     },
     {
       "config": {
@@ -3387,21 +3387,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-2-4002-noaim.json.gz",
-      "bytes": 825284,
-      "frames": 7200,
+      "bytes": 611113,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 47,
-        "thrown": 37,
-        "parries": 24,
+        "launched": 16,
+        "thrown": 20,
+        "parries": 11,
         "caught": 0
       },
-      "sha256": "dd527ea6ecdee611acd6005143b0f85b52b29ff5b3259ef97fff81defee1dbc0"
+      "sha256": "80af376639a3ab6b95cdb7c2a0956f028412ad89fd4ce3f97c7db26073308d01"
     },
     {
       "config": {
@@ -3412,21 +3412,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-2-4003-noaim.json.gz",
-      "bytes": 1066800,
-      "frames": 7200,
+      "bytes": 616709,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 32,
-        "thrown": 32,
-        "parries": 17,
+        "launched": 30,
+        "thrown": 36,
+        "parries": 24,
         "caught": 0
       },
-      "sha256": "cd17084f85d1d4ec08a97776ccc1f082ce41915f97a2702613597e5b4b35868c"
+      "sha256": "c1a2174da1d9596ed3d2e0ad6a0f00b1d0da130f825c60706cba3967983b0464"
     },
     {
       "config": {
@@ -3437,21 +3437,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-3-4001-noaim.json.gz",
-      "bytes": 1206430,
-      "frames": 7200,
+      "bytes": 1000522,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 6300,
         "turns": 0,
-        "launched": 47,
-        "thrown": 31,
-        "parries": 21,
+        "launched": 22,
+        "thrown": 21,
+        "parries": 8,
         "caught": 0
       },
-      "sha256": "52b96e4061530e7a0f5da6a5e6c8aa42e0e88ed60c2476072889685bb77c4c6f"
+      "sha256": "79adffeba1bf634c6a7190b4b44efc9bc575b24ef8640accf889defae29264dd"
     },
     {
       "config": {
@@ -3462,21 +3462,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-3-4002-noaim.json.gz",
-      "bytes": 1105080,
-      "frames": 7200,
+      "bytes": 875017,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 6300,
         "turns": 0,
-        "launched": 42,
-        "thrown": 33,
-        "parries": 24,
+        "launched": 45,
+        "thrown": 41,
+        "parries": 23,
         "caught": 0
       },
-      "sha256": "a0e3efbd87c27dca5b6dd31e99cbdeab1f16eb2d26e0bd4dc7838e73e76f110b"
+      "sha256": "fcad9cef36067847364d31db57e6e57e1dcf81471eeb297e79164b3b13af71ca"
     },
     {
       "config": {
@@ -3487,21 +3487,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-3-4003-noaim.json.gz",
-      "bytes": 1035179,
-      "frames": 6217,
+      "bytes": 1374752,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 6217,
+        "releases": 6300,
         "turns": 0,
-        "launched": 30,
-        "thrown": 27,
-        "parries": 24,
-        "caught": 1
+        "launched": 24,
+        "thrown": 21,
+        "parries": 14,
+        "caught": 0
       },
-      "sha256": "6b6cd02c379bc8095795dee20333da8e6c2794850238ca7c0d63361f358829f2"
+      "sha256": "dba2daf164eceeabd6c0c28a009f1b4b0d4d2e4958726881f0f68423d0524baa"
     },
     {
       "config": {
@@ -3512,21 +3512,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-4-4001-noaim.json.gz",
-      "bytes": 2140172,
-      "frames": 7200,
+      "bytes": 1965859,
+      "frames": 5633,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5633,
         "turns": 0,
-        "launched": 31,
-        "thrown": 30,
-        "parries": 30,
-        "caught": 2
+        "launched": 28,
+        "thrown": 31,
+        "parries": 27,
+        "caught": 0
       },
-      "sha256": "ff9fe580ed7d2024bc81228ff600fcd29ddc2e4e1b143288759b12c2ae70402f"
+      "sha256": "33662cda9ff6ca4519909f26cf6d62c488552a0c7506b370898ade6c83f70d19"
     },
     {
       "config": {
@@ -3537,7 +3537,7 @@
         "aim": false
       },
       "file": "buffs/buff-news-4-4002-noaim.json.gz",
-      "bytes": 2341118,
+      "bytes": 2321742,
       "frames": 7200,
       "coverage": {
         "presses": 0,
@@ -3546,12 +3546,12 @@
         "light": 0,
         "releases": 7200,
         "turns": 0,
-        "launched": 39,
-        "thrown": 42,
-        "parries": 34,
-        "caught": 0
+        "launched": 47,
+        "thrown": 49,
+        "parries": 39,
+        "caught": 1
       },
-      "sha256": "37a8c13b39dca7e0e7aa51d15f47e8cadcd1a867589b62b279f235238f4e9bed"
+      "sha256": "ee4b2a4dadde05e02ee46c4404e8348ffce847ff7e563cabaddeb4a8c1ddb083"
     },
     {
       "config": {
@@ -3562,21 +3562,21 @@
         "aim": false
       },
       "file": "buffs/buff-news-4-4003-noaim.json.gz",
-      "bytes": 1721008,
-      "frames": 4930,
+      "bytes": 2021773,
+      "frames": 5662,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4930,
+        "releases": 5662,
         "turns": 0,
-        "launched": 25,
-        "thrown": 33,
-        "parries": 28,
-        "caught": 1
+        "launched": 23,
+        "thrown": 40,
+        "parries": 25,
+        "caught": 0
       },
-      "sha256": "ce046b2325b38f8267ba87099354107b9897fc1e4b2ea87cf5c5a459150623e9"
+      "sha256": "5fc96b0f3af25fc9a2f37005ccdf6c04b6de685fda318d4d38280623e3e2783c"
     },
     {
       "config": {
@@ -3587,21 +3587,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-0-4001-noaim.json.gz",
-      "bytes": 351324,
-      "frames": 4200,
+      "bytes": 302559,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 7,
-        "thrown": 10,
-        "parries": 5,
+        "launched": 6,
+        "thrown": 12,
+        "parries": 7,
         "caught": 0
       },
-      "sha256": "ce9185bb71a4ea44bd4511c9f2d0de2b1701f017d1a3c25b15d05a54eb18c161"
+      "sha256": "c848266063a63f4c60787460e991d778b389e8109351a4c4ffc1f197b132d2ba"
     },
     {
       "config": {
@@ -3612,21 +3612,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-0-4002-noaim.json.gz",
-      "bytes": 348865,
-      "frames": 4200,
+      "bytes": 306647,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 10,
-        "thrown": 11,
-        "parries": 3,
+        "launched": 18,
+        "thrown": 19,
+        "parries": 6,
         "caught": 0
       },
-      "sha256": "262f68178dcaf1e14430635200ff57a2be0c9cb0775afadeaaa434ae6f5f91c4"
+      "sha256": "488936dcfc2676a0eaeb73e9fa7fb53801bbb4a06780b5845befc9cc27c5ce05"
     },
     {
       "config": {
@@ -3637,21 +3637,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-0-4003-noaim.json.gz",
-      "bytes": 347477,
-      "frames": 4200,
+      "bytes": 300200,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
         "launched": 7,
-        "thrown": 8,
-        "parries": 4,
+        "thrown": 7,
+        "parries": 0,
         "caught": 0
       },
-      "sha256": "98a6c0bfffadec5a4be8383e3c7260388bc44ecae83d35da1d04ad2ca35973fc"
+      "sha256": "027cc62b31d75410174e8a4c81ac73140ffcc69e32257142b3750a6a8d5b01d8"
     },
     {
       "config": {
@@ -3662,21 +3662,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-1-4001-noaim.json.gz",
-      "bytes": 604284,
-      "frames": 7200,
+      "bytes": 454269,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 26,
-        "thrown": 30,
-        "parries": 15,
+        "launched": 12,
+        "thrown": 10,
+        "parries": 2,
         "caught": 1
       },
-      "sha256": "b4fc34117f0abc85c4fbaa999920c45d0c1cfde2f59c499d3630aa021bbf7b66"
+      "sha256": "30409746b1f629f99905e50e0afa0d3a06bf202272369e175bb9070d359b605e"
     },
     {
       "config": {
@@ -3687,21 +3687,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-1-4002-noaim.json.gz",
-      "bytes": 608037,
-      "frames": 7200,
+      "bytes": 453041,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 25,
-        "thrown": 18,
-        "parries": 8,
+        "launched": 20,
+        "thrown": 16,
+        "parries": 9,
         "caught": 0
       },
-      "sha256": "ca840fd0fddba52707ec439a468c2e649edabffcbb536c9c48f4c1cc6de1fa1f"
+      "sha256": "ca3c35037c32f1cc54233350f05499ef36c4cf1a0ebf47a8886048be2cd679c1"
     },
     {
       "config": {
@@ -3712,21 +3712,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-1-4003-noaim.json.gz",
-      "bytes": 607443,
-      "frames": 7200,
+      "bytes": 456092,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 34,
-        "thrown": 34,
-        "parries": 18,
-        "caught": 0
+        "launched": 12,
+        "thrown": 11,
+        "parries": 5,
+        "caught": 1
       },
-      "sha256": "a61c94c20b18f13a9f9743ad0a539f21acf0cf7c74cf433c617598475dc1b002"
+      "sha256": "cbdcba6dccc21a6b56b26b6011558df226f939e01a6deff245cbe8d37caac056"
     },
     {
       "config": {
@@ -3737,21 +3737,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-2-4001-noaim.json.gz",
-      "bytes": 845773,
-      "frames": 7200,
+      "bytes": 613488,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 33,
-        "thrown": 33,
-        "parries": 22,
-        "caught": 1
+        "launched": 15,
+        "thrown": 20,
+        "parries": 15,
+        "caught": 0
       },
-      "sha256": "73d65ddae6aeafa96e829320ea96405d5f1afb816090aeb4605951f47b6ea045"
+      "sha256": "b23505fdb14a1d8e91cda5cde4cb5f4bb3f3f62517542756bb60c18bb53d1829"
     },
     {
       "config": {
@@ -3762,21 +3762,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-2-4002-noaim.json.gz",
-      "bytes": 829010,
-      "frames": 7200,
+      "bytes": 732531,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 36,
-        "thrown": 28,
+        "launched": 26,
+        "thrown": 21,
         "parries": 14,
         "caught": 1
       },
-      "sha256": "7d662860e47dbe98a711432d398e6fe570449b447340e2f09abb0b54e5f3be33"
+      "sha256": "9108021fa730f07c9e8e483c09ebcaee3e715fb4f21b40261e40ef87bfff4cdf"
     },
     {
       "config": {
@@ -3787,21 +3787,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-2-4003-noaim.json.gz",
-      "bytes": 834441,
-      "frames": 7200,
+      "bytes": 613492,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 39,
-        "thrown": 28,
-        "parries": 18,
+        "launched": 13,
+        "thrown": 26,
+        "parries": 20,
         "caught": 1
       },
-      "sha256": "ec3d86efe037ab8b55e1f3cf6157c97dae293392e654994de80fd2322ea1958b"
+      "sha256": "57ec72546ae0c457dacf1d981ec4d1bf866562fbd58a9444969f961ea0ea75c1"
     },
     {
       "config": {
@@ -3812,21 +3812,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-3-4001-noaim.json.gz",
-      "bytes": 926917,
-      "frames": 5217,
+      "bytes": 1261823,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 5217,
+        "releases": 6300,
         "turns": 0,
-        "launched": 27,
-        "thrown": 25,
-        "parries": 19,
-        "caught": 1
+        "launched": 22,
+        "thrown": 33,
+        "parries": 22,
+        "caught": 0
       },
-      "sha256": "0d25ef4890e609637f560494cfd79766890b043490620b6798663b000ac8c9c3"
+      "sha256": "d14bd1dedae72588a059d4138a7a9f05e84f2c80d1deba434ff9196317fc5e47"
     },
     {
       "config": {
@@ -3837,21 +3837,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-3-4002-noaim.json.gz",
-      "bytes": 1723041,
-      "frames": 7200,
+      "bytes": 1293347,
+      "frames": 5208,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5208,
         "turns": 0,
-        "launched": 25,
-        "thrown": 43,
-        "parries": 38,
-        "caught": 1
+        "launched": 26,
+        "thrown": 27,
+        "parries": 23,
+        "caught": 0
       },
-      "sha256": "69f844e9217d5582c5946250630da68bbe7955d45f96f7afa1327e16917389bf"
+      "sha256": "cd6b920a360596252b8b49cd1f656c9ec1b86ab1bf905c635bdb186931c16e79"
     },
     {
       "config": {
@@ -3862,21 +3862,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-3-4003-noaim.json.gz",
-      "bytes": 1695175,
-      "frames": 7200,
+      "bytes": 2133886,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 6300,
         "turns": 0,
-        "launched": 27,
-        "thrown": 29,
-        "parries": 19,
+        "launched": 25,
+        "thrown": 27,
+        "parries": 11,
         "caught": 0
       },
-      "sha256": "5c2bc49ea6b0db1307fa2bcd1a76271377041462a088dc33580c92afbc6438a2"
+      "sha256": "da1a2b14dd8aad7f03ff2480699fbc01b3f9ce360eaabec6d08d0250bd4bb2e8"
     },
     {
       "config": {
@@ -3887,21 +3887,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-4-4001-noaim.json.gz",
-      "bytes": 501444,
-      "frames": 1637,
+      "bytes": 2463767,
+      "frames": 7200,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 1637,
+        "releases": 7200,
         "turns": 0,
-        "launched": 7,
-        "thrown": 5,
-        "parries": 8,
+        "launched": 33,
+        "thrown": 35,
+        "parries": 20,
         "caught": 0
       },
-      "sha256": "b297cd22fd46976dedcfe6c8640e6b8ddb7af15e4747d1f9fd71d1eeecdeca72"
+      "sha256": "5da160db43931e043ae0e59bf8cd75e6989b70b964d0066c359010496751398e"
     },
     {
       "config": {
@@ -3912,21 +3912,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-4-4002-noaim.json.gz",
-      "bytes": 1381159,
-      "frames": 5609,
+      "bytes": 741753,
+      "frames": 2271,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 5609,
+        "releases": 2271,
         "turns": 0,
-        "launched": 30,
-        "thrown": 38,
-        "parries": 37,
+        "launched": 5,
+        "thrown": 9,
+        "parries": 8,
         "caught": 0
       },
-      "sha256": "c8249c0414dae8d0e09d1df60360146e6116c513fa735a4facab236eb0017fa7"
+      "sha256": "0c3f75374d8754d567e686409c2de657f506a081be7a6233c09324f700e95da5"
     },
     {
       "config": {
@@ -3937,21 +3937,21 @@
         "aim": false
       },
       "file": "buffs/buff-legs-4-4003-noaim.json.gz",
-      "bytes": 794649,
-      "frames": 2558,
+      "bytes": 1779837,
+      "frames": 7200,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 2558,
+        "releases": 7200,
         "turns": 0,
-        "launched": 18,
-        "thrown": 16,
-        "parries": 9,
+        "launched": 30,
+        "thrown": 25,
+        "parries": 16,
         "caught": 0
       },
-      "sha256": "0f02db0db2fe08d0f795d98873e1ca3aebfe4f2d0f88903a6786a94bf15f1437"
+      "sha256": "e3d60cec0da7467349d7a2322de076c209ab5c76535b4171d33166881d8ac78c"
     },
     {
       "config": {
@@ -3962,21 +3962,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-early-0-5001-noaim.json.gz",
-      "bytes": 352781,
-      "frames": 4200,
+      "bytes": 308052,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
         "launched": 15,
-        "thrown": 19,
-        "parries": 5,
+        "thrown": 18,
+        "parries": 7,
         "caught": 0
       },
-      "sha256": "285dd375854f8e41a1f77991ad8cf10461508f161f7acf78d6fe20de1a40493e"
+      "sha256": "f990964c001985f44867055f0e535ae299d40e90d69fc61cf9fbd77fb20b19c6"
     },
     {
       "config": {
@@ -3987,21 +3987,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-late-0-5001-noaim.json.gz",
-      "bytes": 399353,
-      "frames": 4802,
+      "bytes": 351559,
+      "frames": 4202,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4802,
+        "releases": 4202,
         "turns": 0,
-        "launched": 20,
-        "thrown": 20,
-        "parries": 5,
+        "launched": 3,
+        "thrown": 4,
+        "parries": 1,
         "caught": 0
       },
-      "sha256": "55760c374e9dc1d8a7e3afb984bc825016370562e53720d64c510151348cae72"
+      "sha256": "d2e6bf9a943cc32042582b3ebd4e9c38d318754a481f106e8398e00083b38981"
     },
     {
       "config": {
@@ -4012,21 +4012,21 @@
         "aim": false
       },
       "file": "ads/ad-rescue-0-5001-noaim.json.gz",
-      "bytes": 349583,
-      "frames": 4200,
+      "bytes": 302182,
+      "frames": 3600,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 4200,
+        "releases": 3600,
         "turns": 0,
-        "launched": 13,
-        "thrown": 15,
-        "parries": 5,
+        "launched": 4,
+        "thrown": 4,
+        "parries": 1,
         "caught": 0
       },
-      "sha256": "cfc588012a0d7c1a0a12434e4d3d48c696f60f830b87aaf181cd0dacd3fd1b82"
+      "sha256": "a7f414e0f06f5f6c9b99ed1d2646dc71ef5414dc5765335506cfdb16978ccb10"
     },
     {
       "config": {
@@ -4037,21 +4037,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-early-1-5001-noaim.json.gz",
-      "bytes": 606176,
-      "frames": 7200,
+      "bytes": 464640,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 33,
-        "thrown": 29,
-        "parries": 14,
-        "caught": 0
+        "launched": 18,
+        "thrown": 21,
+        "parries": 11,
+        "caught": 1
       },
-      "sha256": "f757b60923ded5b486c3f53fcf2b163fd6856e92fd9e0e49da88da697d11079c"
+      "sha256": "5daf90e6119e43499a4ae569d4fd40b8af460dbf4f5d6297979be66d30016832"
     },
     {
       "config": {
@@ -4062,21 +4062,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-late-1-5001-noaim.json.gz",
-      "bytes": 635630,
-      "frames": 7802,
+      "bytes": 504819,
+      "frames": 6002,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7802,
+        "releases": 6002,
         "turns": 0,
-        "launched": 18,
-        "thrown": 15,
-        "parries": 4,
-        "caught": 0
+        "launched": 17,
+        "thrown": 17,
+        "parries": 5,
+        "caught": 1
       },
-      "sha256": "6498ebf56af7f378cc0e469913b51b53f08e3f2c17c16d1adf148f0b541770b5"
+      "sha256": "b090397b9704074be7258d0919345b5f8f23c816ff440f5a387db1257e55ef54"
     },
     {
       "config": {
@@ -4087,21 +4087,21 @@
         "aim": false
       },
       "file": "ads/ad-rescue-1-5001-noaim.json.gz",
-      "bytes": 583419,
-      "frames": 7200,
+      "bytes": 454954,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 14,
-        "thrown": 12,
-        "parries": 2,
-        "caught": 0
+        "launched": 17,
+        "thrown": 16,
+        "parries": 4,
+        "caught": 1
       },
-      "sha256": "539237472cd8a24805de3a9f350d48e272c4b62bb86a077287ed5d89f9336963"
+      "sha256": "85d7e1a8e6c5198b24d7214ad00df149b0f375ec265fb3a49dda679bfcf9e81a"
     },
     {
       "config": {
@@ -4112,21 +4112,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-early-2-5001-noaim.json.gz",
-      "bytes": 820028,
-      "frames": 7200,
+      "bytes": 685007,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 32,
+        "launched": 36,
         "thrown": 32,
-        "parries": 27,
+        "parries": 23,
         "caught": 0
       },
-      "sha256": "b93ec391ec6b1fcddd49867c897c12a33f6103301ac62b088056fae93bf3ba73"
+      "sha256": "e4cf1ff133b19d508e8391d5864ee51ca0a275d25d0808d996b1027db6d90b49"
     },
     {
       "config": {
@@ -4137,21 +4137,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-late-2-5002-noaim.json.gz",
-      "bytes": 919041,
-      "frames": 7802,
+      "bytes": 678057,
+      "frames": 6002,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7802,
+        "releases": 6002,
         "turns": 0,
-        "launched": 41,
-        "thrown": 43,
-        "parries": 39,
+        "launched": 28,
+        "thrown": 24,
+        "parries": 14,
         "caught": 0
       },
-      "sha256": "693317aeb9fa3e8253a2517d7150250ecf258f4744218dec6dee5cf154173b40"
+      "sha256": "a452b995a6bb0bf9ca0421b425452e03509e8f6c8ae583683a9c0e944f6761cf"
     },
     {
       "config": {
@@ -4162,21 +4162,21 @@
         "aim": false
       },
       "file": "ads/ad-rescue-2-5002-noaim.json.gz",
-      "bytes": 851235,
-      "frames": 7200,
+      "bytes": 610648,
+      "frames": 5400,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 5400,
         "turns": 0,
-        "launched": 38,
-        "thrown": 38,
-        "parries": 32,
+        "launched": 25,
+        "thrown": 19,
+        "parries": 9,
         "caught": 0
       },
-      "sha256": "bb349f6c1375b6ad3f7105d3f9e6efd355d881f136410babececf8464fe1a097"
+      "sha256": "1b298a9e34fad5afa9bb01a62305a76000d4e6360466be3aff9c40fe3e78a75c"
     },
     {
       "config": {
@@ -4187,21 +4187,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-early-3-5001-noaim.json.gz",
-      "bytes": 2665784,
-      "frames": 7200,
+      "bytes": 1956782,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 6300,
         "turns": 0,
-        "launched": 36,
-        "thrown": 37,
-        "parries": 24,
+        "launched": 33,
+        "thrown": 36,
+        "parries": 28,
         "caught": 0
       },
-      "sha256": "3b0cd1f6fd5e573b22c1db15bf57aa5e2c9e99bf5c777da591e24c975cbc2a56"
+      "sha256": "4b1aa195d24c2d48124e885ba33cf539d7e2ac4ce03963594017c471a0053b7b"
     },
     {
       "config": {
@@ -4212,21 +4212,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-late-3-5001-noaim.json.gz",
-      "bytes": 2214250,
-      "frames": 7636,
+      "bytes": 1847968,
+      "frames": 6300,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7636,
+        "releases": 6300,
         "turns": 0,
-        "launched": 36,
-        "thrown": 46,
-        "parries": 24,
+        "launched": 32,
+        "thrown": 40,
+        "parries": 25,
         "caught": 0
       },
-      "sha256": "e5f77d39a891b2abae529f1d39c2ad55b8c80a5f72946fe9c705f2571d20760b"
+      "sha256": "324ce47147c2f90ee11d5a5d8475720d78df115cef64fc1c7877a03ccaeee593"
     },
     {
       "config": {
@@ -4237,21 +4237,21 @@
         "aim": false
       },
       "file": "ads/ad-rescue-3-5001-noaim.json.gz",
-      "bytes": 2001471,
-      "frames": 7200,
+      "bytes": 1098082,
+      "frames": 4520,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 4520,
         "turns": 0,
-        "launched": 34,
-        "thrown": 44,
-        "parries": 22,
+        "launched": 22,
+        "thrown": 23,
+        "parries": 12,
         "caught": 0
       },
-      "sha256": "2f958f1fd142b5356096d3b30204a819872180ed2f834b54abb1331d4d0cb541"
+      "sha256": "30fa71a2ae730c99a58d3700a3616385b848abcf379c46d31cca830049465d22"
     },
     {
       "config": {
@@ -4262,21 +4262,21 @@
         "aim": false
       },
       "file": "ads/ad-revive-early-4-5001-noaim.json.gz",
-      "bytes": 2560090,
-      "frames": 7200,
+      "bytes": 617479,
+      "frames": 1659,
       "coverage": {
         "presses": 0,
         "whiffs": 0,
         "coolPresses": 0,
         "light": 0,
-        "releases": 7200,
+        "releases": 1659,
         "turns": 0,
-        "launched": 33,
-        "thrown": 34,
-        "parries": 27,
-        "caught": 1
+        "launched": 13,
+        "thrown": 11,
+        "parries": 8,
+        "caught": 0
       },
-      "sha256": "187de36c56a3c5ddc249d7c7205363482c673bd46ad980d68c0f5d9e9825fc89"
+      "sha256": "931c788852650649374381c7022adaab55cd7ea54bf7af51abe7cd93c5b4f96b"
     },
     {
       "config": {
@@ -4287,7 +4287,7 @@
         "aim": false
       },
       "file": "ads/ad-revive-late-4-5001-noaim.json.gz",
-      "bytes": 2576694,
+      "bytes": 2814496,
       "frames": 7802,
       "coverage": {
         "presses": 0,
@@ -4296,12 +4296,12 @@
         "light": 0,
         "releases": 7802,
         "turns": 0,
-        "launched": 26,
-        "thrown": 28,
-        "parries": 24,
-        "caught": 0
+        "launched": 51,
+        "thrown": 54,
+        "parries": 41,
+        "caught": 2
       },
-      "sha256": "ed452711cb4a5557430c67aa56caeb2e882a441e0c299bc5b0859a3b76ab7925"
+      "sha256": "4fc912589acf6754a209db83f4a3e13ee6d587b7bf473f4703ad75b70e1c42f2"
     },
     {
       "config": {
@@ -4312,7 +4312,7 @@
         "aim": false
       },
       "file": "ads/ad-rescue-4-5001-noaim.json.gz",
-      "bytes": 2295744,
+      "bytes": 2689963,
       "frames": 7200,
       "coverage": {
         "presses": 0,
@@ -4321,12 +4321,12 @@
         "light": 0,
         "releases": 7200,
         "turns": 0,
-        "launched": 26,
-        "thrown": 28,
-        "parries": 24,
-        "caught": 0
+        "launched": 51,
+        "thrown": 54,
+        "parries": 39,
+        "caught": 2
       },
-      "sha256": "86fe6c9099e82f2d0223368a5288f25f0eac8d58886c809cf32a9022849a548f"
+      "sha256": "5c16d62fed2220701428942080e8ffc409c2bf59c5984d6888dbcf11ea56f3d4"
     }
   ],
   "hashFormat": "sha256:canonical-json-sorted-keys-v1"

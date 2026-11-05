@@ -17,7 +17,7 @@ test('启动远端不阻塞缓存，白名单缓存次启动先用，本局配�
   const f=fixture();f.disk.set('shuaiguo_cloud_config',JSON.stringify({version:1,levels:{1:{duration:80}}}));
   let resolveConfig;f.setRoute(async(name,data)=>name==='config'?await new Promise(r=>resolveConfig=r):{ok:true,data:data.progress||{unlocked:1,best:{}}});
   const service=new CloudServices(f.platform,f.store),start=service.start();
-  assert.equal(service.level(0).duration,80);const m=new Match({seed:1,levelParams:service.level(0)});
+  assert.equal(service.level(0).duration,80);const m=new Match({itemDrops:false,seed:1,levelParams:service.level(0)});
   await delay(0);resolveConfig({ok:true,data:{version:2,levels:{1:{duration:90,potLife:900}}}});await start;
   assert.equal(m.L.duration,80);assert.equal(service.level(0).duration,90);assert.equal(service.level(0).potLife,40);
   const next=new CloudServices(f.platform,f.store);assert.equal(next.level(0).duration,90);next.dispose();service.dispose();
@@ -50,7 +50,7 @@ test('微信本地存储与新时间戳旧档兼容；好友KV只写最小总账
   const kv=f.calls.filter(c=>c.name==='friend').at(-1).data;assert.deepEqual(kv,[{key:'sg_debt_v1_1',value:'{"v":1,"debt":2}'}]);s.dispose();
 });
 test('simulate不触发云：只接外围事件，真实core模拟不访问平台',()=>{
-  const f=fixture(),s=new CloudServices(f.platform,f.store),m=new Match({seed:1,simulating:true});m.simulate(0,1,1);assert.equal(f.calls.length,0);assert.equal(f.disk.size,0);s.dispose();
+  const f=fixture(),s=new CloudServices(f.platform,f.store),m=new Match({itemDrops:false,seed:1,simulating:true});m.simulate(0,1,1);assert.equal(f.calls.length,0);assert.equal(f.disk.size,0);s.dispose();
 });
 test('离线继续使用缓存，网页不建立队列或访问任何云接口',async()=>{
   const f=fixture();f.disk.set('shuaiguo_cloud_config','{"version":1,"levels":{"1":{"duration":80}}}');f.setRoute(async()=>({ok:false,error:'offline'}));let s=new CloudServices(f.platform,f.store);await s.start();assert.equal(s.level(0).duration,80);s.dispose();

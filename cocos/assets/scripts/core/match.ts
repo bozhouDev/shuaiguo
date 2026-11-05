@@ -7,14 +7,17 @@ import { leadersLogic } from './leaders';
 import { scheduleLogic } from './schedule';
 import { tutorialLogic } from './tutorial';
 import { agentsLogic } from './agents';
+import { itemsLogic } from './items';
 import { createNAV } from './navigation';
 import { createTIP_CHECKS } from './tips';
 import { createTUT_STEPS } from './tutorial-steps';
 import * as C from './config';
+import {hypotheticalRank} from './verdict';
 import { simulate } from './simulate';
 import {isBetterBest} from './progress';
 import type { State, Level, Input, MatchOptions, CoreEvent, Hint, Fx, Progress } from './types';
 
+type ItemsLogic = typeof itemsLogic;
 type StateLogic = typeof stateLogic;
 type PotsLogic = typeof potsLogic;
 type LeadersLogic = typeof leadersLogic;
@@ -22,7 +25,7 @@ type ScheduleLogic = typeof scheduleLogic;
 type TutorialLogic = typeof tutorialLogic;
 type AgentsLogic = typeof agentsLogic;
 // 分文件的方法仍属于同一对局对象，互相调用不使用全局变量。
-export interface Match extends StateLogic, PotsLogic, LeadersLogic, ScheduleLogic, TutorialLogic, AgentsLogic {}
+export interface Match extends ItemsLogic, StateLogic, PotsLogic, LeadersLogic, ScheduleLogic, TutorialLogic, AgentsLogic {}
 export class Match {
   S!: State;
   L: Level;
@@ -33,6 +36,7 @@ export class Match {
   forceTut = false;
   auto: boolean;
   simulating: boolean;
+  itemDrops: boolean;
   mode = 'play';
   hintTimer = 0;
   msgTimer = 0;
@@ -46,18 +50,20 @@ export class Match {
 
   // 方法逐个绑定，保留原型把 makeLeader/tutNext/raging 直接当回调传递的写法。
   constructor(options: MatchOptions) {
-    const logic = { ...stateLogic, ...potsLogic, ...leadersLogic, ...scheduleLogic, ...tutorialLogic, ...agentsLogic };
+    const logic = { ...stateLogic, ...potsLogic, ...leadersLogic, ...scheduleLogic, ...tutorialLogic, ...agentsLogic, ...itemsLogic };
     for (const [name, fn] of Object.entries(logic)) Object.defineProperty(this, name, { value: fn.bind(this), configurable: true });
     this.onEvent = options.onEvent;
     this.L = options.levelParams ? JSON.parse(JSON.stringify(options.levelParams)) : LEVELS[options.level ?? 0];
     this.auto = options.auto ?? false;
     this.simulating = options.simulating ?? false;
+    this.itemDrops = options.itemDrops ?? this.L.itemDrops ?? !this.simulating;
     this.progress = JSON.parse(JSON.stringify(options.progress ?? { unlocked: 1, best: {} }));
     this.E = new Engine(options.seed, this.emit.bind(this));
     this.floats = new Floats(this.emit.bind(this));
     // 此时 S 与原型 makeState 首次调用时一样不存在，不能先创建一个占位状态。
     this.S = this.makeState(options.tutorial ?? false, options.buff);
     if (options.tutorial) this.tutNext();
+    else {this.recordRank(); this.reportRank();}
   }
   // 事件出口不消费随机数，不规范化参数，由接收者按用途存档。
   emit(kind: string, ...args: unknown[]) { this.onEvent?.({ t: this.S?.t || 0, kind, args }); }
@@ -121,8 +127,8 @@ export class Match {
     this.S.flying = this.S.flying.filter(f => f.target !== P);
     this.S.throws = this.S.throws.filter(f => f.target !== P);
     this.S.over = null; this.S.closing = null; this.S.lastTick = null;
-    if (this.workT() > this.L.duration - 15) this.S.t0 = this.S.t - (this.L.duration - 15);
-    this.emit('hidePanel'); this.mode = 'play'; this.E.bgm(this.S.rush ? 'rush' : 'work');
+    if (this.workT() > this.L.duration - C.CLEARING) this.S.t0 = this.S.t - (this.L.duration - C.CLEARING);
+    this.emit('hidePanel'); this.mode = 'play'; this.E.bgm(this.isClearing() ? 'clearing' : this.S.rush ? 'rush' : 'work');
     this.E.sfx('revive'); this.E.toast('甩掉 6 口锅，继续熬到下班');
   }
   // 激励广告成功回调：顶包后重新结算，保留原型的存档和反馈顺序。
@@ -143,9 +149,20 @@ export class Match {
     const P = this.S.player, crushed = reason === 'crushed';
     const rank = this.ranking();
     const myRank = crushed ? rank.length : rank.indexOf(P) + 1;
+    // 压哨只认铃响成绩，广告顶包不能补造；事件整局只发一次。
+    const buzzer = !crushed && !this.S.rescued && this.S.t >= this.bellTime() && this.S.clearingRank !== null &&
+      this.S.clearingRank > this.passRank() && myRank <= this.passRank() ? {from: this.S.clearingRank, to: myRank} : null;
+    if (buzzer && !this.S.buzzerEmitted) {this.S.buzzerEmitted = true; this.emit('buzzer', buzzer);}
     const stars = crushed ? 0 : this.starsOfRank(myRank);
     const old = prog.best[this.L.id];
     const myDebt = this.debtOf(P);
+    // 离下班线的差距（2026-11-05 加，让「就差一点」看得见）：
+    // 没过关 = 你的总账 − 线内最后一名的总账；过关 = 线外第一名的总账 − 你的总账（领先多少）；压垮或场上没人在线外则不算
+    const line = this.passRank();
+    const lineAgent = crushed ? null : stars ? rank[line] : rank[line - 1];
+    const lineGap = lineAgent ? (stars ? lineAgent.blames - P.blames : P.blames - lineAgent.blames) : null;
+    const lineInfo = lineAgent ? {gap: lineGap!, rank: stars ? line + 1 : line, name: lineAgent.name,
+      hisBlames: lineAgent.blames, hisThrown: lineAgent.thrown, myThrown: P.thrown} : null;
     const isBest = isBetterBest({stars, debt: myDebt, blames: P.blames}, old);
     if (isBest) prog.best[this.L.id] = { blames: P.blames, debt: myDebt, stars };
     const unlockedNew = stars > 0 && this.L.id + 1 > prog.unlocked && LEVELS.some(lv => lv.id === this.L.id + 1);
@@ -157,11 +174,11 @@ export class Match {
     const next = LEVELS[LEVELS.findIndex(lv => lv.id === this.L.id) + 1];
     const diag = !stars ? this.diagnose(P) : null;
     const shareKind = !stars ? 'blame' : next ? 'brag' : 'cert';
-    return { reason, crushed, rank, myRank, stars, myDebt, isBest, unlockedNew, prog, title, pieReport, nephewReport, next, diag,
+    return { buzzer, ...(this.S.items ? {items: {...this.S.items.stats, byKind: {...this.S.items.stats.byKind}}} : {}), reason, crushed, rank, myRank, stars, myDebt, lineInfo, isBest, unlockedNew, prog, title, pieReport, nephewReport, next, diag,
       epilogue: this.L.id === 5 && stars ? '我们是大小周，明天照常上班' : '',
-      ads: { revive: crushed && !this.S.revived, rescue: !crushed && !stars && !this.S.rescued },
+      ads: { revive: crushed && !this.S.revived, rescue: !crushed && !stars && !this.S.rescued && hypotheticalRank(this, 3).rank <= line },
       accounts: rank.map(a => ({ id: a.id, blames: a.blames, pots: this.potsOf(a), carry: this.carryOf(a), debt: this.debtOf(a) })),
-      shareInfo: { pieReport, nephewReport, nephewCrushed: this.S.nephewCrushed, kind: shareKind, crushed, blames: P.blames,
+      shareInfo: { buzzer, pieReport, nephewReport, nephewCrushed: this.S.nephewCrushed, kind: shareKind, crushed, blames: P.blames,
         rank: myRank, total: rank.length, stars, title, day: this.L.name.split('·')[0].trim(), revived: !!this.S.revived, rescued: !!this.S.rescued } };
   }
   // 结算仅执行计算、声音与存档事件，界面由调用方处理。
@@ -181,6 +198,18 @@ export class Match {
     this.mode = 'closing';
     this.S.closing = { t: 0, passed: this.starsOfRank(this.ranking().indexOf(this.S.player) + 1) > 0 };
     this.resetCoachInput(); this.clearBanners(); this.emit('hidePanel'); this.E.bgm(false); this.E.sfx('bell');
+    this.calculateResult('time'); // 铃响即发压哨事件，供画面在结算前播放。
+  }
+  // 迭代需求§5：只在正式上班最后15秒进入一次，不改清账前更早的截止时间。
+  updateClearing() {
+    if (!this.isClearing() || this.S.clearing) return;
+    this.S.clearing = true;
+    this.S.clearingRank = this.ranking().indexOf(this.S.player) + 1;
+    for (const a of this.S.agents) for (const pot of a.sn.segs) pot.due = this.capDue(pot.due);
+    for (const f of this.S.throws) f.pot.due = this.capDue(f.pot.due);
+    for (const f of this.S.flying) f.due = this.capDue(f.due ?? Infinity);
+    this.showMsg(`【全员群】行政：${this.clockAt(this.L.duration - C.CLEARING)} 了，手里的锅下班前一律追责`);
+    this.E.bgm('clearing');
   }
   // 对应 updateClosingNotice 的纯计算：每个新秒数只响一次，画面读事件显示倒计时或胜负反馈。
   updateClosingNotice() {

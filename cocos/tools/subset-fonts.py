@@ -1,6 +1,6 @@
 """提取对局全部源码字符，生成静态 TTF；不改原型字体。"""
 from pathlib import Path
-import re, json, subprocess
+import re, json, subprocess, argparse
 from fontTools.subset import Options, Subsetter
 from fontTools.ttLib import TTFont
 from fontTools.varLib.instancer import instantiateVariableFont
@@ -67,7 +67,8 @@ if __name__ == '__main__':
                build('NotoSansSC-VF.ttf', 'body-400.ttf', text, 400),
                build('NotoSansSC-VF.ttf', 'body-700.ttf', text, 700),
                build('NotoSansSC-VF.ttf', 'body-900.ttf', text, 900)]
-    dest = ROOT.parent / 'port/tmp/p4-2-d'
+    parser=argparse.ArgumentParser();parser.add_argument('--report-dir',default=str(ROOT.parent/'port/tmp/p4-2-d'));args=parser.parse_args()
+    dest = Path(args.report_dir)
     dest.mkdir(parents=True, exist_ok=True)
     (dest / 'fonts.json').write_text(json.dumps({'sources': [str(p.relative_to(ROOT.parent)) for p in files],
                                                'characters': len(text), 'fonts': reports}, ensure_ascii=False, indent=2))

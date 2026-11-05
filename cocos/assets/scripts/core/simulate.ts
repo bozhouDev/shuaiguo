@@ -4,22 +4,29 @@ import {LEVELS} from './levels';
 export interface SimulationStats {
  runs:number;crushedPlayer:number;rankHist:Record<string,number>;avgLeft:Record<string,number>;avgBlame:Record<string,number>;avgCaught:Record<string,number>;
  avgBooms:number;avgSkies:number;crushedBots:number;avgSpawned:number;avgThrown:number;avgLaunched:number;avgMiss:number;avgParry:number;avgLeaderHits:number;avgCrushT:number;passed:number;passRate:number;
+ items?: {picked:number;expired:number;byKind:Record<string,number>};
  avgPiesEaten:number;avgAllPiesEaten:number;avgPieMeetings:number;avgPiesSpawned:number;avgNephewReceived:number;nephewCrushed:number;nephewProtected:number;avgFinBlame?:number;
 }
 // 固定种子只在本次模拟生效；成功与异常都恢复原对局与随机状态，无种子继续消费本局流。
-export function simulate(this:Match,levelIdx=0,runs=20,seed?:number):SimulationStats {
+export function simulate(this:Match,levelIdx=0,runs=20,seed?:number,itemDrops=false):SimulationStats {
       const keepL = this.L, keepAuto = this.auto, keepS = this.S, keepMode = this.mode;
+      const keepItems = this.itemDrops;
       const keepRng = this.E.rngState(), keepSim = this.simulating;
       this.simulating = true;
       const keepMuted = this.E.muted;
       this.E.muted = true; // 模拟对局不出声
       try {
       if (seed !== undefined) this.E.seed(seed); // 固定种子只在本次模拟内生效。
-      this.L = LEVELS[levelIdx || 0]; this.auto = true;
+      this.L = LEVELS[levelIdx || 0]; this.auto = true; this.itemDrops = itemDrops;
       const out: SimulationStats = { runs: runs || 20, crushedPlayer: 0, rankHist: {}, avgLeft: {}, avgBlame: {}, avgCaught: {}, avgBooms: 0, avgSkies: 0, crushedBots: 0, avgSpawned: 0, avgThrown: 0, avgLaunched: 0, avgMiss: 0, avgParry: 0, avgLeaderHits: 0, avgCrushT: 0, passed: 0, passRate: 0, avgPiesEaten: 0, avgAllPiesEaten: 0, avgPieMeetings: 0, avgPiesSpawned: 0, avgNephewReceived: 0, nephewCrushed: 0, nephewProtected: 0 };
+      if (itemDrops) out.items = {picked:0,expired:0,byKind:{clear:0,invincible:0,delay:0}};
       for (let r = 0; r < out.runs; r++) {
         this.S = this.makeState(false); this.mode = 'play';
         while (!this.S.over) this.update(1 / 30);
+        if (out.items && this.S.items) {
+          out.items.picked += this.S.items.stats.picked; out.items.expired += this.S.items.stats.expired;
+          for (const kind of ['clear','invincible','delay'] as const) out.items.byKind[kind] += this.S.items.stats.byKind[kind];
+        }
         if (this.S.over === 'crushed') out.crushedPlayer++;
         const rank = this.ranking();
         const pr = this.S.over === 'crushed' ? rank.length : rank.indexOf(this.S.player) + 1;
@@ -58,6 +65,6 @@ export function simulate(this:Match,levelIdx=0,runs=20,seed?:number):SimulationS
       this.L = keepL; this.auto = keepAuto; this.S = keepS; this.mode = keepMode;
       this.floats.list = []; this.clearBanners();
       return out;
-      } finally { if (seed !== undefined) this.E.setRngState(keepRng); this.simulating = keepSim; this.E.muted = keepMuted; this.L = keepL; this.auto = keepAuto; this.S = keepS; this.mode = keepMode; }
+      } finally { this.itemDrops = keepItems; if (seed !== undefined) this.E.setRngState(keepRng); this.simulating = keepSim; this.E.muted = keepMuted; this.L = keepL; this.auto = keepAuto; this.S = keepS; this.mode = keepMode; }
     
 }

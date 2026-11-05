@@ -5,9 +5,10 @@ const {cleanPerf}=require('./perf.cjs');
 const LIMIT=20,RATE=120;
 // 按字段类型白名单截断，拒收自由文本和任何用户自定义称呼。
 function clean(v){
-  if(!v||!['start','finish','tutorial','ad_show','ad_result','share','perf'].includes(v.type)||typeof v.id!=='string'||! /^[a-zA-Z0-9_-]{1,64}$/.test(v.id))return null;
+  if(!v||!['start','finish','tutorial','ad_show','ad_result','share','perf','item_pick'].includes(v.type)||typeof v.id!=='string'||! /^[a-zA-Z0-9_-]{1,64}$/.test(v.id))return null;
   if(!LEVELS.some(l=>l.id===v.level)||!Number.isSafeInteger(v.at)||v.at<0||v.at>Date.now()+60000)return null;
   const out={id:v.id,type:v.type,at:v.at,level:v.level};
+  if(v.type==='item_pick'){if(!['clear','invincible','delay'].includes(v.kind)||!Number.isSafeInteger(v.picked)||v.picked<1||v.picked>100000)return null;return {...out,kind:v.kind,picked:v.picked};}
   if(v.type==='perf'){const perf=cleanPerf(v);return perf?{...out,...perf}:null;}
   for(const key of ['tutorial','crushed','revived','rescued','success'])if(typeof v[key]==='boolean')out[key]=v[key];
   for(const key of ['rank','stars','debt','blames','crushedAt','duration','step'])if(typeof v[key]==='number'&&Number.isFinite(v[key])&&v[key]>=0&&v[key]<=100000)out[key]=v[key];

@@ -4,714 +4,814 @@
   "intervalSteps": 30,
   "emptyStorage": true,
   "praiseExcluded": true,
-  "fullBytes": 7652232,
-  "bytes": 7652232,
+  "fullBytes": 7053427,
+  "bytes": 7053427,
   "averageDuration": [
-    70,
-    120,
-    106.6208,
-    99.88,
-    103.6117
+    60,
+    90,
+    83.9775,
+    105,
+    110.9075
   ],
   "cases": [
     {
       "level": 0,
       "seed": 1001,
       "file": "level-0-seed-1001.json.gz",
-      "bytes": 26119,
+      "bytes": 24280,
+      "sha256": "a88eded21cb2a5a265d6df4b512f6e8c1923af5efefea1f0d87ed3c52a74dedd",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1002,
       "file": "level-0-seed-1002.json.gz",
-      "bytes": 26633,
+      "bytes": 24807,
+      "sha256": "5e285920637ebe823212055776a2e02fa702c5bb103ba44e4062b0229041173b",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1003,
       "file": "level-0-seed-1003.json.gz",
-      "bytes": 26614,
+      "bytes": 25742,
+      "sha256": "cb94bf5875120f47cdc5f3d89a9a3fe5a25ab73e9dc178b6049c84e4dbdaed6d",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1004,
       "file": "level-0-seed-1004.json.gz",
-      "bytes": 26226,
+      "bytes": 24632,
+      "sha256": "1dae9909f247109861ac7ec130a51ca8e70b9bb5b3c08a301415ad734a10fe6d",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1005,
       "file": "level-0-seed-1005.json.gz",
-      "bytes": 26888,
+      "bytes": 25246,
+      "sha256": "62943c02fb4810ac5bade102b3851ac4448bafa1adaaa0e0f27432c52089c793",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1006,
       "file": "level-0-seed-1006.json.gz",
-      "bytes": 28762,
+      "bytes": 26274,
+      "sha256": "cf78dfd47009e4aa4b923fcde8420eb3b7d9486567036c19bddd86ba46cfc6d4",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1007,
       "file": "level-0-seed-1007.json.gz",
-      "bytes": 26437,
+      "bytes": 27977,
+      "sha256": "c662653b5e4dd839648c2239ac7d712e48fe482a910679b5a11891644e809616",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1008,
       "file": "level-0-seed-1008.json.gz",
-      "bytes": 27792,
+      "bytes": 26279,
+      "sha256": "cf252cb30be4fb296eacd6d21098608a7a627aaa5157a62d59af3951f3dc9565",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1009,
       "file": "level-0-seed-1009.json.gz",
-      "bytes": 26890,
+      "bytes": 25234,
+      "sha256": "b67c68f370c87dfe3e6ae8805e1b2dd11ddd68f7be0f94198b41e5f3099347a3",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1010,
       "file": "level-0-seed-1010.json.gz",
-      "bytes": 27334,
+      "bytes": 25615,
+      "sha256": "a601ce6b5668161f3f01a0fcbc8cbf5ef54f7036ece018410437a04d80c3dfcc",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1011,
       "file": "level-0-seed-1011.json.gz",
-      "bytes": 26268,
+      "bytes": 25296,
+      "sha256": "4880f373f65dd525b300fabbd4509c789e16fd24487acbf5f8903cba25063d68",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1012,
       "file": "level-0-seed-1012.json.gz",
-      "bytes": 26055,
+      "bytes": 26697,
+      "sha256": "e6a16b28b5711a2b6b2e65092ff10de852177befdac87cb430483fc05176371e",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1013,
       "file": "level-0-seed-1013.json.gz",
-      "bytes": 25897,
+      "bytes": 22918,
+      "sha256": "141e67926fc04eee5b4e9b14115a8cd09bca16e5f690655e7a0799cf38c6314c",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1014,
       "file": "level-0-seed-1014.json.gz",
-      "bytes": 27626,
+      "bytes": 26593,
+      "sha256": "5aee1788cb2dcd8029e8fd8e428bd9593efa7ae8f75cf73973c446112bee8f53",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1015,
       "file": "level-0-seed-1015.json.gz",
-      "bytes": 28276,
+      "bytes": 26886,
+      "sha256": "41effd7850c9e9b677b39ccf2f94a4bfc51a28f572a99b822c57d55f0ba6cc44",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1016,
       "file": "level-0-seed-1016.json.gz",
-      "bytes": 26362,
+      "bytes": 24723,
+      "sha256": "2ab985f6d32afea7579046b081d1439c00f7cb9ac5e30a25c75963001579356a",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1017,
       "file": "level-0-seed-1017.json.gz",
-      "bytes": 27767,
+      "bytes": 25660,
+      "sha256": "cfa517ff08202bfdf0796b048ac892f02ae050240fd98b89fb0351baad31c1b9",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1018,
       "file": "level-0-seed-1018.json.gz",
-      "bytes": 24973,
+      "bytes": 24195,
+      "sha256": "5f76bb25b64ba317656a27e531d209e5539cae7b53de62c515261217e315266e",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1019,
       "file": "level-0-seed-1019.json.gz",
-      "bytes": 27461,
+      "bytes": 25003,
+      "sha256": "ce466a48e3f9003064fbcc754f6359b9f20eb73a376005af9c9ef2c26367d25e",
       "compact": false
     },
     {
       "level": 0,
       "seed": 1020,
       "file": "level-0-seed-1020.json.gz",
-      "bytes": 25732,
+      "bytes": 25473,
+      "sha256": "f854839e91a6535dfe4e0d448440da9d40c3b6a342a73480a2dd48914d33471a",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1001,
       "file": "level-1-seed-1001.json.gz",
-      "bytes": 49228,
+      "bytes": 45881,
+      "sha256": "d23543f9c2215133babf2a286b73d08049d10807e9c2a0f428e9a969c417531c",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1002,
       "file": "level-1-seed-1002.json.gz",
-      "bytes": 49377,
+      "bytes": 43301,
+      "sha256": "64b26cb22d25934b74cce1e1576cb31718d250438bc49904cc0e2d3d3a5067d7",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1003,
       "file": "level-1-seed-1003.json.gz",
-      "bytes": 48065,
+      "bytes": 40104,
+      "sha256": "8cae244b288f525429b81a37a520b478bb927cedbded1819014eacd7e5a6616e",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1004,
       "file": "level-1-seed-1004.json.gz",
-      "bytes": 48354,
+      "bytes": 43054,
+      "sha256": "ad9732a9ea7b18308f3f97e6440f93bce741619ed510905f51a04608db54c43f",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1005,
       "file": "level-1-seed-1005.json.gz",
-      "bytes": 52499,
+      "bytes": 41669,
+      "sha256": "6cadcf2a14667e3a3f7150f56304160555304c06f6c9a56140ff8e89b3c80dee",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1006,
       "file": "level-1-seed-1006.json.gz",
-      "bytes": 48229,
+      "bytes": 42045,
+      "sha256": "6a6307dc1e8cbce46ba80d57a3dfbf025f249a8800d52cdf8f6f75b93874883a",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1007,
       "file": "level-1-seed-1007.json.gz",
-      "bytes": 51828,
+      "bytes": 41631,
+      "sha256": "557faad7a24fa3e5a74e0cab46beeefe92971ee90312db6e49057042532470b3",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1008,
       "file": "level-1-seed-1008.json.gz",
-      "bytes": 49149,
+      "bytes": 42928,
+      "sha256": "54989aa207119097b91d639c49e656004a37b364e12848ffdce2f74f2b504e40",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1009,
       "file": "level-1-seed-1009.json.gz",
-      "bytes": 52077,
+      "bytes": 44721,
+      "sha256": "01edfa694971c5a22a15e80d108f3af2ff1c6a2c6f23aadf50c0bb5c27c26660",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1010,
       "file": "level-1-seed-1010.json.gz",
-      "bytes": 49310,
+      "bytes": 45547,
+      "sha256": "5159dd2d829c65665d811da0cad3afe4347c095298be4c53ceb0981b1bcdb0bd",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1011,
       "file": "level-1-seed-1011.json.gz",
-      "bytes": 45926,
+      "bytes": 44844,
+      "sha256": "351204867f2f2257413ac2131cc5b5fe19dbc368a20e781e835d6488b6d9e1e3",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1012,
       "file": "level-1-seed-1012.json.gz",
-      "bytes": 49461,
+      "bytes": 43014,
+      "sha256": "dd04aae9e4b71d8d7051174397f8e59425fa9415b34e298469c877c869036789",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1013,
       "file": "level-1-seed-1013.json.gz",
-      "bytes": 49598,
+      "bytes": 37793,
+      "sha256": "180e466e352d3319c734742b05610524fa29338253d37922ca98743e8031b912",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1014,
       "file": "level-1-seed-1014.json.gz",
-      "bytes": 49004,
+      "bytes": 41258,
+      "sha256": "c71e9d49c63d2db4294e3bdef20290e4d24a87c6d6671fdaf9502a5becec2992",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1015,
       "file": "level-1-seed-1015.json.gz",
-      "bytes": 47613,
+      "bytes": 42131,
+      "sha256": "dd527e5ff79e14a218bdf8a15140fe858405d365007c4a17568b947f58bc8c3e",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1016,
       "file": "level-1-seed-1016.json.gz",
-      "bytes": 47514,
+      "bytes": 42428,
+      "sha256": "ceaa5bdf217cfe4c44ef323a063c4e124876bb9dd49b259037adbe6672a06df1",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1017,
       "file": "level-1-seed-1017.json.gz",
-      "bytes": 51312,
+      "bytes": 46006,
+      "sha256": "22040a75853c2db55278f0e6e59ff631de3e47aecccac0cb70dc35852e435d90",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1018,
       "file": "level-1-seed-1018.json.gz",
-      "bytes": 50557,
+      "bytes": 41469,
+      "sha256": "d8ef5a0cc82cc45f4e15504c837f684f0659d002ea558118c0e17867147be9ca",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1019,
       "file": "level-1-seed-1019.json.gz",
-      "bytes": 49940,
+      "bytes": 40944,
+      "sha256": "166858892e28d55a23073ff85d882918ee29d303763cc2682ef0f1bac2d82457",
       "compact": false
     },
     {
       "level": 1,
       "seed": 1020,
       "file": "level-1-seed-1020.json.gz",
-      "bytes": 44930,
+      "bytes": 42178,
+      "sha256": "98da076cdf5ee2756b107eb71fcc58acb2ac0649e49ca7d05d51ccf56b3688f0",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1001,
       "file": "level-2-seed-1001.json.gz",
-      "bytes": 103749,
+      "bytes": 72908,
+      "sha256": "db62b8fecedc0eb687fb55f0c2e6d857ba768727f65e7cdc741c56e3500a1792",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1002,
       "file": "level-2-seed-1002.json.gz",
-      "bytes": 99282,
+      "bytes": 73110,
+      "sha256": "e3d4eadb7ae26712a503aa7dae2a24741c3dcc857ce0929fdef174b9d1ba4d8c",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1003,
       "file": "level-2-seed-1003.json.gz",
-      "bytes": 99660,
+      "bytes": 74078,
+      "sha256": "3fb38fe3fa1a0cda47110a0d0f3824893e1b1a7bdd2660942182bd991a9338b0",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1004,
       "file": "level-2-seed-1004.json.gz",
-      "bytes": 25958,
+      "bytes": 38686,
+      "sha256": "6c2cfe9a8cebe1880c63e620ff1009408bfe6bd730c79480ed3704b7a3a704b1",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1005,
       "file": "level-2-seed-1005.json.gz",
-      "bytes": 104031,
+      "bytes": 65152,
+      "sha256": "8a8a03bfdc45902c5faef7b7c8d5b411a99ce49727c6ed996cfcb75c82824076",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1006,
       "file": "level-2-seed-1006.json.gz",
-      "bytes": 101850,
+      "bytes": 81083,
+      "sha256": "dada96c427cef49b79686bf7ecb1d30f8547a4dc9780e6b83ebfd5b1697bf5b3",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1007,
       "file": "level-2-seed-1007.json.gz",
-      "bytes": 97968,
+      "bytes": 74327,
+      "sha256": "9c6f9ebe8c11043d2acdf8da67c0a4961eeede73cfe44b33ac7762097d7112b8",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1008,
       "file": "level-2-seed-1008.json.gz",
-      "bytes": 99124,
+      "bytes": 77173,
+      "sha256": "b4d04f0b1578eee20076da38a86f8081bf90ec93995f3321f1b3e5349da46035",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1009,
       "file": "level-2-seed-1009.json.gz",
-      "bytes": 99337,
+      "bytes": 35699,
+      "sha256": "ad9d9445ac917617af097b25d56689c72f1cabe7c55e8e4e5b89ad8482c154ad",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1010,
       "file": "level-2-seed-1010.json.gz",
-      "bytes": 53073,
+      "bytes": 71112,
+      "sha256": "97df39832962151d476f8dc05234e6a83d1d01227d7516ae15f5d852a82a6760",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1011,
       "file": "level-2-seed-1011.json.gz",
-      "bytes": 105678,
+      "bytes": 74490,
+      "sha256": "de883f25746352d842d0fce8a326a3d110f1ebadc5585e8a35c1518e1c787c4d",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1012,
       "file": "level-2-seed-1012.json.gz",
-      "bytes": 101112,
+      "bytes": 56919,
+      "sha256": "0a2c17b1ad016f528d4bde3320869cca4645ccde6c2eba445cccb1e4f62b3e5f",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1013,
       "file": "level-2-seed-1013.json.gz",
-      "bytes": 103914,
+      "bytes": 75974,
+      "sha256": "0880286cd95eda5b32b1eb00b75978f9f49138237a909b73e9bbe548477e642e",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1014,
       "file": "level-2-seed-1014.json.gz",
-      "bytes": 44411,
+      "bytes": 74133,
+      "sha256": "0f7260681fbc83d164521d66a78edb18a3db37f5177ec33bfa01e6cf42cb10d4",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1015,
       "file": "level-2-seed-1015.json.gz",
-      "bytes": 101686,
+      "bytes": 72938,
+      "sha256": "65832bb75c2b22e08169513f277842dce091ef02780f4ecc9b9b9952d9073bdd",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1016,
       "file": "level-2-seed-1016.json.gz",
-      "bytes": 101013,
+      "bytes": 71996,
+      "sha256": "31622afd8abd8fa02c166a03db66b8c03f9c9ca02dafba0b3c24b0564df6ab31",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1017,
       "file": "level-2-seed-1017.json.gz",
-      "bytes": 97202,
+      "bytes": 65091,
+      "sha256": "c68f975aec3cfc5c56dd11d55f38088a887c3d5e39c81dc758b739f99bed1304",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1018,
       "file": "level-2-seed-1018.json.gz",
-      "bytes": 95166,
+      "bytes": 67135,
+      "sha256": "d9a8f3b748bd5c08d4bc340f80877f3211b293b6fae73539713bd7e95ae74bdc",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1019,
       "file": "level-2-seed-1019.json.gz",
-      "bytes": 117352,
+      "bytes": 62120,
+      "sha256": "0a7332f5c756baabda01f3c0c31a71c2c30fe253fc609a1c4cefd95d1ee96830",
       "compact": false
     },
     {
       "level": 2,
       "seed": 1020,
       "file": "level-2-seed-1020.json.gz",
-      "bytes": 51440,
+      "bytes": 70765,
+      "sha256": "3b2453803d47d388a8446b0d92e267e6904c9f3f50841d45bcbaa78ae2a9e994",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1001,
       "file": "level-3-seed-1001.json.gz",
-      "bytes": 122699,
+      "bytes": 105825,
+      "sha256": "522181d03e741f0d099f7ccb3c8206e8775567e607c2ded18fc628f5720929ee",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1002,
       "file": "level-3-seed-1002.json.gz",
-      "bytes": 120591,
+      "bytes": 111531,
+      "sha256": "bca001e143afc74c2727af9eb55b8fdd883dfe8947b8d0f8662bb83d0d94a04b",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1003,
       "file": "level-3-seed-1003.json.gz",
-      "bytes": 114728,
+      "bytes": 113588,
+      "sha256": "0f5ea7762a8c89d7acb66b68a4f079ca02b9697bc4355725703a54e91d2f8179",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1004,
       "file": "level-3-seed-1004.json.gz",
-      "bytes": 115398,
+      "bytes": 88501,
+      "sha256": "ebda937d522925ef286ace849744750b2e511448c91544dbd6d200b4e0750b9d",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1005,
       "file": "level-3-seed-1005.json.gz",
-      "bytes": 116949,
+      "bytes": 102551,
+      "sha256": "8710c2f6e2eb3f2a195b8c5140133e7b18aa7ca14d1130a4545634caf97ef056",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1006,
       "file": "level-3-seed-1006.json.gz",
-      "bytes": 113904,
+      "bytes": 91548,
+      "sha256": "56382201cec18149f2fa44b84d053459afa7ba239d9bd485a98f156debb73435",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1007,
       "file": "level-3-seed-1007.json.gz",
-      "bytes": 25674,
+      "bytes": 95487,
+      "sha256": "b50f80ff8156d5fc67bd53d27f60ef07f9b76a935e7062323b65fee7604a967b",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1008,
       "file": "level-3-seed-1008.json.gz",
-      "bytes": 30062,
+      "bytes": 92362,
+      "sha256": "a8bf0e20bcbedd5724b29e1c81b30861295999e06462b4cd3f3f6f747c1467eb",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1009,
       "file": "level-3-seed-1009.json.gz",
-      "bytes": 116711,
+      "bytes": 102311,
+      "sha256": "af5cfedf42ecf32cc47d12d01ab69f50d4841a852fe3b016ff9f5211e634357f",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1010,
       "file": "level-3-seed-1010.json.gz",
-      "bytes": 119504,
+      "bytes": 105185,
+      "sha256": "b17cc0b720c85995afac4727c615426308f75439e5993f0f1228d788140de4d3",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1011,
       "file": "level-3-seed-1011.json.gz",
-      "bytes": 49759,
+      "bytes": 96943,
+      "sha256": "cc79bdc1b84bc6dc39356bc284d2941807b66ad9ee9fefdf5a2cc7c53b82481d",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1012,
       "file": "level-3-seed-1012.json.gz",
-      "bytes": 97058,
+      "bytes": 105919,
+      "sha256": "b50eb5293c9d40b6df48d83673ae8ee4b2f7b2b3cfb372549eec925e1f97bd9f",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1013,
       "file": "level-3-seed-1013.json.gz",
-      "bytes": 53262,
+      "bytes": 102140,
+      "sha256": "2a1128e221f733f7b943c3d8301a1348d544fb88fdcae2db504be8b9550be72d",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1014,
       "file": "level-3-seed-1014.json.gz",
-      "bytes": 121788,
+      "bytes": 106098,
+      "sha256": "a575d520b9e630893f78f947090e42239c47ac88a610ef992bc26d05e1601c5c",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1015,
       "file": "level-3-seed-1015.json.gz",
-      "bytes": 120574,
+      "bytes": 103750,
+      "sha256": "8c86daf31bf6a9336a5de7e13fe1aafb2bbc7c2830bf24ac0a8c4ced76bc6da7",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1016,
       "file": "level-3-seed-1016.json.gz",
-      "bytes": 116424,
+      "bytes": 97899,
+      "sha256": "91a90fdd48dc00b6c337e84f155879e49876befcf0e61ce17174fb2ab9e4ac36",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1017,
       "file": "level-3-seed-1017.json.gz",
-      "bytes": 114440,
+      "bytes": 99507,
+      "sha256": "9ae4bca9a909068c01a8f523c8727d82c20f5c47f024e2d9b782618191279097",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1018,
       "file": "level-3-seed-1018.json.gz",
-      "bytes": 117012,
+      "bytes": 86172,
+      "sha256": "0686029bb014a16c8e4770e9beb0be782bd01eb7bb6185246ad7b7e60287a1e1",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1019,
       "file": "level-3-seed-1019.json.gz",
-      "bytes": 66316,
+      "bytes": 91031,
+      "sha256": "2dbe0b52c2b97927b0706c1042a895fac5a98cd751c8e3f860113de1d680b715",
       "compact": false
     },
     {
       "level": 3,
       "seed": 1020,
       "file": "level-3-seed-1020.json.gz",
-      "bytes": 92359,
+      "bytes": 98876,
+      "sha256": "dbc24ce4c1ce75be47c13e4186479fbb42ccb66f629b24cfa14fbfccec26759b",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1001,
       "file": "level-4-seed-1001.json.gz",
-      "bytes": 79516,
+      "bytes": 26088,
+      "sha256": "73b7fe52c9042dda47de27d363bbb83c2d42d2c04fc1354ac6b6039b99c83d15",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1002,
       "file": "level-4-seed-1002.json.gz",
-      "bytes": 131461,
+      "bytes": 142774,
+      "sha256": "a10ce6a70a269fc0d3e194898797a6b8b1236c0eae08ee6e3fcd803f55a65ce2",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1003,
       "file": "level-4-seed-1003.json.gz",
-      "bytes": 131753,
+      "bytes": 131510,
+      "sha256": "b6238d34e9f4763b66d5380b67d4af27c40cba1ec766eb2a5e3396148110acc7",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1004,
       "file": "level-4-seed-1004.json.gz",
-      "bytes": 141923,
+      "bytes": 113748,
+      "sha256": "4085e2b24a50ba18574e34ba6e8a055b7d0111c1e6a581c4440c38805adfa156",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1005,
       "file": "level-4-seed-1005.json.gz",
-      "bytes": 142143,
+      "bytes": 124427,
+      "sha256": "136afb7506f8bcc0e5f38fea78cda45962176c3f33b30aa13c5f5da304f47d6b",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1006,
       "file": "level-4-seed-1006.json.gz",
-      "bytes": 141301,
+      "bytes": 123268,
+      "sha256": "ac2a8ffe3adde0fd5c96b56a02edca6a4d1226c54dde103df846f12ee9e2bb7a",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1007,
       "file": "level-4-seed-1007.json.gz",
-      "bytes": 150271,
+      "bytes": 116274,
+      "sha256": "2789f65f33b54b5e1d690cf3d84890ca4ff19dadfd9b36d54d119a574f1cb30c",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1008,
       "file": "level-4-seed-1008.json.gz",
-      "bytes": 38097,
+      "bytes": 124669,
+      "sha256": "8a8c1159e2971d33b87c32987dfb238e315a54176b80edc83a7a23c7842a802d",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1009,
       "file": "level-4-seed-1009.json.gz",
-      "bytes": 136295,
+      "bytes": 87651,
+      "sha256": "3e1439c59d571eb70949001c95e472d4a345cd3f85721601caab336617cf428e",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1010,
       "file": "level-4-seed-1010.json.gz",
-      "bytes": 139418,
+      "bytes": 134567,
+      "sha256": "3667eeadd9e7427a47254d46cacfffe91f1dbd6a38fe82452a699b5eb7ea9e60",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1011,
       "file": "level-4-seed-1011.json.gz",
-      "bytes": 140651,
+      "bytes": 122490,
+      "sha256": "302d9a59b3d49c3c7300005e4725d2d01be830b65c3f04848c11fd46b4ffa7bb",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1012,
       "file": "level-4-seed-1012.json.gz",
-      "bytes": 134858,
+      "bytes": 127316,
+      "sha256": "4d9c86175c94d93d329541b0480af4232b83efe14d46c954931d6e98a726033f",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1013,
       "file": "level-4-seed-1013.json.gz",
-      "bytes": 111239,
+      "bytes": 123553,
+      "sha256": "5d55bca28b2c0618ad3af0eacac49e3ded1d655509c11d3d8213b5ce90510dd4",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1014,
       "file": "level-4-seed-1014.json.gz",
-      "bytes": 104287,
+      "bytes": 129190,
+      "sha256": "e32da9ff606b3e4cdf0deb36b8e8f0ca440d04714bbd5a30bbd1f12f36a9862d",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1015,
       "file": "level-4-seed-1015.json.gz",
-      "bytes": 42950,
+      "bytes": 125927,
+      "sha256": "a3b2c363792ae1942fcd8016d08b5eedad7ee848354d7116aeb7de0b24713dd4",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1016,
       "file": "level-4-seed-1016.json.gz",
-      "bytes": 131617,
+      "bytes": 119949,
+      "sha256": "3f0ada1887da86015e99e72604a128c39b199a1fb20e63deeaeb91d24fbdf9b6",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1017,
       "file": "level-4-seed-1017.json.gz",
-      "bytes": 134161,
+      "bytes": 68413,
+      "sha256": "3ceb77744abee06541bc941a142d2b5a13c10b67bb037b4344c9ec683c940162",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1018,
       "file": "level-4-seed-1018.json.gz",
-      "bytes": 65669,
+      "bytes": 127247,
+      "sha256": "447d6efb22516cb09cd2d66b12af2e23fb5c5f48b53ab6338100a2f723f87de3",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1019,
       "file": "level-4-seed-1019.json.gz",
-      "bytes": 146925,
+      "bytes": 132755,
+      "sha256": "3f8ada2e7590c5e8eecb8b4f0ce99e33c4937aae09eb7181e45a9690ef6451f9",
       "compact": false
     },
     {
       "level": 4,
       "seed": 1020,
       "file": "level-4-seed-1020.json.gz",
-      "bytes": 139396,
+      "bytes": 137022,
+      "sha256": "f0c2c4dfbd0a7be148b04e0cbf095dbb85754aebcd71b292a9c5d7d93f7bd343",
       "compact": false
     }
   ]

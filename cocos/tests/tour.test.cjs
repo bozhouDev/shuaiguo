@@ -45,7 +45,7 @@ test('销毁取消异步页面；失败不假报done、不继续后续步骤',as
 test('结算夹具保留原数值，真实core计算三档星级/失败/压垮/证书与辅助后结算',()=>{
   require('./register-core.cjs');const {Match}=require('../assets/scripts/core/match.ts');
   for(const [result,level,stars,kind]of [['three',0,3,'brag'],['two',0,2,'brag'],['one',0,1,'brag'],['fail',1,0,'blame'],['crush',1,0,'blame'],['three',4,3,'cert'],['revived',1,2,'brag'],['rescued',1,3,'brag'],['rescued',4,3,'cert']]){
-    const m=new Match({level,seed:1001,auto:true});prepareTourResult(m,result);const r=m.calculateResult(result==='crush'?'crushed':'time');
+    const m=new Match({itemDrops:false,level,seed:1001,auto:true});prepareTourResult(m,result);const r=m.calculateResult(result==='crush'?'crushed':'time');
     assert.equal(r.stars,stars);assert.equal(r.shareInfo.kind,kind);
     if(result==='crush'){assert.equal(m.potsOf(m.S.player),12);m.revive();assert.equal(m.potsOf(m.S.player),6);assert.equal(m.S.revived,true);}
     if(result==='revived'){assert.equal(m.S.revived,true);assert.equal(m.potsOf(m.S.player),6);}

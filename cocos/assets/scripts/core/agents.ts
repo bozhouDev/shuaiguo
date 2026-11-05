@@ -4,6 +4,15 @@ import type { Agent, Diagnosis } from './types';
 import { OFFICE } from './levels';
 import * as C from './config';
 
+// 排名和结算假想重排共用同一纯排序，保留稳定排序及小舅子优先规则。
+export function rankedAgents(agents: Agent[], nephewRanked: boolean | undefined, debtOf: (a: Agent) => number): Agent[] {
+  return agents.filter(a => a.key !== 'nephew' || nephewRanked === true).sort((a, b) =>
+    (Number(a.crushed) - Number(b.crushed)) ||
+    (!a.crushed && (Number(b.key === 'nephew') - Number(a.key === 'nephew'))) ||
+    (a.crushed ? b.crushedAt - a.crushedAt : (debtOf(a) - debtOf(b)) || (a.blames - b.blames)) ||
+    (b.thrown - a.thrown));
+}
+
 export const agentsLogic = {
 
 /* ---------------- 机器人大脑 ---------------- */
@@ -158,6 +167,9 @@ export const agentsLogic = {
       const d = this.E.dist(me.x, me.y, item.x, item.y);
       if (d < 75) flee(item.x, item.y, 2 * (1 - d / 75));
     }
+    // 仅自动玩家在安全直线路径内靠近道具；同事完全沿用原大脑。
+    const item = this.desiredItem(a);
+    if (item) { vx = 0; vy = 0; seek(item.x, item.y, 6); }
     // 7. 没事干：保持方向慢慢晃，靠近边缘时往中间拐
     if (Math.hypot(vx, vy) < 0.15) {
       vx += Math.cos(me.angle) * 0.4 + this.E.rand(-0.2, 0.2);
@@ -230,11 +242,28 @@ export const agentsLogic = {
 /* ---------------- 排名 ---------------- */
   // 排名：没被压垮的在前；总账（背锅次数 + 身上锅 × ½）少的在前；同分再比背锅次数少、甩出去的多；被压垮的人越晚压垮排越前
   ranking(this: Match): Agent[] {
-    return this.S.agents.filter((a) => a.key !== 'nephew' || this.L.nephewRanked === true).sort((a, b) =>
-      (Number(a.crushed) - Number(b.crushed)) ||
-      (!a.crushed && (Number(b.key === 'nephew') - Number(a.key === 'nephew'))) ||
-      (a.crushed ? b.crushedAt - a.crushedAt : (this.debtOf(a) - this.debtOf(b)) || (a.blames - b.blames)) ||
-      (b.thrown - a.thrown));
+    return rankedAgents(this.S.agents, this.L.nephewRanked, a => this.debtOf(a));
+  },
+
+// 迭代需求§6：只采正式上班整秒，下标就是workT整秒；复活拨钟不覆盖已有历史。
+  recordRank(this: Match): void {
+    if (this.S.tut || this.S.over === 'crushed' || this.S.player.crushed) return;
+    const second = Math.floor(this.workT() + 1e-7);
+    if (!Number.isFinite(second) || second < 0 || this.S.rankTrail.length > second) return;
+    const rank = this.ranking().indexOf(this.S.player) + 1;
+    while (this.S.rankTrail.length <= second) this.S.rankTrail.push(rank);
+  },
+
+// 每帧只观察名次，不改排序；升名次和掉出线另发喊话，不占教学tips。
+  reportRank(this: Match): void {
+    if (this.S.tut || this.S.over === 'crushed' || this.S.player.crushed) { this.S.previousRank = null; return; }
+    const ranked = this.ranking(), to = ranked.indexOf(this.S.player) + 1, from = this.S.previousRank;
+    this.S.previousRank = to;
+    if (from === null || from === to) return;
+    const who = ranked[to < from ? to : to - 2]?.name ?? '';
+    const change = {from, to, who};
+    this.emit('rankChange', change);
+    if (to < from || to > this.passRank()) this.emit('rankCallout', change);
   },
 
 // 名次 → 星级：第 1 名 3 星，第 2 名 2 星，第 3 名 1 星，其余 0
@@ -244,14 +273,16 @@ export const agentsLogic = {
   update(this: Match, dt: number): void {
     // 最后一句等玩家确认，所有角色、飞锅和截止时间一起冻结。
     if (this.coachLocked()) return;
-    // 截断最后一帧：18:00 之后到期的锅不能混入本局成绩。
+    // 截断最后一帧：清账封顶的锅恰在18:00到期，先updateDue再锁榜。
     if (!this.S.tut) dt = Math.min(dt, Math.max(0, this.S.t0 + this.L.duration - this.S.t));
     this.S.t += dt;
     if (!this.S.tut && this.S.t0 + this.L.duration - this.S.t < 1e-7) this.S.t = this.S.t0 + this.L.duration;
+    this.updateClearing();
     if (this.S.tea > 0) this.S.tea -= dt;
     if (this.S.tut) this.updateTutorial(dt);
     else this.updateSchedule();
     for (const a of this.S.agents) this.updateAgent(a, dt);
+    this.updateItems(); // 走到道具上立即生效，再处理同帧领导碰撞和来锅。
     for (const l of this.S.leaders) this.updateLeader(l, dt);
     this.updatePies();
     this.updateFlying(dt);
@@ -273,11 +304,13 @@ export const agentsLogic = {
     for (const a of this.S.agents) {
       if (a.crushed || this.potsOf(a) < C.MAX_POTS) continue;
       if (a.key === 'nephew') { this.crushNephew(a); continue; }
-      if (a.isPlayer) { this.S.over = 'crushed'; return; }
+      if (a.isPlayer) { this.recordRank(); this.S.over = 'crushed'; return; }
       a.crushed = true; a.crushedAt = this.S.t; a.target = null;
       this.E.toast(`${a.name}被锅压垮了！`, 1800);
       this.E.sfx('crush', { vol: 0.6 });
     }
+    this.recordRank();
+    this.reportRank();
     if (this.workT() >= this.L.duration - 1e-7) { this.S.t = this.S.t0 + this.L.duration; this.S.over = 'time'; }
   },
 

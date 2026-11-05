@@ -62,7 +62,7 @@ test('介绍页节点池一次移交，新对局仍读新种子/进度且重建�
  const first=new WorldView(parent,()=>{},true,options(1001));await first.start();const oldMatch=first.match,root=first.root,surfaces=first.surfaces;
  assert.equal(typeof first.takeVisuals,'function','需要一次性移交显示池入口');const warm=first.takeVisuals();assert.throws(()=>first.takeVisuals());first.destroy();assert.ok(!root.destroyed);assert.equal(subscribed,0);
  const nextOptions=options(2002);nextOptions.progress.bossName='王总';const next=new WorldView(parent,()=>{},true,nextOptions,warm);await next.start();
- try{assert.equal(next.root,root);assert.deepEqual(next.surfaces,surfaces);assert.notEqual(next.match,oldMatch);assert.equal(next.match.bossName(),'王总');const oracle=new Match({level:4,seed:2002,auto:true,tutorial:false,progress:nextOptions.progress});assert.equal(next.match.E.rngState(),oracle.E.rngState());assert.equal(next.steps,0);
+ try{assert.equal(next.root,root);assert.deepEqual(next.surfaces,surfaces);assert.notEqual(next.match,oldMatch);assert.equal(next.match.bossName(),'王总');const oracle=new Match({itemDrops:false,level:4,seed:2002,auto:true,tutorial:false,progress:nextOptions.progress});assert.equal(next.match.E.rngState(),oracle.E.rngState());assert.equal(next.steps,0);
   const shape=m=>({t:m.S.t,rng:m.E.rngState(),agents:m.S.agents.map(a=>({x:a.sn.x,y:a.sn.y,pots:a.sn.segs,blames:a.blames})),leaders:m.S.leaders.map(l=>({x:l.x,y:l.y,state:l.state}))});assert.deepEqual(shape(next.match),shape(oracle));assert.equal(subscribed,1);
  }finally{next.destroy();}assert.equal(root.destroyed,true);assert.equal(subscribed,0);
 });

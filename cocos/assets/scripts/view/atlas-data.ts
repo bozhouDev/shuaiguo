@@ -1,7 +1,17 @@
-// 由 tools/import-world-assets.mjs 从 js/atlas.js 生成；矩形坐标以左上角为原点。
+// 由 tools/import-world-assets.mjs 从 js/atlas.js 生成并保留 Cocos 独立分片；矩形坐标以左上角为原点。
 export const ATLAS: {sheets: {file: string; frames: Record<string, [number, number, number, number]>}[]} = {
   "sheets": [
-    {"file":"atlas/lobby","frames":{"lobby_bg":[0,0,512,768]}},
+    {
+      "file": "atlas/lobby",
+      "frames": {
+        "lobby_bg": [
+          0,
+          0,
+          512,
+          768
+        ]
+      }
+    },
     {
       "file": "atlas/boss",
       "frames": {
@@ -962,6 +972,30 @@ export const ATLAS: {sheets: {file: string; frames: Record<string, [number, numb
           143,
           230
         ],
+        "player_walk_dr0": [
+          0,
+          915,
+          131,
+          230
+        ],
+        "player_walk_dr1": [
+          133,
+          915,
+          131,
+          230
+        ],
+        "player_walk_dr2": [
+          266,
+          915,
+          133,
+          230
+        ],
+        "player_walk_dr3": [
+          401,
+          915,
+          131,
+          230
+        ],
         "player_walk_s0": [
           0,
           464,
@@ -1008,6 +1042,30 @@ export const ATLAS: {sheets: {file: string; frames: Record<string, [number, numb
           148,
           232,
           145,
+          230
+        ],
+        "player_walk_ur0": [
+          534,
+          915,
+          135,
+          230
+        ],
+        "player_walk_ur1": [
+          671,
+          915,
+          136,
+          230
+        ],
+        "player_walk_ur2": [
+          0,
+          1147,
+          137,
+          230
+        ],
+        "player_walk_ur3": [
+          139,
+          1147,
+          136,
           230
         ],
         "player_win": [
@@ -1419,6 +1477,29 @@ export const ATLAS: {sheets: {file: string; frames: Record<string, [number, numb
           901,
           176,
           292
+        ]
+      }
+    },
+    {
+      "file": "atlas/items",
+      "frames": {
+        "item_clear": [
+          2,
+          2,
+          120,
+          98
+        ],
+        "item_invincible": [
+          124,
+          2,
+          120,
+          92
+        ],
+        "item_delay": [
+          246,
+          2,
+          120,
+          98
         ]
       }
     }

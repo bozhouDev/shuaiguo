@@ -2,11 +2,11 @@
 require('./register-core.cjs');
 const { Match } = require('../assets/scripts/core/match.ts');
 const { summary } = require('../../tests/golden/extra.cjs');
-// 一次工厂调用只创建一局，返回与原型 harness 对齐的门面及本局事件。
+// 一次工厂调用只创建一局，返回测试需要的结算入口、存档和事件。
 function factory(c, progress) {
   const events = [];
   let lastResult;
-  const m = new Match({
+  const m = new Match({itemDrops:false,
     seed: c.seed,
     level: c.level,
     auto: ['auto', 'buff', 'ad'].includes(c.kind),

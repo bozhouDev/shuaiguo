@@ -90,11 +90,11 @@ function loadComparison() {
   let record;
   record = loadCommonJS(RECORD, request => {
     if (request === 'node:fs' || request === 'node:path' || request === 'node:zlib' || request === 'node:crypto') return require(request);
-    if (request === '../game-harness.cjs') return {setup() {throw new Error('编译录像不得启动原型 harness');}};
+    if (request === '../../cocos/tests/golden-adapter.cjs') return {runCase() {throw new Error('compiled comparison only imports compact helpers');}};
     throw new Error(`录像记录器请求了未预期模块：${request}`);
   });
   const verify = loadCommonJS(VERIFY, request => {
-    if (request === 'node:fs' || request === 'node:path' || request === 'node:zlib') return require(request);
+    if (request === 'node:fs' || request === 'node:path' || request === 'node:zlib' || request === 'node:crypto') return require(request);
     if (request === './record.cjs') return record;
     throw new Error(`录像比较器请求了未预期模块：${request}`);
   });

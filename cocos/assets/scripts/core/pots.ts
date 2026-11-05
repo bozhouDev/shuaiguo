@@ -1,8 +1,9 @@
 // 对应原型 js/game.js：tailPos addPots launchPot launchSky nearestAgent updateFlying potHit receivePot crushNephew canThrowTo canFire inAimFan pickAim leadAngle sightClear raging bossRaging visionRange visionCone seenBy nephewGuardian caught fireThrow incomingTTI heat aiVal parryChance parryWin pressFire parry missThrow inWall updateThrows landThrow addBlame explode updateDue；设计依据《这锅你来背-核心玩法》。
 import type { Match } from './match';
-import type { Agent, Pot, Leader, Point, FlyingPot, ThrownPot } from './types';
+import type { Agent, Pot, Leader, Point, FlyingPot, ThrownPot, PotOrigin, BlameSource } from './types';
 import { OFFICE } from './levels';
 import * as C from './config';
+import {HIT_LINES, HIT_WINDOW, GRUDGE_TIME} from './feel-data';
 
 export const potsLogic = {
 
@@ -14,11 +15,11 @@ export const potsLogic = {
   },
 
 // 给某人加 n 口锅（从 (fx, fy) 飞到尾巴的动画只是视觉），连甩清零
-  addPots(this: Match, a: Agent, n: number, fx: number, fy: number): void {
+  addPots(this: Match, a: Agent, n: number, fx: number, fy: number, origin?: PotOrigin): void {
     for (let i = 0; i < n; i++) {
       const pot = this.newPot(this.S.t);
       if (a.crushed) break;
-      this.receivePot(a, pot);
+      this.receivePot(a, pot, undefined, origin);
       this.S.arcs.push({ x0: fx, y0: fy, to: () => this.tailPos(a), t: -i * 0.08, dur: 0.4, label: pot.label });
     }
     a.combo = 0;
@@ -26,9 +27,10 @@ export const potsLogic = {
 
 /* ---------------- 飞行的锅 ---------------- */
   // 发射一口锅：warn > 0 时先在原地预警再起飞；target 为追踪的打工人
-  launchPot(this: Match, x: number, y: number, target: Agent, warn: number, hot: boolean, src: string): void {
+  launchPot(this: Match, x: number, y: number, target: Agent, warn: number, hot: boolean, src: string, from?: string): void {
     this.S.flying.push({
-      src, phase: warn > 0 ? 'warn' : 'fly', t: warn, warn0: warn, x, y, target, hot: !!hot,
+      ...(this.isClearing() ? {due: this.bellTime()} : {}),
+      src, from: from ?? (src === 'leader' ? this.bossName() : ''), phase: warn > 0 ? 'warn' : 'fly', t: warn, warn0: warn, x, y, target, hot: !!hot,
       a: Math.atan2(target.sn.y - y, target.sn.x - x), spin: 0, life: C.POT_LIFE,
       label: hot ? '急件' : this.E.pick(OFFICE.potLabels),
     });
@@ -38,10 +40,12 @@ export const potsLogic = {
 // 天降锅：只砸主角，脚下先出现阴影，SKY_TIME 秒后砸下来，躲不掉
   launchSky(this: Match, target: Agent, from?: Leader): void {
     // 领导出差期间跳过天降锅；老板随机派锅的替代路径由 updateLeader 处理。
-    if (target.crushed || (target.isPlayer && this.S.buff === 'trip' && this.workT() < 30)) return;
+    if (this.isClearing() || target.crushed || (target.isPlayer && this.S.buff === 'trip' && this.workT() < 30)) return;
+    if (!this.S.tut && this.workT() + C.SKY_TIME >= this.L.duration - C.CLEARING) return;
     this.S.flying.push({ src: 'sky', phase: 'sky', t: C.SKY_TIME, warn0: C.SKY_TIME, x: target.sn.x, y: target.sn.y, target, hot: false, a: 0, spin: 0, life: C.POT_LIFE, label: this.E.pick(OFFICE.potLabels) });
     this.S.spawned++; this.S.skies++;
     if (target.isPlayer) {
+      this.S.lastSkyT = this.S.t; // 记下这口的时刻，SKY_GAP 秒内老板不再丢天降锅（保底）
       this.floats.add(`${from ? from.name : this.bossName()}：这个你来`, target.sn.x, target.sn.y - 60, '#E8504A');
       this.E.sfx('skyWarn');
     }
@@ -93,10 +97,11 @@ export const potsLogic = {
 
 // 飞行锅命中：收锅、记来源，并触发对应反馈。
   potHit(this: Match, a: Agent, f: FlyingPot): void {
+    if (this.itemInvincible(a)) return; // 道具无敌：任何飞来的锅（天降、领导、散会、事件）都砸不中，直接作废
     // 带教不计入复盘；只记录实际落到主角身上的锅。
     if (a.isPlayer && !this.S.tut && Object.prototype.hasOwnProperty.call(a.hitsBy, f.src)) a.hitsBy[f.src]++;
     this.spawnFx('fx_impact', a.sn.x, a.sn.y - 26, 54);
-    this.receivePot(a, this.newPot(this.S.t, f.hot, f.label));   // 截止时间从落到身上开始算
+    this.receivePot(a, this.newPot(this.S.t, f.hot, f.label), undefined, {src: f.src as BlameSource, from: f.from ?? (f.src === 'leader' ? this.bossName() : ''), t: this.S.t});   // 截止时间从落到身上开始算
     a.combo = 0;
     if (a.isPlayer) this.tutEvent('potOnMe');
     if (f.hot) {
@@ -113,7 +118,15 @@ export const potsLogic = {
   },
 
 // 入袋统一记账：每口锅单独等 1–2 秒，后来接锅不延长先前的等待。
-  receivePot(this: Match, a: Agent, pot: Pot, from?: Agent): void {
+  receivePot(this: Match, a: Agent, pot: Pot, from?: Agent, origin?: PotOrigin): void {
+    pot.due = this.capDue(pot.due);
+    if (!pot.origin) {
+      pot.origin = {...(origin ?? {src: 'leader' as const, from: this.bossName(), t: this.S.t})};
+      // 晚段复活会回拨t0，撞击时的显示时钟须单独保留；不改变已定origin结构。
+      if (pot.origin.src === 'bump') pot.originClock = this.clockAt(this.workT());
+    }
+    if (pot.lastThrower === undefined) pot.lastThrower = null;
+    pot.lastFrom = from && !from.isPlayer ? from.name : undefined;
     if (a.key === 'nephew') {
       pot.passAt = this.S.t + this.E.rand(1, 2);
       pot.nephewSender = from || null; // 领导、散会直接派来的锅没有同事责任人
@@ -191,7 +204,7 @@ export const potsLogic = {
 
 // a 在不在某位领导的视野扇形里（隔墙看不见）；在就返回那位领导
   // 领导正在发火（老板发火事件）
-  raging(this: Match, l: Leader): boolean { return (l.rageUntil || 0) > this.S.t; },
+  raging(this: Match, l: Leader): boolean { return !this.isClearing() && (l.rageUntil || 0) > this.S.t; },
 
 // 场上有没有正在发火的领导（同事跟着慌）
   bossRaging(this: Match): boolean { return !!this.S && this.S.leaders.some(this.raging); },
@@ -221,7 +234,7 @@ export const potsLogic = {
     a.cool = C.THROW_CD;
     a.caught++;
     this.floats.add(`${l.name}：当着我的面甩锅？`, a.sn.x, a.sn.y - 60, '#E8504A');
-    this.addBlame(a, 1, '被抓现行');
+    this.addBlame(a, 1, '被抓现行', {src: 'caught', from: l.name});
     if (a.isPlayer) this.E.sfx('caught');
   },
 
@@ -239,6 +252,8 @@ export const potsLogic = {
     const b = target || this.pickAim(a);
     const ang = b ? this.leadAngle(a, b) : a.sn.angle;
     const pot = a.sn.segs.splice(potIdx == null ? this.urgentIdx(a) : potIdx, 1)[0];
+    pot.due = this.capDue(pot.due);
+    pot.lastThrower = a;
     this.S.throws.push({
       owner: a, target: b, x: a.sn.x + Math.cos(ang) * 12, y: a.sn.y + Math.sin(ang) * 12, a: ang,
       speed: C.THROW_SPEED, pot, label: pot.label, hot: pot.hot, dist: 0, range: this.hyped(a) ? C.THROW_RANGE + 50 : C.THROW_RANGE, bounces: 0, spin: 0, rolled: new Set(),
@@ -281,7 +296,8 @@ export const potsLogic = {
   },
 
 // 按人格和关卡倍率计算反甩概率，上限为九成。
-  parryChance(this: Match, b: Agent): number { return Math.min(0.9, b.p.parry * this.aiVal(b, 'parry')); },
+  // 同事反甩成功率 = 人设 × 关卡倍率，封顶 PARRY_MAX
+  parryChance(this: Match, b: Agent): number { return Math.min(C.PARRY_MAX, b.p.parry * this.aiVal(b, 'parry')); },
 
 // 当前反甩窗口：每来回一次就缩小
   parryWin(this: Match, f: ThrownPot): number { return C.PARRY_WIN * Math.pow(C.PARRY_DECAY, f.bounces); },
@@ -303,8 +319,10 @@ export const potsLogic = {
 
 // b 把飞来的锅 f 原路弹回给扔锅的人：加速、窗口缩小
   parry(this: Match, b: Agent, f: ThrownPot): void {
+    f.pot.due = this.capDue(f.pot.due);
     const back = f.owner;
     f.owner = b;
+    f.pot.lastThrower = b;
     f.target = back.crushed ? null : back;
     f.bounces++;
     f.speed *= C.PARRY_SPEEDUP;
@@ -328,6 +346,7 @@ export const potsLogic = {
   missThrow(this: Match, f: ThrownPot, why?: string): void {
     f.dead = true;
     const a = f.owner;
+    f.pot.due = this.capDue(f.pot.due);
     a.combo = 0;
     if (a.crushed) return;
     if (a.key === 'nephew') f.pot.passAt = this.S.t + this.E.rand(1, 2);
@@ -336,7 +355,7 @@ export const potsLogic = {
     this.S.arcs.push({ x0: f.x, y0: f.y, to: () => this.tailPos(a), t: 0, dur: 0.25, label: f.label });
     a.misses++;
     if (a.isPlayer) {
-      this.floats.add(why === 'wife' ? '老板娘护短，锅弹回来' : why === 'nephew' ? `${this.bossName()}护短，锅弹回来` : why === 'shield' ? '他刚接锅，弹开了' : '甩空了！锅弹回来', a.sn.x, a.sn.y - 40, '#E8504A');
+      this.floats.add(why === 'wife' ? '老板娘护短，锅弹回来' : why === 'nephew' ? `${this.bossName()}护短，锅弹回来` : why === 'shield' ? '他刚接锅，弹开了' : why === 'invincible' ? '他无敌，弹开了' : '甩空了！锅弹回来', a.sn.x, a.sn.y - 40, '#E8504A');
       this.E.sfx('miss');
     }
   },
@@ -376,7 +395,8 @@ export const potsLogic = {
         if (this.E.dist(f.x, f.y, b.sn.x, b.sn.y) < C.THROW_HIT_R) { victim = b; break; }
       }
       if (victim) {
-        if (victim.shield > 0 && !this.nephewGuardian(victim)) this.missThrow(f, 'shield');
+        if (this.itemInvincible(victim)) this.missThrow(f, 'invincible'); // 甩给无敌的人：锅弹回甩锅的人，不能凭空消失
+        else if (victim.shield > 0 && !this.nephewGuardian(victim)) this.missThrow(f, 'shield');
         else { f.dead = true; this.landThrow(f, victim); }
       } else if (f.dist >= f.range || this.inWall(f.x, f.y)) this.missThrow(f);
     }
@@ -385,12 +405,13 @@ export const potsLogic = {
 
 // 锅 f 砸中 b：归 b（截止时间照旧，越传越烫）；记连甩
   landThrow(this: Match, f: ThrownPot, b: Agent): void {
+    if (this.itemInvincible(b)) { this.missThrow(f, 'invincible'); return; } // 砸不中：弹回甩锅的人，不记命中、连甩或收锅
     const a = f.owner;
     const guardian = this.nephewGuardian(b);
     if (guardian) {
       // 抓现行已在出手时拦截；飞出的锅这里只罚护短，不再检查扔锅者的视野。
       this.missThrow(f, guardian.type === 'wife' ? 'wife' : 'nephew');
-      this.addBlame(a, guardian.type === 'wife' ? 3 : 2, `${guardian.name}护短`);
+      this.addBlame(a, guardian.type === 'wife' ? 3 : 2, `${guardian.name}护短`, {src:'protect', from:guardian.name});
       this.S.nephewProtected++;
       this.floats.add('他还小，你多担待点', guardian.x, guardian.y - 70, '#E8504A');
       return;
@@ -406,6 +427,25 @@ export const potsLogic = {
     a.comboT = C.COMBO_WINDOW;
     a.maxCombo = Math.max(a.maxCombo, a.combo);
     a.thrown++;
+    if (a.isPlayer && this.isClearing()) a.clearingThrown!++;
+    // 爽感记录不消费随机数；只记实际命中，护短和护盾弹回均已提前返回。
+    if (b.isPlayer && !a.isPlayer) a.grudgeUntil = this.S.t + GRUDGE_TIME;
+    if (a.isPlayer && !b.isPlayer) {
+      const seconds = f.pot.due - this.S.t;
+      if (Number.isFinite(seconds) && (!a.closestThrow || seconds < a.closestThrow.seconds)) a.closestThrow = {seconds, clock: this.clockAt(this.workT())};
+      b.playerHits = (b.playerHits ?? []).filter(t => this.S.t - t <= HIT_WINDOW);
+      b.playerHits.push(this.S.t);
+      const lines = HIT_LINES[b.key];
+      if (lines) {
+        const index = b.hitLines ?? 0;
+        this.emit('mateSpeech', {id: b.id, text: b.playerHits.length === 3 ? '你是不是针对我' : lines[index % lines.length]});
+        b.hitLines = index + 1;
+      }
+      if (this.S.t < (b.grudgeUntil ?? 0)) {
+        a.revengeCount = (a.revengeCount ?? 0) + 1;
+        this.emit('revenge', {id: b.id, count: a.revengeCount});
+      }
+    }
     a.victims[b.name] = (a.victims[b.name] || 0) + 1;
 
     // 接锅的人：短暂护盾 + 愣住 + 连甩清零 + 记仇
@@ -437,9 +477,10 @@ export const potsLogic = {
 
 /* ---------------- 截止时间：到点在谁身上谁背锅 ---------------- */
   // 给 a 记 n 次背锅，why 为飘字说明
-  addBlame(this: Match, a: Agent, n: number, why: string): void {
+  addBlame(this: Match, a: Agent, n: number, why: string, source?: {src: BlameSource; from: string; orig?: {src: BlameSource; from: string}; origin?: PotOrigin}): void {
     if (a.key === 'nephew') return; // 小舅子永远不背锅，截止归责由 explode 按口追溯
     a.blames += n;
+    if (a.isPlayer && !this.S.tut) a.blameLog!.push({t: this.S.t, clock: this.clockAt(this.workT()), n, ...(source ?? {src: 'leader', from: this.bossName()})});
     this.tutEvent('blame', a);
     if (a.isPlayer) {
       this.floats.add(`背锅 +${n}：${why}`, a.sn.x, a.sn.y - 40, '#E8504A');
@@ -457,15 +498,39 @@ export const potsLogic = {
     // 他拿着或正在塞出去的锅到期，算最后甩给他的同事；责任人已出局也照记。
     // 没人甩给他的领导/散会锅到期直接消失，不凭空栽给玩家。
     const liable = a.key === 'nephew' ? pot.nephewSender : a;
-    if (liable) this.addBlame(liable, pot.hot ? C.P0_BLAME : 1, a.key === 'nephew' ? '小舅子的锅算你的' : pot.hot ? '急件炸了' : `${pot.label}出事了`);
+    if (liable) {
+      // 小舅子、急件优先；普通锅最后被同事交接才改用mate，首次来源永不覆盖。
+      const orig = a.key === 'nephew' ? {src: 'nephew' as const, from: ''} : pot.hot ? {src: 'p0' as const, from: ''}
+        : pot.lastFrom ? {src: 'mate' as const, from: pot.lastFrom} : {src: pot.origin?.src ?? 'leader' as const, from: pot.origin?.from ?? this.bossName()};
+      const bell = !this.S.tut && this.S.t >= this.bellTime();
+      this.addBlame(liable, pot.hot ? C.P0_BLAME : 1, a.key === 'nephew' ? '小舅子的锅算你的' : pot.hot ? '急件炸了' : `${pot.label}出事了`,
+        {...(bell ? {src: 'bell' as const, from: orig.from, orig} : orig), ...(pot.origin ? {origin: {...pot.origin, ...(pot.originClock ? {clock: pot.originClock} : {})}} : {})});
+    }
+    // 新反馈用独立事件让画面替换旧飘字，旧计分、音效与录像事件不变。
+    const n = pot.hot ? C.P0_BLAME : 1;
+    // 小舅子身上的锅到点算回你头上（见上面 liable），是你被罚，不放「你甩的」庆祝、不计受害者。
+    if (onBody && !a.isPlayer && a.key !== 'nephew' && pot.lastThrower?.isPlayer) {
+      const player = this.S.player;
+      player.kills![a.name] = (player.kills![a.name] ?? 0) + 1;
+      player.killOrder![a.name] = ++player.killSerial!;
+      this.emit('ownedBlame', {id: a.id, n, original: `${a.name} 背锅 +${n}`});
+      if (this.S.ownedBoomAt !== this.S.t) {this.S.ownedBoomAt = this.S.t; this.emit('ownedBoom');}
+    }
+    if (a.isPlayer && pot.lastThrower && !pot.lastThrower.isPlayer) {
+      const original = `背锅 +${n}：${pot.hot ? '急件炸了' : `${pot.label}出事了`}`;
+      this.emit('mateBlame', {text: `背锅 +${n} · ${pot.lastThrower.name}甩的`, original, x: a.sn.x, y: a.sn.y - 40});
+    }
     if (pot.hot) this.E.sfx('boom', { vol: liable && liable.isPlayer ? 1 : 0.5 });
     if (pot.hot && liable) this.E.toast(liable.isPlayer ? `急件炸在你手里，背锅 +${C.P0_BLAME}` : `急件炸在${liable.name}手里，背锅 +${C.P0_BLAME}`, 2000);
   },
 
 // 每帧：身上到点的锅出事；还在飞的锅到点，算甩它的人
   updateDue(this: Match): void {
+    // 正常帧保留出局者冻结规则；铃响必须清掉每个人的余锅，包括已压垮者。
+    const bell = !this.S.tut && this.S.t >= this.bellTime();
+    if (bell && this.S.over !== 'time') this.S.player.bellPots = this.potsOf(this.S.player);
     for (const a of this.S.agents) {
-      if (a.crushed) continue;
+      if (a.crushed && !bell) continue;
       // 删除前固定每口锅的位置，同帧多口到期也不会串位。
       const positions = a.sn.segs.some((pot) => pot.due <= this.S.t) ? a.sn.positions() : [];
       for (let i = a.sn.segs.length - 1; i >= 0; i--) {
@@ -474,6 +539,9 @@ export const potsLogic = {
         this.explode(a, pot, positions[i], true);
       }
     }
-    for (const f of this.S.throws) if (!f.dead && f.pot.due <= this.S.t) { f.dead = true; if (!f.owner.crushed) this.explode(f.owner, f.pot, f); }
+    for (const f of this.S.throws) if (!f.dead && f.pot.due <= this.S.t) { f.dead = true; if (!f.owner.crushed || bell) this.explode(f.owner, f.pot, f); }
+    this.S.throws = this.S.throws.filter(f => !f.dead);
+    // 领导/散会飞锅尚未落地，没有可归责的在榜发送者，沿用未命中不记账的口径。
+    this.S.flying = this.S.flying.filter(f => !f.dead && !(f.due !== undefined && f.due <= this.S.t));
   },
 };

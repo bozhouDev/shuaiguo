@@ -2,8 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { Match } from '../assets/scripts/core/match.ts';
-test('随机序列、零种子、表现隔离、模拟复现及异常恢复与原型契约相同', () => {
-  const m = new Match({ seed: 1001 }),
+test('随机序列、零种子、表现隔离、模拟复现及异常恢复符合 TS 契约', () => {
+  const m = new Match({itemDrops:false, seed: 1001 }),
     E = m.E;
   E.seed(1001);
   const start = E.rngState(),

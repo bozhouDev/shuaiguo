@@ -1,8 +1,5 @@
 // 录像外路径：独立输入随机流、逐帧完整玩法摘要，以及真实 finish 局部结果。
-const assert = require('node:assert/strict');
-const { setup } = require('../game-harness.cjs');
 const { normalize, hash } = require('./record.cjs');
-const path = require('node:path');
 const DT = 1 / 60;
 const kinds = new Set(['sfx', 'toast', 'buzz', 'floats', 'showMsg', 'showHint', 'spawnFx']);
 // 不执行教学定时回调；只记录剩余时间，回调效果由后续帧与事件检验。
@@ -33,63 +30,9 @@ function state(m) {
     ranking: Array.from(m.ranking(), (a) => a.id)
   });
 }
-// Match 和原型只有调用表不同，算法与结果均来自各自真实实现。
-function prototype(c, progress) {
-  const env = setup(true, { extended: true, events: true, sourceDir: path.resolve(__dirname, '../../js') });
-  const { ctx, storage } = env,
-    m = ctx.TEST;
-  if (progress) storage.set('shuaiguo_v3', JSON.stringify(progress));
-  ctx.E.seed(c.seed);
-  m.boot(c.level, {
-    auto: c.kind === 'buff' || c.kind === 'auto' || c.kind === 'ad',
-    simulating: false,
-    tutorial: c.kind === 'tutorial',
-    buff: c.buff
-  });
-  Object.defineProperty(m, 'E', { value: ctx.E });
-  // 保存真实结算面板和按钮回调；广告替身只跳过等待，仍执行原型成功回调。
-  let handlers = {},
-    html = '';
-  ctx.E.showPanel = (h, f) => {
-    html = h;
-    handlers = f;
-  };
-  ctx.E.fakeAd = (cb) => cb();
-  // 以下门面分别调用真实结算、广告按钮、教学按钮及收尾入口。
-  return {
-    ...env,
-    m,
-    // 真实 finish 写存档和面板后，读取内存暴露的局部计算结果。
-    finish(reason) {
-      m.finish(reason);
-      return summary(m.lastResult);
-    },
-    // 只点击原型实际显示的广告按钮，缺少按钮或回调都使验收失败。
-    ad(name) {
-      assert(html.includes(`data-act="${name}"`), `未显示广告按钮 ${name}`);
-      assert.equal(typeof handlers[name], 'function', `缺少广告回调 ${name}`);
-      handlers[name]();
-    },
-    // 第七步确认走提示框的实际点击监听器。
-    start() {
-      ctx.document.getElementById('hint').querySelector('.h-go').listeners.click();
-    },
-    // 跳过教学走原按钮监听器，不直接清除教学状态。
-    skip() {
-      ctx.document.getElementById('btnSkip').listeners.click();
-    },
-    // 顶包会再次结算，因此读取上次 finish 的最新结果。
-    result: () => summary(m.lastResult),
-    // 验证原型真正写入的本地存档内容。
-    stored: () => JSON.parse(storage.get('shuaiguo_v3')),
-    // 供专项断言检查广告、彩蛋和证书的展示资格。
-    html: () => html,
-    // 模拟前后台切换，只推进真实收尾入口。
-    closing(dt, hidden) {
-      ctx.document.hidden = hidden;
-      m.updateClosing(dt);
-    }
-  };
+// 默认录像工厂指向 TS；延迟加载可避免 extra-adapter 取 summary 时形成循环初始化。
+function tsFactory(c, progress) {
+  return require('../../cocos/tests/extra-adapter.cjs').factory(c, progress);
 }
 // 去除对象身份和关卡对象，保留结算全部纯计算字段；同结构用于真实原型结果和 TS 返回值。
 function summary(r) {
@@ -183,7 +126,7 @@ const id = (c) =>
     .filter((x) => x !== '')
     .join('-');
 // 一局完整录像；TS 重放保存下来的输入，原型自验时重新生成，避免生成器变化被掩盖。
-function run(c, factory = prototype, replay) {
+function run(c, factory = tsFactory, replay) {
   const env = factory(c),
     m = env.m,
     s = m.S,
@@ -279,4 +222,4 @@ function run(c, factory = prototype, replay) {
     coverage
   };
 }
-module.exports = { DT, kinds, state, prototype, summary, inputGenerator, tutorialInput, cases, id, run };
+module.exports = { DT, kinds, state, summary, inputGenerator, tutorialInput, cases, id, run };

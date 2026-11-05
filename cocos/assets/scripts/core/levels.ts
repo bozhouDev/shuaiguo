@@ -126,7 +126,8 @@ import type { Office, Level } from './types';
       name: '周一 · 入职第一天',
       theme: 'office',      // 默认办公
       desc: '入职第一天，老周先带你走一遍。锅到点在谁身上谁背锅，18:00 背锅最少的前三名下班。',
-      duration: 70,         // 正式上班的实际秒数，对应 09:00 ~ 18:00（带教时间不算）；2026-11-03 由 90 缩短
+      // 2026-11-05 五关时长改成 60 / 90 / 90 / 105 / 120：一局越短失败成本越低，越想再来；难度靠密度、人数、期限，不靠时长
+      duration: 60,         // 正式上班的实际秒数，对应 09:00 ~ 18:00（带教时间不算）；2026-11-03 由 90 缩到 70，2026-11-05 再缩到 60
       startPots: 1,         // 开始上班时每个同事发 1 口锅
       potLife: 40,
       skyChance: 0,         // 带教之后不再有天降锅
@@ -135,18 +136,18 @@ import type { Office, Level } from './types';
       leaders: [{ type: 'boss', route: 'boss' }],
       ai: { aggr: 0.5, parry: 0 },                                // 刚上班：同事懒得追着甩，也不反弹
       aiEnd: { aggr: 0.95, parry: 0.4, dodge: 1.1, focus: 0.4 },  // 快下班：开始追着甩、偶尔弹回来
-      pace: [
+      pace: [               // 时间点按 70 → 60 秒等比挪
         { t: 5, every: 9 },
-        { t: 28, every: 7 },
-        { t: 48, every: 5.5 },
+        { t: 24, every: 7 },
+        { t: 41, every: 5.5 },
       ],
-      rushAt: 46,
-      incidents: [{ t: 32, kind: 'rage' }],
+      rushAt: 39,
+      incidents: [{ t: 27, kind: 'rage' }],
       bursts: [],
       tips: [
         { on: 'seen', title: '领导视野', icon: ['boss_idle'], sub: '你站在老板的!红扇形!里', text: '先*走出去*再甩' },
       ],
-      finale: { t: 58, pots: 4, msg: '【全员群】人事：下午茶到了，茶水间自取', say: '老板：下班前这几个你分一下' },
+      finale: { t: 49, pots: 4, msg: '【全员群】人事：下午茶到了，茶水间自取', say: '老板：下班前这几个你分一下' },
       tutorial: {
         spots: {
           ring: { x: 595, y: 745 },     // 第一步要走到的黄圈（别放太右，窄屏会被切边）
@@ -163,7 +164,7 @@ import type { Office, Level } from './types';
           { do: 'expire', say: '看好：锅*到点*在谁身上，谁*背锅*。', say2: '*{who}*背锅 +1，~你没事~。' },
           { do: 'sight', say: '老板面前的!红扇形!是*视野*。', say2: '在视野里甩锅会被*抓现行*：!锅不走，还要背锅!。' },
           { do: 'dodge', say: '又来一口。先*走出红扇形*，再甩给*会计*。', alt: '又来一口。别在!红扇形!里甩，甩给*会计*。' },
-          { do: 'rank', say: '右上角是*名次*：炸了的锅算 1，身上没甩掉的算*半口*。*18:00 前三名*下班，越到下班大家越急。' },
+          { do: 'rank', say: '右上角是*名次*：锅*到点*算 1 次，*18:00 还在手里的*也算。*前三名*下班，越到下班大家越急。' },
         ],
       },
     },
@@ -172,28 +173,27 @@ import type { Office, Level } from './types';
       name: '周二 · 早会之后',
       theme: 'spring',      // 春日绿意
       desc: `老板派活更勤，同事也会反甩了。下午老板还要发一次火，身上攒满 12 口就压垮。`,
-      duration: 120,        // 实际秒数，对应 09:00 ~ 18:00
+      duration: 90,         // 实际秒数，对应 09:00 ~ 18:00；2026-11-05 由 120 缩到 90
       startPots: 1,         // 同事开局自带的锅（主角开局空手，第一口是天降锅）
       potLife: 26,          // 2026-11-02 加难：30 → 26
-      skyChance: 0.3,
+      skyChance: 0.25,      // 2026-11-05 .3 → .25，另有 SKY_GAP 保底
       bots: ['pm', 'intern', 'veteran'],
       leaders: [{ type: 'boss', route: 'boss' }],
       ai: { aggr: 0.9, parry: 0.7, dodge: 1.1, focus: 0.5 },      // 上午和原来一样
-      aiEnd: { aggr: 1.5, parry: 1.35, dodge: 1.4, focus: 1.5 },  // 下班前盯着账面干净的人甩
-      leaderFocus: 0.3,
-      pace: [
-        { t: 6, every: 7 },
-        { t: 40, every: 5.5 },
-        { t: 80, every: 4.5 },
-        { t: 107, every: 2.6 },
+      aiEnd: { aggr: 1.7, parry: 1.1, dodge: 1.3, focus: 1.3 },   // 下班前盯着账面干净的人甩；2026-11-05 反甩倍率封顶 1.2（另有 PARRY_MAX）
+      leaderFocus: 0.6,
+      pace: [               // 清账前派锅节奏；正式最后15秒停止普通派锅
+        { t: 5, every: 7 },
+        { t: 30, every: 5.5 },
+        { t: 60, every: 4.3 },
       ],
-      rushAt: 90,
-      incidents: [{ t: 64, kind: 'rage' }, { t: 98, kind: 'inspect' }],
+      rushAt: 68,
+      incidents: [{ t: 48, kind: 'rage' }, { t: 74, kind: 'inspect' }],
       bursts: [
-        { t: 30, src: 'meeting', n: 3, msg: '【全员群】行政：{time} 周会结束，散会！' },
-        { t: 78, src: 'meeting', n: 4, msg: '【全员群】行政：{time} 销售会结束，大家辛苦' },
+        { t: 22, src: 'meeting', n: 3, msg: '【全员群】行政：{time} 周会结束，散会！' },
+        { t: 58, src: 'meeting', n: 4, msg: '【全员群】行政：{time} 销售会结束，大家辛苦' },
       ],
-      events: { n: 1, window: [45, 100], pool: ['printer', 'tea', 'p0'] },
+      events: { n: 1, window: [34, 72], pool: ['printer', 'tea', 'p0'] },
       news: [
         { icon: 'fx_impact', text: '同事学会反甩了；锅快砸中你时按「甩」，也能弹回去' },
         { icon: 'wok', text: '散会、打印机卡纸会喷锅，群里一预告就离远点' },
@@ -209,30 +209,29 @@ import type { Office, Level } from './types';
       name: '周三 · 开大会',
       theme: 'beach',       // 海滨度假
       desc: '经理一次丢两口！小舅子接锅就塞给别人，别当着老板的面甩他；他不占前三名额。',
-      duration: 120,
-      startPots: 2,
-      potLife: 20,          // 2026-11-02 加难：24 → 20
-      skyChance: 0.35,
+      // 2026-11-05 拆断层：周三只上「新东西」（经理、小舅子、人数 3 → 5），其他数值贴着周二，不再十个变量一起跳
+      duration: 90,         // 新角色关不加长
+      startPots: 1,         // 2 → 1，滞后一关再加
+      potLife: 24,          // 20 → 24，每关只减 2
+      skyChance: 0.25,      // .35 → .25
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew'],
       nephewRanked: false, // 小舅子不占前三名额；以后周五设 true 就会占名额
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }],
-      ai: { aggr: 1.25, parry: 1.2, dodge: 1.15, sneak: 1.15, focus: 0.85 }, // 2026-11-03 改成爬升：开局比原来略松
-      aiEnd: { aggr: 1.7, parry: 1.6, dodge: 1.35, sneak: 1.35, focus: 1.6 }, // 下班前比原来狠
-      leaderFocus: 0.35,
-      pace: [
-        { t: 3, every: 4.8 },
-        { t: 30, every: 3.9 },
-        { t: 70, every: 3.1 },
-        { t: 105, every: 1.8 },
+      ai: { aggr: 1.0, parry: 0.9, dodge: 1.1, sneak: 1.15, focus: 0.85 },   // 锯齿：新角色关开局比周二下班时松，再爬上去
+      aiEnd: { aggr: 1.15, parry: 1.15, dodge: 1.3, sneak: 1.35, focus: 1.2 }, // 温和定稿：新角色关放缓同事追甩，盯人仍为 1.2
+      leaderFocus: 0,      // 不优先点名，仍按闲忙派锅
+      pace: [               // 温和定稿：经理一次两口，放慢派锅；时间点不变，周三至周五间隔相同
+        { t: 3, every: 10 },
+        { t: 22, every: 8 },
+        { t: 52, every: 6.5 },
       ],
-      rushAt: 90,
-      incidents: [{ t: 50, kind: 'inspect', who: 'director' }, { t: 84, kind: 'rage' }],
-      bursts: [
-        { t: 25, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 月度总结会结束，散会！' },
-        { t: 60, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 总结会第二场结束' },
-        { t: 95, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 安全培训结束，记得签到' },
+      rushAt: 68,
+      incidents: [{ t: 38, kind: 'inspect', who: 'director' }, { t: 63, kind: 'rage' }],
+      bursts: [             // 3 场 17 口 → 2 场 7 口
+        { t: 20, src: 'meeting', n: 3, msg: '【全员群】行政：{time} 月度总结会结束，散会！' },
+        { t: 55, src: 'meeting', n: 4, msg: '【全员群】行政：{time} 总结会第二场结束' },
       ],
-      events: { n: 3, window: [30, 108], pool: ['printer', 'tea', 'p0'] },
+      events: { n: 2, window: [25, 72], pool: ['printer', 'tea', 'p0'] },
       news: [
         { icon: 'director_idle', text: '经理一次丢两口锅，他面前也有红扇形视野' },
         { icon: 'nephew_normal', text: '小舅子接锅就塞给别人；当着老板甩他会被护短' },
@@ -247,27 +246,27 @@ import type { Office, Level } from './types';
       name: '周四 · 老板画饼',
       theme: 'autumn',
       desc: '老板上午、下午各画一次饼。出纳跟风甩锅；小舅子不占名额，其余 7 人争前三。',
-      duration: 120, startPots: 3, potLife: 20, skyChance: 0.3,  // 2026-11-02 加难：开局 2 → 3 口，期限 24 → 20
+      // 温和定稿：开局仍为 1 口，新增压力来自散会第三场、出纳、画饼；期限每关只减 2
+      duration: 105, startPots: 1, potLife: 22, skyChance: 0.2,
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew', 'cashier'],
       nephewRanked: false,
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }],
-      ai: { aggr: 1.2, parry: 1.1, dodge: 1.15, sneak: 1.1, focus: 0.9 },
-      aiEnd: { aggr: 1.6, parry: 1.5, dodge: 1.35, sneak: 1.3, focus: 1.6 },
-      leaderFocus: 0.4,
-      pace: [
-        { t: 3, every: 4.8 }, { t: 30, every: 3.9 }, { t: 70, every: 3.1 },
-        { t: 105, every: 1.8 },
+      ai: { aggr: 1.1, parry: 1.0, dodge: 1.15, sneak: 1.1, focus: 0.9 },
+      aiEnd: { aggr: 1.35, parry: 1.2, dodge: 1.35, sneak: 1.3, focus: 1.3 },
+      leaderFocus: 0,      // 不优先点名，仍按闲忙派锅
+      pace: [               // 温和定稿：派锅间隔与周三相同，保留原时间点
+        { t: 3, every: 10 }, { t: 26, every: 8 }, { t: 61, every: 6.5 },
       ],
-      rushAt: 90,
-      incidents: [{ t: 50, kind: 'inspect', who: 'director' }, { t: 86, kind: 'rage' }],
-      // 09:00–18:00 对应 120 秒：22 秒约 10:39，74 秒约 14:33。
-      pieMeetings: [{ t: 22, duration: 3.6, count: 4, life: 9 }, { t: 74, duration: 3.6, count: 4, life: 9 }],
+      rushAt: 79,
+      incidents: [{ t: 44, kind: 'inspect', who: 'director' }, { t: 75, kind: 'rage' }],
+      // 09:00–18:00 对应 105 秒：19 秒约 10:38，65 秒约 14:34。
+      pieMeetings: [{ t: 19, duration: 3.6, count: 4, life: 9 }, { t: 65, duration: 3.6, count: 4, life: 9 }],
       bursts: [
-        { t: 38, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 散会，活儿都领回去' },
-        { t: 62, src: 'meeting', n: 7, msg: '【全员群】行政：{time} 盘点会结束' },
-        { t: 98, src: 'meeting', n: 7, msg: '【全员群】行政：{time} 散会，下班前都交齐' },
+        { t: 33, src: 'meeting', n: 4, msg: '【全员群】行政：{time} 散会，活儿都领回去' },
+        { t: 54, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 盘点会结束' },
+        { t: 86, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 散会，下班前都交齐' },
       ],
-      events: { n: 3, window: [35, 108], pool: ['printer', 'tea', 'p0'] },
+      events: { n: 3, window: [30, 87], pool: ['printer', 'tea', 'p0'] },
       news: [
         { icon: 'cashier_normal', text: '新同事出纳：专挑刚被甩中的人，跟着落井下石' },
         { icon: 'pie', text: '老板开会画饼：捡饼多两口锅，换十秒鸡血' },
@@ -281,26 +280,26 @@ import type { Office, Level } from './types';
       id: 5,
       name: '周五 · 老板娘查账', theme: 'winter',
       desc: '今天只有 2 个下班名额，小舅子占 1 个；把他压垮就空出一个。老板娘专查同事里的第 1 名。',
-      duration: 120, startPots: 3, potLife: 19, skyChance: 0.12,  // 2026-11-02 加难：开局 2 → 3 口，期限 23 → 19
+      // 温和定稿：周五最长（120 秒），派锅间隔与周三、周四相同；老板娘、实际下班名额、开局锅和期限继续加压
+      duration: 120, startPots: 2, potLife: 20, skyChance: 0.12,
       passRank: 2, passStars: 3, nephewRanked: true,
       bots: ['pm', 'tester', 'intern', 'veteran', 'designer', 'nephew', 'cashier'],
       leaders: [{ type: 'boss', route: 'boss' }, { type: 'director', route: 'director' }, { type: 'wife', route: 'wife' }],
-      ai: { aggr: 1.25, parry: 1.15, dodge: 1.2, sneak: 1.15, focus: 1.1 },
-      aiEnd: { aggr: 1.65, parry: 1.55, dodge: 1.4, sneak: 1.35, focus: 1.8 },
-      leaderFocus: 0.45,
+      ai: { aggr: 1.2, parry: 1.0, dodge: 1.2, sneak: 1.15, focus: 1.1 },
+      aiEnd: { aggr: 1.35, parry: 1.2, dodge: 1.4, sneak: 1.35, focus: 1.5 },
+      leaderFocus: 0,      // 老板、经理不优先点名；老板娘仍按查账规则选第一名
       pace: [
-        { t: 3, every: 4.4 }, { t: 30, every: 3.5 }, { t: 70, every: 2.8 },
-        { t: 105, every: 2 },
+        { t: 3, every: 10 }, { t: 30, every: 8 }, { t: 70, every: 6.5 },
       ],
       rushAt: 90,
       incidents: [{ t: 48, kind: 'inspect', who: 'director' }, { t: 86, kind: 'rage' }],
       pieMeetings: [{ t: 22, duration: 3.6, count: 4, life: 9 }, { t: 74, duration: 3.6, count: 4, life: 9 }],
       bursts: [
-        { t: 38, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 散会，账都对一遍' },
-        { t: 62, src: 'meeting', n: 7, msg: '【全员群】行政：{time} 查账会结束' },
-        { t: 98, src: 'meeting', n: 7, msg: '【全员群】行政：{time} 散会，下班前都交齐' },
+        { t: 38, src: 'meeting', n: 5, msg: '【全员群】行政：{time} 散会，账都对一遍' },
+        { t: 62, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 查账会结束' },
+        { t: 98, src: 'meeting', n: 6, msg: '【全员群】行政：{time} 散会，下班前都交齐' },
       ],
-      events: { n: 3, window: [35, 108], pool: ['printer', 'tea', 'p0'] },
+      events: { n: 3, window: [35, 102], pool: ['printer', 'tea', 'p0'] },
       news: [
         { icon: 'wife_idle', text: '老板娘专查同事里的第 1 名，瞄准红线一出就躲' },
         { icon: 'wife_chase', text: '当着她甩中小舅子，背锅 +3；压垮他，姐姐会追你' },
@@ -311,3 +310,9 @@ import type { Office, Level } from './types';
       ],
     },
   ];
+
+// 八个风险点共用原地图：会议室/老板室门口、老板两条纵向巡逻过道及南侧折返点。
+export const ITEM_DROP_POINTS = [
+  {x:220,y:300}, {x:800,y:300}, {x:320,y:460}, {x:640,y:460},
+  {x:640,y:700}, {x:320,y:920}, {x:320,y:1150}, {x:640,y:1150},
+];

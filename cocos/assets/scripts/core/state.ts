@@ -23,7 +23,7 @@ export const stateLogic = {
 // 新的一口锅：label 锅上的字，due 到点时刻（对局秒数），hot 是否 P0
   // 带教期间的锅不走时间（due = Infinity），开始上班时再统一起算
   newPot(this: Match, t: number, hot?: boolean, label?: string): Pot {
-    return { label: hot ? '急件' : label || this.E.pick(OFFICE.potLabels), due: this.S && this.S.tut ? Infinity : t + (hot ? C.P0_LIFE : this.potLife()), hot: !!hot };
+    return { lastThrower: null, label: hot ? '急件' : label || this.E.pick(OFFICE.potLabels), due: this.S && this.S.tut ? Infinity : this.capDue(t + (hot ? C.P0_LIFE : this.potLife())), hot: !!hot };
   },
 
 // 某人身上最急的一口锅的下标（没有锅返回 -1）
@@ -55,6 +55,15 @@ export const stateLogic = {
   // S.t 是对局物理时间（锅的截止、动画都用它），派锅节奏、散会、下班判定都用上班时钟
   workT(this: Match): number { return this.S.t - this.S.t0; },
 
+// 清账依据正式上班时钟，带教物理时间不计；状态标记只负责消息去重。
+  isClearing(this: Match): boolean { return !!this.S && !this.S.tut && this.workT() >= this.L.duration - C.CLEARING - 1e-7; },
+
+// 所有锅的截止时间仍用对局物理时钟，周一带教结束后从t0起算。
+  bellTime(this: Match): number { return this.S.t0 + this.L.duration; },
+
+// 清账内每个写入截止时间的入口统一封顶，保留原本更早的到期。
+  capDue(this: Match, due: number): number { return this.isClearing() ? Math.min(due, this.bellTime()) : due; },
+
 // 上班秒数 → 屏幕时钟文字（09:00 ~ 18:00）
   clockAt(this: Match, t: number): string {
     const mins = (this.E.clamp(t, 0, this.L.duration) / this.L.duration) * 9 * 60;
@@ -76,7 +85,9 @@ export const stateLogic = {
     sn.angle = isPlayer ? 0 : this.E.rand(0, Math.PI * 2);
     if (!isPlayer && !noPots && key !== 'nephew') this.giveStartPots(sn, 0);
     return {
+      ...(isPlayer ? {blameLog: [], clearingThrown: 0, bellPots: 0, kills: {}, killOrder: {}, killSerial: 0, closestThrow: null, revengeCount: 0} : {}),
       id, key, p, name: p.name, isPlayer, sn,
+      ...(!isPlayer ? {grudgeUntil: 0, hitLines: 0, playerHits: []} : {}),
       want: sn.angle, thinkT: this.E.rand(0, 0.3), target: null,   // AI：想去的方向、思考倒计时、想甩锅的对象
       blames: 0, caught: 0, alarmed: false,                    // 背锅次数、被领导抓现行次数、是否已提示快压垮
       hitsBy: { sky: 0, leader: 0, burst: 0, mate: 0, bump: 0 }, // 正式上班后的中锅来源
@@ -94,7 +105,7 @@ export const stateLogic = {
 
 // 同事开局自带的锅：截止时间打散，免得同一时刻一起到点
   giveStartPots(this: Match, sn: Snake, t: number): void {
-    for (let i = 0; i < this.L.startPots; i++) { const pot = this.newPot(t); pot.due = t + this.E.rand(0.5, 1) * this.potLife(); sn.segs.push(pot); }
+    for (let i = 0; i < this.L.startPots; i++) { const pot = this.newPot(t); pot.due = this.capDue(t + this.E.rand(0.5, 1) * this.potLife()); pot.origin = {src:'leader', from:this.bossName(), t}; sn.segs.push(pot); }
   },
 
 // 创建一位领导
@@ -113,10 +124,13 @@ export const stateLogic = {
 // 生成一局的初始状态；tut 为真时先走带教（同事站到带教位置、开局不带锅，上班时钟先不走）
   makeState(this: Match, tut = false, buff?: string | null): State {
     buff = tut ? null : buff || null; // 带教不带增益，时间表生成时就确定本局增益
+    const items = this.itemDrops ? this.makeItems() : undefined;
     const spots = tut ? this.L.tutorial!.spots : {};
     const player = this.makeAgent(0, 'me', OFFICE.player.x, OFFICE.player.y, true);
     const bots = this.L.bots.map((k, i) => { const sp = spots[k] || OFFICE.spawns[i]; return this.makeAgent(i + 1, k, sp.x, sp.y, false, tut); });
     return {
+      rankTrail: [], previousRank: null, clearingRank: null, ownedBoomAt: null, buzzerEmitted: false, clearing: false,
+      ...(items ? {items} : {}),
       pies: [], pieBatch: 0, pieMeetingsDone: 0, piesSpawned: 0, piesExpired: 0,
       nephewProtected: 0, nephewCrushed: false, // 护短次数与本局隐藏成就
       praiseAt: {}, outSince: null, // 同类冷却与连续掉出前三的起点，每局重置
@@ -128,7 +142,7 @@ export const stateLogic = {
       // 带教进度：i 当前步，timers 本步的定时器，ring 要走到的黄圈，victim 第一次甩中的同事
       tut: tut ? { i: -1, timers: [], ring: null, step: null, def: null, done: false, victim: null, showRank: false } : null,
       finale: false, finMsg: false, finDone: false,                  // 收尾（下午茶）：是否进行中 / 群消息发了没 / 触发过没
-      skyFirst: !tut, revived: false, rescued: false, over: null, lastTick: 0, spawned: 0, leaderHits: 0, booms: 0, skies: 0,
+      skyFirst: !tut, lastSkyT: -Infinity, revived: false, rescued: false, over: null, lastTick: 0, spawned: 0, leaderHits: 0, booms: 0, skies: 0,
     };
   },
 

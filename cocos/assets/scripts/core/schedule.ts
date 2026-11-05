@@ -85,7 +85,7 @@ export const scheduleLogic = {
 // 吃饼马上加两口普通期限的锅，飞锅弧线只是视觉，不延迟负担与压垮判定。
   eatPie(this: Match, a: Agent, pie: Pie): void {
     a.piesEaten++; a.hypeUntil = this.S.t + 10; // 连吃刷新十秒，不叠加倍率或时间
-    this.addPots(a, 2, pie.boss.x, pie.boss.y - 20);
+    this.addPots(a, 2, pie.boss.x, pie.boss.y - 20, {src:'leader',from:pie.boss.name,t:this.S.t});
     this.S.spawned += 2;
     a.pieSay = this.E.pick(C.PIE_PROMISES); a.pieSayUntil = this.S.t + 2.4;
     pie.boss.pieSay = '既然你这么积极，这些也交给你'; pie.boss.pieSayUntil = this.S.t + 2.4;
@@ -117,7 +117,7 @@ export const scheduleLogic = {
     // 急着下班：到 rushAt 秒，同事们开始抢着甩锅（更快、更急、更狠），换紧张配乐；只提示这一次
     if (!this.S.rushHour && w >= (this.L.rushAt ?? this.L.duration * C.RUSH_AT)) {
       this.S.rushHour = true; this.S.rush = true;
-      this.E.toast(`${this.clockAt(w)} 快下班了，大家都急着甩锅！`, 2200); this.E.sfx('rush'); this.shake = 8; this.E.bgm('rush');
+      this.E.toast(`${this.clockAt(w)} 快下班了，大家都急着甩锅！`, 2200); this.E.sfx('rush'); this.shake = 8; this.E.bgm(this.isClearing() ? 'clearing' : 'rush');
     }
     // 散会、随机事件、临时事件
     while (this.S.schedule.length && w >= this.S.schedule[0].t) {
@@ -156,9 +156,9 @@ export const scheduleLogic = {
     this.S.finale = true;
     this.S.finBlame0 = P.blames; // 调试统计用：收尾期间主角背了几次锅
     this.S.tea = this.L.duration - fin.t + 1;
-    this.addPots(P, fin.pots, l ? l.x : P.sn.x, l ? l.y : P.sn.y - 200);
-    const end = this.S.t0 + this.L.duration - 0.6; // 赶在下班判定之前到点
-    for (const pot of P.sn.segs.slice(-fin.pots)) pot.due = end;
+    this.addPots(P, fin.pots, l ? l.x : P.sn.x, l ? l.y : P.sn.y - 200, {src:'leader',from:l?.name ?? this.bossName(),t:this.S.t});
+    const end = this.S.t0 + this.L.duration - 0.6; // 保留周一原收尾提前0.6秒到期的节拍，未在本卡调参。
+    for (const pot of P.sn.segs.slice(-fin.pots)) pot.due = this.capDue(end);
     this.floats.add(this.bossText(fin.say), P.sn.x, P.sn.y - 60, '#E8504A');
     this.E.toast('同事都挤在茶水间，过去一口气甩掉！', 2400);
     this.E.sfx('tea');
@@ -167,25 +167,27 @@ export const scheduleLogic = {
 
 // 某个地点一口气喷出 n 口锅，依次瞄准离那里最近的几个人
   burst(this: Match, srcKey: string, n: number): void {
+    if (this.isClearing()) return;
     const src = OFFICE.sources[srcKey];
     const near = this.S.agents.filter((a) => !a.crushed)
       .sort((a, b) => this.E.dist(a.sn.x, a.sn.y, src.x, src.y) - this.E.dist(b.sn.x, b.sn.y, src.x, src.y))
       .slice(0, 3);
     if (!near.length) return;
-    for (let i = 0; i < n; i++) this.launchPot(src.x, src.y, near[i % near.length], 0.9 + i * 0.2, false, 'burst');
+    for (let i = 0; i < n; i++) this.launchPot(src.x, src.y, near[i % near.length], 0.9 + i * 0.2, false, 'burst', srcKey === 'printer' ? '打印机' : '散会');
     this.E.sfx(srcKey === 'printer' ? 'printer' : 'burst');
     this.shake = Math.max(this.shake, 4);
   },
 
 // 随机事件生效
   startEvent(this: Match, kind: string): void {
+    if (this.isClearing()) return;
     if (kind === 'printer') this.burst('printer', 5);
     else if (kind === 'tea') { this.S.tea = 10; this.E.toast('同事们都去茶水间了，挤在一起正好连甩', 2200); this.E.sfx('tea'); }
     else if (kind === 'p0') {
       const l = this.S.leaders[0];
       if (l.meeting) { l.afterMeetingHot = true; return; }
       const target = this.pickTargets(l)[0] || this.nearestAgent(l.x, l.y);
-      if (target) this.launchPot(l.x, l.y - 20, target, 0.9, true, 'leader');
+      if (target) this.launchPot(l.x, l.y - 20, target, 0.9, true, 'leader', l.name);
     }
   },
 
@@ -193,6 +195,7 @@ export const scheduleLogic = {
   // rage 老板发火——RAGE_TIME 秒内走得快、派锅又密又多（一次多一口、不丢天降锅）、视野更大，同事跟着慌、抢着甩
   // inspect 领导查岗——INSPECT_TIME 秒内直奔你走过来，停在跟前盯着看，你在他视野里甩锅就被抓
   startIncident(this: Match, inc: Incident): void {
+    if (inc.kind === 'rage' && this.isClearing()) return;
     const l = this.S.leaders.find((x) => x.type === (inc.who || 'boss'));
     if (!l) return;
     if (inc.kind === 'rage') {

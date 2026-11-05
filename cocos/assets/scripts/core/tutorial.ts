@@ -59,8 +59,8 @@ export const tutorialLogic = {
     this.resetCoachInput();
     this.S.tut = null;
     this.S.t0 = this.S.t;
-    for (const a of this.S.agents) for (const pot of a.sn.segs) if (pot.due === Infinity) pot.due = this.S.t + this.potLife();
-    for (const f of this.S.throws) if (f.pot.due === Infinity) f.pot.due = this.S.t + this.potLife();
+    for (const a of this.S.agents) for (const pot of a.sn.segs) if (pot.due === Infinity) pot.due = this.capDue(this.S.t + this.potLife());
+    for (const f of this.S.throws) if (f.pot.due === Infinity) f.pot.due = this.capDue(this.S.t + this.potLife());
     for (const a of this.S.agents) {
       a.hitsBy = { sky: 0, leader: 0, burst: 0, mate: 0, bump: 0 }; // 带教记录清零
       a.blames = 0; a.caught = 0; // 带教里的背锅不算数，免得重玩跳过带教时难度不一样
@@ -72,6 +72,7 @@ export const tutorialLogic = {
     }
     const prog = this.loadProgress();
     if (!prog.tutDone) { prog.tutDone = true; this.saveProgress(prog); }
+    this.recordRank();
     this.forceTut = false;
     this.clearBanners();
     this.E.toast('09:00 正式上班！', 1600);

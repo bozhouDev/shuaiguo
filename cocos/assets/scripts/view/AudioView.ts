@@ -74,8 +74,9 @@ export class AudioView {
   }
   // 记录播放位置后淡出，正常停止.3秒，换曲.6秒。
   private stop(fade: number): void {const c = this.current, ctx = this.context; if (c && ctx) {this.positions[c.name] = (c.offset + ctx.currentTime - c.start) % c.src.buffer!.duration; c.gain.gain.cancelScheduledValues(ctx.currentTime); c.gain.gain.setValueAtTime(c.gain.gain.value, ctx.currentTime); c.gain.gain.linearRampToValueAtTime(0, ctx.currentTime + fade); c.src.stop(ctx.currentTime + fade + .05); this.current = null;} if (this.nativeBgm) {const source=this.nativeBgm;this.positions[this.nativeName]=source.currentTime;tween(source).to(fade,{volume:0}).call(()=>{source.stop();source.destroy();}).start();this.nativeBgm=null;}}
-  // 新开局work和rush归零；暂停继续、返回大厅均接上次位置。
-  bgm(name: string | boolean, fromStart = false): void {this.want = name === true ? 'work' : typeof name === 'string' ? name : null; if(fromStart&&this.wechat&&this.want)this.wechat.reset(this.want); if (fromStart && this.want) {this.positions[this.want] = 0; if (this.want === 'work') this.positions.rush = 0;} this.sync();}
+  // clearing使用预渲染快1.15倍副本，保持所有平台1倍播放；新开局work/rush/clearing归零。
+  // 暂停继续、返回大厅均接上次位置。
+  bgm(name: string | boolean, fromStart = false): void {this.want = name === true ? 'work' : typeof name === 'string' ? name : null; if(fromStart&&this.wechat&&this.want)this.wechat.reset(this.want); if (fromStart && this.want) {if(this.want==='work'&&(this.current?.name==='rush'||this.current?.name==='clearing'||this.nativeName==='rush'||this.nativeName==='clearing'))this.stop(0);this.positions[this.want] = 0; if (this.want === 'work') {this.positions.rush = 0;this.positions.clearing = 0;}} this.sync();}
   // 加载完成再复查当前想放的歌，避免慢加载把旧场景音乐放出来。
   sync(): void {
     const name = this.settings.music ? this.want : null;

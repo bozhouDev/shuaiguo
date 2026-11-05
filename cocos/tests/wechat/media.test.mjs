@@ -15,6 +15,10 @@ test('BGM后台/广告/来电交错只最后一把锁释放才恢复；停止状
  const f=audioFixture(),audio=new WechatAudio();try{audio.bgm('work','work.mp3',true);let bg=f.instances[0];bg.currentTime=12;audio.blocked('ad',true);assert.equal(bg.playing,false);audio.blocked('interruption',true);audio.blocked('background',true);audio.blocked('ad',false);audio.blocked('background',false);assert.equal(bg.playing,false);audio.blocked('interruption',false);assert.equal(bg.playing,true);assert.equal(f.plays.at(-1).url,'work.mp3');audio.blocked('background',true);audio.bgm(null);const before=f.plays.length;audio.blocked('background',false);assert.equal(f.plays.length,before);audio.bgm('work','work.mp3');assert.equal(f.plays.at(-1).start,12);audio.bgm('work','work.mp3',true);assert.equal(f.plays.at(-1).start,0);for(let i=0;i<30;i++)audio.bgm(i%2?'work':'rush',i%2?'work.mp3':'rush.mp3');assert.ok(f.instances.length<=2);
  }finally{audio.dispose();delete globalThis.wx;}
 });
+// 清账副本已预渲染加速，原生播放保持1倍，新局必须清掉上一局清账位置。
+test('清账BGM副本不二次加速；新局和广告恢复不沿用上一局清账位置',()=>{
+ const f=audioFixture(),audio=new WechatAudio();try{audio.bgm('clearing','clearing.mp3');f.instances[0].currentTime=9;audio.bgm('work','work.mp3',true);audio.bgm('clearing','clearing.mp3');assert.equal(f.plays.at(-1).start,0);assert.equal(f.plays.at(-1).rate,1);audio.blocked('ad',true);audio.blocked('ad',false);assert.equal(f.plays.at(-1).url,'clearing.mp3');assert.ok(f.instances.length<=2);}finally{audio.dispose();delete globalThis.wx;}
+});
 test('原生音效在广告/中断期间不播放，API缺失静默',()=>{
  const f=audioFixture(),audio=new WechatAudio();try{audio.blocked('ad',true);assert.equal(audio.sfx('a',1,1),false);assert.equal(f.plays.length,0);audio.blocked('ad',false);assert.equal(audio.sfx('a',1,1),true);}finally{audio.dispose();delete globalThis.wx;}const missing=new WechatAudio();assert.equal(missing.sfx('a',1,1),false);missing.dispose();
 });

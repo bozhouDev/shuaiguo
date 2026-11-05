@@ -29,13 +29,13 @@ def main():
             assert (w,h)==(tw,th),name
             assert 0<=tx and 0<=ty and tx+w<=atlas.width and ty+h<=atlas.height,name
             atlas.paste(image.crop((x,y,x+w,y+h)),(tx,ty));verified.add(name)
-    assert verified==set(match['frames']);assert len(sheets)==12
+    assert verified==set(match['frames']);assert len(sheets)==13
     if args.reference:
         reference=Image.open(args.reference).convert('RGBA');assert reference.size==atlas.size
         assert reference.tobytes()==atlas.tobytes(),'复原像素与交付前RGBA不同'
     digest=hashlib.sha256(atlas.tobytes()).hexdigest()
     if args.gpu_evidence:
         evidence=json.loads(Path(args.gpu_evidence).read_text());assert evidence['atlas']['sha256']==digest,'GPU读回像素不一致'
-    print(json.dumps({'size':atlas.size,'rgbaSha256':digest,'framesVerified':len(verified),'decodedDifferentPixels':0,'sourcePngBytes':source_bytes,'newImageDownloadBytes':0,'sheets':sheets},ensure_ascii=False,indent=2))
+    print(json.dumps({'size':atlas.size,'rgbaSha256':digest,'framesVerified':len(verified),'decodedDifferentPixels':0,'sourcePngBytes':source_bytes,'newImageDownloadBytes':sum(s['bytes'] for s in sheets if s['file']=='atlas/items'),'sheets':sheets},ensure_ascii=False,indent=2))
 
 if __name__=='__main__':main()

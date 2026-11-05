@@ -1,9 +1,10 @@
 import {Match} from '../core/match';
+import {verdict,battleLines} from '../core/verdict';
 import {BUFFS} from '../core/config';
 import {ScreenPaint} from './ScreenPaint';
 import {Box} from './UiPaint';
 export type Result = ReturnType<Match['calculateResult']>;
-const INK = '#1F2A44', MUTED = '#5E6A84', ALARM = '#E8504A';
+const INK = '#1F2A44', MUTED = '#5E6A84', ALARM = '#E8504A'; // 颜色按 DESIGN §3：红 = 对你不利，绿 = 对你有利
 
 // DESIGN §7与结算设计图：只读取core结算，所有文字和操作仍为真实节点。
 export class ResultView {
@@ -13,10 +14,21 @@ export class ResultView {
     const p = this.p, x = b.x + 18, w = b.w - 36;
     this.hero(r, b);
     let y = this.summary(r, {x, y: b.y + 206, w, h: 0});
-    y += p.paragraph('总账 = 炸了的锅 + 身上还背着的锅 × ½', {x, y, w, h: 0}, 12, MUTED, 'body-700') + 8;
+    const copy = verdict(r, m);
+    if (copy.main) y += p.paragraph(copy.main, {x, y: y + 2, w, h: 0}, 16, copy.color, 'body-900') + 6;
+    if (copy.sub) y += p.paragraph(copy.sub, {x, y, w, h: 0}, 13, INK, 'body-700') + 6;
+    // 真账文案由core纯函数生成，没有数据就不占一行。
+    for(const text of battleLines(m))y+=p.paragraph(text,{x,y,w,h:0},13,INK,'body-700')+4;
+    // 失败页主操作紧跟判词，先给玩家立即重来的入口，再展示完整榜单与复盘。
+    if (!r.stars) {
+      this.button('retry', copy.retryLabel, {x, y: y + 9, w, h: 52}, true, false, false); y += 61;
+      if (r.diag) {this.button('buff', `带上「${BUFFS[r.diag.buff].name}」重来`, {x, y: y + 9, w, h: 42}, false, true, false); y += 51;}
+      y += 8;
+    }
     y = this.ranking(m, r, {x, y, w, h: 0}) + 8;
     // 证书和辅助记录不影响星级，周五仍按真实shareOutcome决定证书类型。
     const outcome = m.shareOutcome(r.shareInfo);
+    if(r.buzzer){p.text('压哨',x+w-44,y,18,'#2F9E6B','body-900');y+=24;}
     for (const text of [outcome.certificate, outcome.helps.join(' · '), r.nephewReport, r.pieReport, r.epilogue]) {
       if (text) y += p.paragraph(text, {x, y, w, h: 0}, 13, MUTED, 'body-700') + 4;
     }
@@ -30,10 +42,9 @@ export class ResultView {
     button(r.shareInfo.kind === 'blame' ? 'share-blame' : 'share',
       {blame: '这锅甩给微信好友', brag: '晒战绩给好友', cert: '领证书，发朋友圈'}[r.shareInfo.kind]!, false, false, true);
     if (r.ads.revive) button('revive', '甩掉 6 口锅，接着熬', false, true);
-    if (r.ads.rescue) button('rescue', '找人顶锅：背锅 -3', false, true);
+    if (r.ads.rescue) button('rescue', '顶锅 -3，刚好够', false, true);
     if (r.stars && r.next) button('next', `下一关：${r.next.name.split('·').pop()!.trim()}`, true);
-    if (!r.stars && r.diag) button('buff', `带上「${BUFFS[r.diag.buff].name}」重来`, true, true);
-    button('retry', r.stars ? '再来一局' : '直接重来', !!r.stars && !r.next);
+    if (r.stars) button('retry', copy.retryLabel, !r.next);
     y += 8; p.button('menu', '返回首页', {x, y, w, h: 30}, 'link'); y += 34;
     // 花草随内容滚动，位于所有点击框之后，不挡底部文字链接。
     p.image('ui_result_grass_left', b.x + 6, y, 102, 40);
@@ -55,7 +66,9 @@ export class ResultView {
       for (let i = 0; i < 3; i++) p.c.drawImage(ribbon, sx[i], 0, sx[i + 1] - sx[i], ribbon.h, dx[i], b.y + 65, dx[i + 1] - dx[i], 64);
     }
     const title = r.crushed ? '被锅压垮了' : failed ? '这次得加班了' : '准点下班！';
-    this.fit(title, {x: b.x + 56, y: b.y + 84, w: b.w - 112, h: 28}, 26, failed ? '#FFFFFF' : INK);
+    // 标题对准彩带正面（不含下沿阴影）的中线；全角"！"右侧留白大，整行右移 1/4 字宽让字形视觉居中。
+    const bang = title.endsWith('！') ? 6 : 0;
+    this.fit(title, {x: b.x + 56 + bang, y: b.y + 77, w: b.w - 112, h: 28}, 26, failed ? '#FFFFFF' : INK);
     const y = b.y + 128;
     if (r.crushed) {this.fit('被压垮', {x: b.x + 50, y: y + 7, w: b.w - 100, h: 48}, 40, ALARM); return;}
     const digit = String(r.myRank), fs = 42, dw = p.width(digit, 60, 'body-900'), side = p.width('第', fs, 'body-900'), total = side * 2 + dw + 8, start = b.x + (b.w - total) / 2;
@@ -112,7 +125,7 @@ export class ResultView {
       if (!r.stars && i >= m.passRank() && !a.isPlayer) return;
       if (!r.stars && a.isPlayer && i > m.passRank()) {p.center(`… 中间还有 ${i - m.passRank()} 人`, x, y + 3, w, 12, MUTED, 'body-700'); y += 22;}
       row(String(i + 1), a.isPlayer ? '你' : a.key === 'nephew' ? `${m.bossName()}小舅子` : a.name,
-        `炸了 ${a.blames} · 身上 ${m.potsOf(a)} 口`, m.fmtDebt(m.debtOf(a)), a.isPlayer,
+        `背锅 ${a.blames} 次 · 甩出 ${a.thrown} 口`, m.fmtDebt(m.debtOf(a)), a.isPlayer,
         i === m.passRank() - 1 && r.rank.length > m.passRank(), a.crushed || a.isPlayer && r.crushed);
     });
     return y + 5;

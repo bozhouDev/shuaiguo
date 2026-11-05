@@ -162,7 +162,7 @@ export const leadersLogic = {
   updateLeaderTut(this: Match, l: Leader, dt: number): void {
     if (l.state === 'aim') {
       l.aimT -= dt;
-      if (l.aimT <= 0) { for (const t of l.targets) this.addPots(t, 1, l.x, l.y - 20); l.state = 'patrol'; l.targets = []; l.wait = 99; }
+      if (l.aimT <= 0) { for (const t of l.targets) this.addPots(t, 1, l.x, l.y - 20, {src:'leader',from:l.name,t:this.S.t}); l.state = 'patrol'; l.targets = []; l.wait = 99; }
       return;
     }
     // 走到了（或寻路失败没有路径）就算到位，免得带教卡住
@@ -195,6 +195,12 @@ export const leadersLogic = {
   updateLeader(this: Match, l: Leader, dt: number): void {
     const ox = l.x, oy = l.y;
     if (this.S.tut) { this.updateLeaderTut(l, dt); this.updateFace(l, ox, oy, dt); return; }
+    // 清账取消待发瞄准和发火，巡逻/查岗/追人/碰撞照常，冷却不再消耗。
+    const clearing = this.isClearing();
+    if (clearing) {
+      if (l.state === 'aim') l.state = 'patrol';
+      l.targets = []; l.rageUntil = 0; l.afterMeetingHot = false;
+    }
     if (l.meeting) { this.updatePieMeeting(l, dt); return; } // 讲话时站定，不瞄准、不派锅、不碰撞派活
     if (l.state === 'chase') {
       l.st -= dt;
@@ -203,7 +209,7 @@ export const leadersLogic = {
     } else if (l.state === 'aim') {
       l.aimT -= dt;
       if (l.aimT <= 0) {
-        for (const t of l.targets) if (!t.crushed) this.launchPot(l.x, l.y - 20, t, 0, false, 'leader');
+        for (const t of l.targets) if (!t.crushed) this.launchPot(l.x, l.y - 20, t, 0, false, 'leader', l.name);
         if (l.targets.includes(this.S.player)) this.E.sfx('leaderThrow');
         l.state = 'patrol';
       }
@@ -221,13 +227,16 @@ export const leadersLogic = {
         const p = l.route[l.i];
         if (this.walkTo(l, p.x, p.y, l.cfg.speed * (mad ? C.RAGE_SPEED : 1), dt, 0) < 4 || !l.path.length) { l.wait = p.wait || 0; l.i = (l.i + 1) % l.route.length; }
       }
-      if (this.S.pace) {
+      if (this.S.pace && !clearing) {
         l.throwCd -= dt;
         if (l.throwCd <= 0) {
           l.throwCd = this.S.pace.every * l.cfg.everyMul * (mad ? C.RAGE_EVERY : 1) * this.E.rand(0.85, 1.15);
           l.targets = [];
           // 保护期内随机到天降锅也走普通瞄准派锅，保留原派锅节奏。发火时不丢天降锅，全部瞄准丢、一次多丢一口
-          if (!mad && l.type === 'boss' && this.E.random() < (this.L.skyChance || 0) && !(this.S.buff === 'trip' && this.workT() < 30)) this.launchSky(this.S.player, l);
+          // 天降锅保底：上一口天降锅落下不到 SKY_GAP 秒，这次照常瞄准派锅（随机数照样消耗，节奏不变）
+          // 预警落地也须早于清账，临界摇到天降仍走普通瞄准，不吞掉这次派锅。
+          const skyReady = this.S.t - this.S.lastSkyT >= C.SKY_GAP && this.workT() + C.SKY_TIME < this.L.duration - C.CLEARING;
+          if (!mad && l.type === 'boss' && this.E.random() < (this.L.skyChance || 0) && skyReady && !(this.S.buff === 'trip' && this.workT() < 30)) this.launchSky(this.S.player, l);
           else l.targets = this.pickTargets(l, mad ? 1 : 0);
           if (l.targets.length) {
             l.state = 'aim'; l.aimT = (l.cfg.aimTime ?? C.AIM_TIME) * (mad ? C.RAGE_AIM : 1);
@@ -245,9 +254,9 @@ export const leadersLogic = {
     this.updateFace(l, ox, oy, dt);
     // 撞上领导：+3 口
     for (const a of this.S.agents) {
-      if (a.crushed || (l.hitCd[a.id] || 0) > this.S.t) continue;
+      if (a.crushed || this.itemInvincible(a) || (l.hitCd[a.id] || 0) > this.S.t) continue;
       if (this.E.dist(l.x, l.y, a.sn.x, a.sn.y) < C.HEAD_R + 28) {
-        this.addPots(a, C.LEADER_HIT_POTS, l.x, l.y);
+        this.addPots(a, C.LEADER_HIT_POTS, l.x, l.y, {src:'bump', from:l.name, t:this.S.t, id:this.S.leaderHits + 1});
         if (a.isPlayer && !this.S.tut) a.hitsBy.bump += C.LEADER_HIT_POTS; // 碰撞单独统计，不混入飞行锅
         this.spawnFx('fx_impact', a.sn.x, a.sn.y - 26, 72, 0.45);
         this.S.leaderHits++;

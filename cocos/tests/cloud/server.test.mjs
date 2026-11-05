@@ -56,3 +56,11 @@ test('rank每关最好成绩、范围与星级校验、前50及榜外我的名�
   assert.equal((await rank({action:'submit',level:1,score:{...score,debt:0,blames:0}})).data.updated,true);
   assert.equal((await rank({action:'top',level:1})).data.myRank,1);
 });
+// 新事件复用原队列/身份/限频，只收枚举和计数，不收任意文案。
+test('item_pick只接收三种道具与有效计数，重试不重复入库',async()=>{
+ const db=memoryDB(),track=load('track',db),event={id:'item_1',type:'item_pick',level:5,at:Date.now(),kind:'clear',picked:1,bossName:'不收集'};
+ assert.equal((await track({events:[event]})).data.accepted,1);
+ const row=[...db.tables.get('events').values()][0];assert.equal(row.kind,'clear');assert.equal(row.picked,1);assert.equal(row.bossName,undefined);
+ assert.equal((await track({events:[event]})).data.duplicates,1);
+ for(const bad of [{kind:'evil'},{picked:-1},{picked:1.5}])assert.equal((await track({events:[{...event,id:'bad',...bad}]})).data.accepted,0);
+});

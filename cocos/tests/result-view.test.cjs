@@ -18,44 +18,45 @@ function render(m,reason='time',width=340,top=0){
 }
 test('三星/二星/一星沿用真实名次，天空奖杯金带、表格金框、飞机和花草接入',()=>{
  for(const [kind,stars]of [['three',3],['two',2],['one',1]]){
-  const m=new Match({seed:1001,auto:true});prepareTourResult(m,kind);const out=render(m),names=out.images.map(i=>i.name);
+  const m=new Match({itemDrops:false,seed:1001,auto:true});prepareTourResult(m,kind);const out=render(m),names=out.images.map(i=>i.name);
   assert.equal(out.r.stars,stars);for(const n of ['sky_clear','trophy','ribbon','rays_left','rays_right','frame_gold','frame_table','plane','grass_left','grass_right','button_blue','button_gold'])assert.ok(names.includes('ui_result_'+n),n);
   assert.ok(!names.includes('ui_result_ribbon_red'));assert.deepEqual(out.actions.map(a=>a.action),['share','next','retry','menu']);
   assert.equal(out.texts.filter(t=>t.text==='新纪录').length,1);
  }
 });
 test('失败/压垮用各自天空和徽章、暗红带；广告资格来自core且不冒出奖杯',()=>{
- for(const kind of ['fail','crush']){const m=new Match({level:1,seed:1001,auto:true});prepareTourResult(m,kind);const out=render(m,kind==='crush'?'crushed':'time'),names=out.images.map(i=>i.name);
+ for(const kind of ['fail','crush']){const m=new Match({itemDrops:false,level:1,seed:1001,auto:true});prepareTourResult(m,kind);const out=render(m,kind==='crush'?'crushed':'time'),names=out.images.map(i=>i.name);
   for(const n of [kind==='crush'?'sky_storm':'sky_overcast',kind==='crush'?'crushed':'overtime','ribbon_red'])assert.ok(names.includes('ui_result_'+n),n);
   assert.ok(!names.includes('ui_result_trophy'));assert.ok(!names.includes('ui_result_rays_left'));
-  assert.deepEqual(out.actions.map(a=>a.action),['share-blame',kind==='crush'?'revive':'rescue','buff','retry','menu']);
+  assert.deepEqual(out.actions.map(a=>a.action),['retry','buff','share-blame',...(out.r.ads.revive?['revive']:[]),...(out.r.ads.rescue?['rescue']:[]),'menu']);
   assert.ok(out.texts.some(t=>t.text==='广告 · '));
  }
 });
-test('所有按钮和文字在窄屏边界内，滚动到底能点重来和首页；绘制不改玩法与存档',()=>{
+test('所有按钮和文字在窄屏边界内，失败首屏能重来、滚动到底能点首页；绘制不改玩法与存档',()=>{
  for(const width of [288,328,340])for(const kind of ['three','one','fail','crush']){
-  const m=new Match({level:kind==='three'?4:1,seed:1001,auto:true});prepareTourResult(m,kind);const reason=kind==='crush'?'crushed':'time',before=JSON.stringify(m.S),out=render(m,reason,width);
+  const m=new Match({itemDrops:false,level:kind==='three'?4:1,seed:1001,auto:true});prepareTourResult(m,kind);const reason=kind==='crush'?'crushed':'time',before=JSON.stringify(m.S),out=render(m,reason,width);
   assert.equal(JSON.stringify(m.S),before);assert.ok(Number.isFinite(out.height));
+  if(!out.r.stars){const retry=out.actions.find(a=>a.action==='retry');assert.ok(retry.y+retry.h<667-32,'失败首屏可见重来');}
   for(const a of out.actions){assert.ok(a.x>=0&&a.x+a.w<=width);assert.ok(a.y>=0&&a.y+a.h<out.height);}
   for(const t of out.texts){const w=out.p.width(t.text,t.size,t.font);assert.ok(t.x-w/2>=-1&&t.x+w/2<=width+1,JSON.stringify(t));}
   const viewport=(667-32)*.92,scroll=Math.max(0,out.height-viewport),bottom=render(m,reason,width,-scroll);
-  for(const name of ['retry','menu']){const a=bottom.actions.find(a=>a.action===name);assert.ok(a.y>=0&&a.y+a.h<=viewport,`${name}不可滚动触达`);}
+  for(const name of out.r.stars?['retry','menu']:['menu']){const a=bottom.actions.find(a=>a.action===name);assert.ok(a.y>=0&&a.y+a.h<=viewport,`${name}不可滚动触达`);}
  }
 });
 test('周五证书、复活/顶包后、教学与四种广告增益保留入口和附加结算',()=>{
- for(const help of ['none','revived','rescued']){const m=new Match({level:4,seed:1001,auto:true});prepareTourResult(m,'three');if(help!=='none')m.S[help]=true;const out=render(m);assert.equal(out.r.shareInfo.kind,'cert');assert.ok(out.actions.some(a=>a.label==='领证书，发朋友圈'));assert.ok(!out.actions.some(a=>a.action==='next'));assert.ok(out.texts.some(t=>t.text.includes('下班证书')));}
- const revived=new Match({level:1,seed:1001,auto:true});prepareTourResult(revived,'crush');revived.revive();assert.ok(!render(revived,'crushed').actions.some(a=>a.action==='revive'));
- const rescued=new Match({level:1,seed:1001,auto:true});prepareTourResult(rescued,'fail');rescued.rescue();assert.ok(!render(rescued).actions.some(a=>a.action==='rescue'));
- for(const buff of ['trip','gold','news','legs']){const m=new Match({level:1,seed:1001,buff,auto:true});prepareTourResult(m,'fail');const out=render(m);assert.ok(out.actions.some(a=>a.action==='buff'));assert.ok(out.texts.some(t=>t.text.includes('推荐：')));}
- const tut=new Match({seed:1001,tutorial:true});prepareTourResult(tut,'three');assert.ok(render(tut).actions.some(a=>a.action==='retry'));
+ for(const help of ['none','revived','rescued']){const m=new Match({itemDrops:false,level:4,seed:1001,auto:true});prepareTourResult(m,'three');if(help!=='none')m.S[help]=true;const out=render(m);assert.equal(out.r.shareInfo.kind,'cert');assert.ok(out.actions.some(a=>a.label==='领证书，发朋友圈'));assert.ok(!out.actions.some(a=>a.action==='next'));assert.ok(out.texts.some(t=>t.text.includes('下班证书')));}
+ const revived=new Match({itemDrops:false,level:1,seed:1001,auto:true});prepareTourResult(revived,'crush');revived.revive();assert.ok(!render(revived,'crushed').actions.some(a=>a.action==='revive'));
+ const rescued=new Match({itemDrops:false,level:1,seed:1001,auto:true});prepareTourResult(rescued,'fail');rescued.rescue();assert.ok(!render(rescued).actions.some(a=>a.action==='rescue'));
+ for(const buff of ['trip','gold','news','legs']){const m=new Match({itemDrops:false,level:1,seed:1001,buff,auto:true});prepareTourResult(m,'fail');const out=render(m);assert.ok(out.actions.some(a=>a.action==='buff'));assert.ok(out.texts.some(t=>t.text.includes('推荐：')));}
+ const tut=new Match({itemDrops:false,seed:1001,tutorial:true});prepareTourResult(tut,'three');assert.ok(render(tut).actions.some(a=>a.action==='retry'));
 });
 test('结算所有固定文字在现有字体子集内，长称呼行不侵入锅与总账列',()=>{
  const {UI_METRICS}=load('cocos/assets/scripts/view/ui-metrics');
  for(const type of ['three','two','one','fail','crush','revived','rescued'])for(const level of [0,1,4]){
-  const m=new Match({level,seed:1001,auto:true});prepareTourResult(m,type);const out=render(m,type==='crush'?'crushed':'time');
+  const m=new Match({itemDrops:false,level,seed:1001,auto:true});prepareTourResult(m,type);const out=render(m,type==='crush'?'crushed':'time');
   for(const t of out.texts)for(const ch of t.text)assert.ok(UI_METRICS[t.font][ch],`缺字 ${ch}`);
  }
- const name='一二三四五六',m=new Match({level:4,seed:1001,progress:{unlocked:5,best:{},bossName:name}});prepareTourResult(m,'three');const out=render(m);
+ const name='一二三四五六',m=new Match({itemDrops:false,level:4,seed:1001,progress:{unlocked:5,best:{},bossName:name}});prepareTourResult(m,'three');const out=render(m);
  const t=out.texts.find(t=>t.text===name+'小舅子');assert.ok(t);assert.ok(t.x+out.p.width(t.text,t.size,t.font)/2<=224,'长称呼压到锅图标');
 });
 test('WorldAssets加载全部结算PNG并设置最近邻，九宫格裁片缓存且销毁派生帧',async()=>{
@@ -74,13 +75,39 @@ test('WorldAssets加载全部结算PNG并设置最近邻，九宫格裁片缓存
  const pic=assets.spr.ui_result_frame_gold,a=assets.crop(pic,0,0,16,16);assert.equal(assets.crop(pic,0,0,16,16),a);
  assets.destroy();assert.ok(frames.every(f=>f.destroyed));
 });
-test('真实App结算Mask在375×667固定，滚到底的重来/首页矩形仍可命中',()=>{
+test('真实App结算Mask在375×667固定，各自位置的重来/首页矩形仍可命中',()=>{
  const {load:loadView,cc}=require('./wechat/view-harness.cjs'),{AppView}=loadView('cocos/assets/scripts/view/AppView');
  for(const kind of ['three','fail','crush']){
-  const m=new Match({level:kind==='three'?4:1,seed:1001,auto:true});prepareTourResult(m,kind);const reason=kind==='crush'?'crushed':'time',out=render(m,reason),mask=new cc.Node(),root=new cc.Node();mask.addComponent(cc.UITransform);
+  const m=new Match({itemDrops:false,level:kind==='three'?4:1,seed:1001,auto:true});prepareTourResult(m,kind);const reason=kind==='crush'?'crushed':'time',out=render(m,reason),mask=new cc.Node(),root=new cc.Node();mask.addComponent(cc.UITransform);
   const surface=new Proxy({width:375,height:667},{get:(o,k)=>k in o?o[k]:()=>{}}),viewport=(667-32)*.92;
   const host={panes:[{surface:out.p.c,p:out.p,mask,root}],surface,paint:{box(){}},heights:{result:out.height},scroll:out.height-viewport,actions:[],real:1,world:{match:m},result:out.r,reduced:()=>true,panel:'result'};
   AppView.prototype.modal.call(host,'result');assert.equal(mask.getComponent(cc.UITransform).contentSize.height,viewport);assert.equal(host.maxScroll,out.height-viewport);
-  const top=mask.position.y*-1;for(const name of ['retry','menu']){const a=host.actions.find(a=>a.action===name);assert.ok(a);assert.ok(a.y>=top&&a.y+a.h<=top+viewport);}
+  const top=mask.position.y*-1;for(const name of out.r.stars?['retry','menu']:['menu']){const a=host.actions.find(a=>a.action===name);assert.ok(a);assert.ok(a.y>=top&&a.y+a.h<=top+viewport);}
+ }
+});
+test('差四以上实际结算页全部文字不含差一点或就差，重来黄色排在增益及榜单前',()=>{
+ const m=new Match({itemDrops:false,level:1,seed:1001});prepareTourResult(m,'fail');m.S.agents.forEach((a,i)=>{a.sn.segs=[];a.blames=a.isPlayer?20:i;});
+ const out=render(m),all=out.texts.map(t=>t.text).concat(out.actions.map(a=>a.label)).join('\n');
+ assert.ok(out.r.lineInfo.gap>=4);assert.doesNotMatch(all,/差一点|就差/);assert.ok(all.includes('今天差得有点多'));
+ assert.deepEqual(out.actions.map(a=>a.action),['retry','buff','share-blame','menu']);
+ assert.equal(out.actions[0].label,'再来');const table=out.texts.find(t=>t.text.includes('背锅 '));assert.ok(out.actions[0].y<table.y);
+});
+test('顶锅仅在真实减三能进线时画出规定文案，差四以上不画虚假够线按钮',()=>{
+ const m=new Match({itemDrops:false,level:1,seed:1001});m.S.agents.forEach((a,i)=>{a.sn.segs=[];a.blames=a.isPlayer?7:i===1?1:i===2?3:5;a.thrown=a.isPlayer?20:8;});
+ let out=render(m);assert.equal(out.r.ads.rescue,true);assert.equal(out.actions.find(a=>a.action==='rescue').label,'顶锅 -3，刚好够');
+ m.S.player.blames=9;out=render(m);assert.equal(out.r.ads.rescue,false);assert.ok(!out.actions.some(a=>a.action==='rescue'));
+});
+test('结算真账紧跟判词、13号粗体且无数据不留行，压哨结算和分享证书均有绿印',()=>{
+ const m=new Match({level:4,seed:1001,itemDrops:false});prepareTourResult(m,'three');m.S.t=m.bellTime();m.S.clearingRank=5;m.S.player.kills={'会计':2};m.S.player.killOrder={'会计':1};m.S.player.blameLog=[{src:'mate',from:'老油条'}];m.S.player.closestThrow={seconds:.8,clock:'17:59'};
+ const out=render(m),lines=out.texts.filter(t=>/最大受害者|害你最多|最险一口/.test(t.text));assert.equal(lines.length,3);for(const line of lines){assert.equal(line.size,13);assert.equal(line.font,'body-700');}
+ const verdict=out.texts.find(t=>t.text.includes('最后 15 秒从第'));assert.ok(verdict);assert.ok(lines.every(t=>t.y>verdict.y));assert.ok(out.texts.some(t=>t.text==='压哨'));
+ const {ShareView}=load('cocos/assets/scripts/view/ShareView'),texts=[],p=new Proxy({c:new Proxy({},{get:(o,k)=>k in o?o[k]:()=>{}}),width:s=>s.length*10,center:(...args)=>texts.push(args),text:(...args)=>texts.push(args)},{get:(o,k)=>k in o?o[k]:()=>{}});new ShareView(p).picture({...out.r.shareInfo,kind:'cert'},{x:0,y:0,w:220,h:176});assert.ok(texts.some(t=>t[0]==='压哨'&&t.includes('#2F9E6B')));
+ m.S.player.kills={};m.S.player.blameLog=[];m.S.player.closestThrow=null;assert.ok(!render(m).texts.some(t=>/最大受害者|害你最多|最险一口/.test(t.text)));
+});
+test('三行真账都有数据的窄屏失败页仍可在首屏重来且所有新增文字不越界',()=>{
+ for(const width of [288,328,340]){
+  const m=new Match({itemDrops:false,level:1,seed:1001});prepareTourResult(m,'fail');m.S.player.kills={'新来的':12};m.S.player.killOrder={'新来的':12};m.S.player.closestThrow={seconds:2.9,clock:'17:59'};m.S.player.blameLog=[{src:'mate',from:'老油条',n:1,t:70,clock:'16:00'}];
+  const out=render(m,'time',width);const retry=out.actions.find(a=>a.action==='retry');assert.ok(retry.y+retry.h<667-32,'完整真账不能把重来按钮挤出首屏');
+  for(const t of out.texts){const w=out.p.width(t.text,t.size,t.font);assert.ok(t.x-w/2>=-1&&t.x+w/2<=width+1,JSON.stringify(t));}
  }
 });

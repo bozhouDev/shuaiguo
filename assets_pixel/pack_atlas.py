@@ -8,6 +8,7 @@
 import hashlib
 import json
 import os
+import argparse
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -35,8 +36,26 @@ def group_of(name):
     return 'misc'                        # 锅、特效、图标
 
 
-def pack(items):
+def pack(items, previous=None):
     """货架式装箱：按高度从高到低排，一行放满换行。返回 {名字: (x, y, w, h)} 和图集尺寸。"""
+    if previous:
+        # 已有帧矩形原样保留，新帧从原图下方追加，避免改动已验收坐标。
+        old, width, height = previous
+        pos = {name: old[name] for name, im in items if name in old and old[name][2:] == [im.width, im.height]}
+        if len(pos) != len(old):
+            raise ValueError('保留布局时旧帧不能删除或改尺寸')
+        x, y, row_h = 0, height + PAD, 0
+        for name, im in items:
+            if name in pos:
+                continue
+            if im.width > width:
+                raise ValueError('新增帧宽度超过旧图集')
+            if x + im.width > width:
+                x, y, row_h = 0, y + row_h + PAD, 0
+            pos[name] = (x, y, im.width, im.height)
+            x += im.width + PAD
+            row_h = max(row_h, im.height)
+        return pos, width, y + row_h if row_h else height
     items = sorted(items, key=lambda kv: (-kv[1].height, -kv[1].width))
     # 宽度取「总面积开方」和最宽那张中较大的，让图集接近正方形
     area = sum((im.width + PAD) * (im.height + PAD) for _, im in items)
@@ -53,6 +72,20 @@ def pack(items):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--preserve-layout', action='store_true', help='保留旧帧矩形，只向下追加新帧')
+    parser.add_argument('--only', help='只更新指定分组，其余分组保留现有图集及登记')
+    args = parser.parse_args()
+    previous = {}
+    previous_sheets = {}
+    if (args.preserve_layout or args.only) and os.path.exists(JS):
+        with open(JS) as f:
+            data = json.loads(f.read().split('window.ATLAS = ', 1)[1].strip().rstrip(';'))
+        for sheet in data['sheets']:
+            file = sheet['file'].split('?')[0]
+            previous_sheets[file[:-4]] = sheet
+            with Image.open(os.path.join(OUT, file)) as im:
+                previous[file[:-4]] = (sheet['frames'], im.width, im.height)
     os.makedirs(OUT, exist_ok=True)
     groups = {}
     for fn in sorted(os.listdir(SRC)):
@@ -63,7 +96,11 @@ def main():
 
     sheets, total = [], 0
     for g, items in groups.items():
-        pos, w, h = pack(items)
+        if args.only and g != args.only:
+            sheets.append(previous_sheets[g])
+            total += os.path.getsize(os.path.join(OUT, g + '.png'))
+            continue
+        pos, w, h = pack(items, previous.get(g) if args.preserve_layout else None)
         atlas = Image.new('RGBA', (w, h), (0, 0, 0, 0))
         for name, im in items:
             atlas.paste(im, pos[name][:2])

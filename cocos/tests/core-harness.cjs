@@ -5,7 +5,7 @@ const { OFFICE, LEVELS } = require('../assets/scripts/core/levels.ts');
 // 每次 setup 隔离本地存档和活动 Match；门面跟随 init 切换到新对局。
 function setup() {
   const storage = new Map();
-  let m = new Match({ level: 3, seed: 1001 }),
+  let m = new Match({itemDrops:false, level: 3, seed: 1001 }),
     ctx = { OFFICE, LEVELS };
   // 引擎方法绑定当前对局，固定随机数替身也传入当前引擎。
   const E = new Proxy(
@@ -28,7 +28,7 @@ function setup() {
       get: (_, key) =>
         key === 'init'
           ? (level = 3, recording = false) => {
-              m = new Match({
+              m = new Match({itemDrops:false,
                 level,
                 seed: 1001,
                 auto: recording,

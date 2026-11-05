@@ -80,12 +80,49 @@ test('外围帧和对局共用同一纹理，完整覆盖的十二张旧图集�
  const forbidden=['boss','cashier','designer','director','intern','misc','nephew','player','pm','tester','veteran','wife'];
  for(const name of forbidden){assert.ok(!requests.includes('atlas/'+name+'/texture'),name+'仍在重复加载');assert.ok(requests.includes('atlas/'+name),name+'未作为ImageAsset加载');}
  assert.ok(!requests.some(name=>name.startsWith('atlas/match')),'仍在下载match.png');
- assert.equal(released.length,12,'来源图未逐张释放');assert.equal(uploads.length,12);assert.ok(uploads.every(v=>v.texture===scratch),'所有来源必须共用搬运区');assert.ok(scratch.destroyed,'启动后不能驻留搬运区');assert.equal(copies.length,1,'只允许白像素走CPU上传');assert.equal(blits.length,211,'211帧必须GPU直接复制');assert.deepEqual(state,{framebuffer:'previous-fbo',texture:'previous-texture'},'必须恢复引擎GL绑定');
+ assert.equal(released.length,13,'来源图未逐张释放');assert.equal(uploads.length,13);assert.ok(uploads.every(v=>v.texture===scratch),'所有来源必须共用搬运区');assert.ok(scratch.destroyed,'启动后不能驻留搬运区');assert.equal(copies.length,1,'只允许白像素走CPU上传');assert.equal(blits.length,222,'含8张主角斜向的222帧必须GPU直接复制');assert.deepEqual(state,{framebuffer:'previous-fbo',texture:'previous-texture'},'必须恢复引擎GL绑定');
  assert.equal(textureCount,25,'只能新建一张对局纹理，其余24张为底板/结算/特效');
  for(const name of ['lobby','intro','props'])assert.ok(requests.includes('atlas/'+name+'/texture'),name+'必需底图不应丢失');
- for(const name of ['player_normal','boss_idle','ui_star','wok'])assert.equal(assets.spr[name].frame.texture,assets.matchTexture,name+'没有复用对局纹理');
+ for(const name of ['player_normal','boss_idle','ui_star','wok',...['dr','ur'].flatMap(dir=>[0,1,2,3].map(i=>`player_walk_${dir}${i}`))])assert.equal(assets.spr[name].frame.texture,assets.matchTexture,name+'没有复用对局纹理');
  // 微信会在资源失败后对同一WorldAssets重试；已完成拼装的GPU纹理必须复用。
  const completed=assets.matchTexture;failNextResult=true;await assert.rejects(assets.load(undefined,true),/临时资源失败/);await assets.load(undefined,true);
- assert.equal(assets.matchTexture,completed,'重试不得另建一张39MB纹理');assert.equal(released.length,12,'重试不得再次解码十二张来源');
+ assert.equal(assets.matchTexture,completed,'重试不得另建一张39MB纹理');assert.equal(released.length,13,'重试不得再次解码十二张来源');
  const cropped=assets.crop(assets.spr.player_normal,1,2,3,4);assert.equal(cropped.frame.texture,assets.matchTexture);assert.equal(cropped.w,3);assert.equal(cropped.h,4);assets.destroy();assert.ok(assets.matchTexture.destroyed);
+});
+// 道具表现用真实Match与常驻节点；这里只替换Cocos设备，不用截图冒充真机。
+test('道具光柱到蓝框再闪烁保持同一节点，过期隐藏，画面不写core',()=>{
+ const {Match}=load('cocos/assets/scripts/core/match'),{RetainedWorld}=load('cocos/assets/scripts/view/RetainedWorld');
+ const m=new Match({level:0,seed:1001,itemDrops:true}),world=Object.create(RetainedWorld.prototype);
+ const pics={pie:{frame,w:40,h:40},item_clear:{frame,w:120,h:98},item_invincible:{frame,w:120,h:92},item_delay:{frame,w:120,h:98}};
+ Object.assign(world,{match:m,ground:new MatchNode(new Node(),'ground',{...atlas,pictures:pics}),sectorKeys:new WeakMap()});m.S.leaders=[];
+ const firstAt=m.S.items.plan[0].at,expires=m.S.items.plan[0].expires; m.S.t=firstAt-.5;m.updateItems();const before=JSON.stringify(m.S.items),rng=m.E.rngState();world.vision(m.S.t);assert.equal(JSON.stringify(m.S.items),before);assert.equal(m.E.rngState(),rng);const pool=world.ground.child('ItemDrops'),n=pool.child('item-0');assert.equal(n.child('beam').node.active,true);assert.equal(n.child('box').node.active,false);
+ m.S.t=firstAt;m.updateItems();world.vision(m.S.t);assert.equal(pool.child('item-0'),n);assert.equal(n.child('box').node.active,true);assert.equal(n.child('beam').node.active,false);
+ m.S.t=expires-2;world.vision(m.S.t);const first=n.child('box').node.getComponent(Sprite).color.a;world.vision(m.S.t+Math.PI/14);const second=n.child('box').node.getComponent(Sprite).color.a;assert.notEqual(first,second,'最后3秒必须闪烁');
+ m.S.t=expires;m.updateItems();world.vision(m.S.t);assert.equal(n.node.active,false);assert.equal(m.S.items.stats.expired,1);
+});
+test('无敌金圈和秒数到期一起隐藏，倒计时不残留',()=>{
+ const {Match}=load('cocos/assets/scripts/core/match'),{RetainedWorld}=load('cocos/assets/scripts/view/RetainedWorld');const m=new Match({seed:1001,itemDrops:true}),p=m.S.player,world=Object.create(RetainedWorld.prototype),n=new MatchNode(new Node(),'player',{...atlas,pictures:{player_normal:{frame,w:70,h:70}}});
+ Object.assign(world,{match:m,atlas:n.atlas,actorNodes:new Map([[p,n]]),actorOrder:0,viewport:{x:-p.sn.x,y:-p.sn.y,w:375,h:812}});m.S.items.invincibleUntil=5;
+ world.person(p,{name:'player_normal'},0);const inv=n.child('itemInvincible');assert.equal(inv.node.active,true);assert.equal(inv.child('seconds').node.active,true);
+ m.S.t=5;world.person(p,{name:'player_normal'},5);assert.equal(inv.node.active,false);
+});
+test('上局同事红标记复用常驻节点，正式三秒后隐藏，画面不写core',()=>{
+ const {Match}=load('cocos/assets/scripts/core/match'),{RetainedWorld}=load('cocos/assets/scripts/view/RetainedWorld'),m=new Match({seed:1001,itemDrops:false}),a=m.S.bots[0],world=Object.create(RetainedWorld.prototype),copies=[],n=new MatchNode(new Node(),'rival',{...atlas,text(...args){copies.push(args);return atlas.text(...args);},pictures:{pm_normal:{frame,w:64,h:64}}});a.sn.segs=[];
+ Object.assign(world,{match:m,atlas:n.atlas,actorNodes:new Map([[a,n]]),actorOrder:0,retryRival:a,retryRivalUntil:3,viewport:{x:-a.sn.x,y:-a.sn.y,w:375,h:812}});
+ const before=JSON.stringify(m.S);world.person(a,{name:'pm_normal'},0);const marker=n.child('retryRival');assert.equal(marker.node.active,true);assert.equal(JSON.stringify(m.S),before);
+ assert.ok(copies.some(args=>args[0]==='上局就是他'&&args[2]==='#E8504A'));
+ world.person(a,{name:'pm_normal'},2);assert.equal(n.child('retryRival'),marker);m.S.t=3;world.person(a,{name:'pm_normal'},3);assert.equal(marker.node.active,false);
+});
+test('仇字红底白字与同事短句各复用头顶节点，到期收起且不写core',()=>{
+ const {Match}=load('cocos/assets/scripts/core/match'),{RetainedWorld}=load('cocos/assets/scripts/view/RetainedWorld'),m=new Match({seed:1001,itemDrops:false}),a=m.S.bots[0],copies=[],testAtlas={...atlas,text(...args){copies.push(args);return atlas.text(...args);},pictures:{pm_normal:{frame,w:64,h:64}}},world=Object.create(RetainedWorld.prototype),n=new MatchNode(new Node(),'rival',testAtlas);a.sn.segs=[];a.grudgeUntil=5;m.S.agents=[a];m.S.leaders=[];
+ Object.assign(world,{match:m,atlas:testAtlas,speech:new MatchNode(new Node(),'speech',testAtlas),actorNodes:new Map([[a,n]]),actorOrder:0,viewport:{x:-a.sn.x,y:-a.sn.y,w:375,h:812}});const before=JSON.stringify(m.S);
+ world.person(a,{name:'pm_normal'},0);const marker=n.child('grudge');assert.equal(marker.node.active,true);assert.ok(copies.some(t=>t[0]==='仇'&&t[2]==='#FFFDF5'));assert.equal(marker.child('paper').node.getComponent(Sprite).color.r,232);
+ const speech=new Map([[a.id,{text:'你是不是针对我',life:1.2}]]);world.speeches([],0,0,375,812,speech);const talk=world.speech.child('mateSpeech-'+a.id);assert.equal(talk.node.active,true);assert.ok(copies.some(t=>t[0]==='你是不是针对我'&&t[1]==='13px body-700'&&t[2]==='#5E6A84'));assert.equal(JSON.stringify(m.S),before);
+ world.person(a,{name:'pm_normal'},2);world.speeches([],0,0,375,812,speech);assert.equal(n.child('grudge'),marker);assert.equal(world.speech.child('mateSpeech-'+a.id),talk);m.S.t=5;world.person(a,{name:'pm_normal'},5);world.speeches([],0,0,375,812,new Map());assert.equal(marker.node.active,false);assert.equal(talk.node.active,false);
+});
+test('自己的锅红字22号和右侧黄归属字13号复用同一飘字槽，回收不残留',()=>{
+ const {RetainedWorld}=load('cocos/assets/scripts/view/RetainedWorld'),copies=[],world=Object.create(RetainedWorld.prototype),testAtlas={...atlas,text(...args){copies.push(args);return atlas.text(...args);}};
+ Object.assign(world,{match:{S:{agents:[],leaders:[]}},speech:new MatchNode(new Node(),'speech',testAtlas)});const f={text:'背锅 +3',x:120,y:150,color:'#E8504A',life:1.4,owned:true};world.speeches([f],0,0,375,812);
+ const slot=world.speech.child('Floats').child('float-0');assert.ok(copies.some(t=>t[0]==='背锅 +3'&&t[1]==='22px body-900'&&t[2]==='#E8504A'));assert.ok(copies.some(t=>t[0]==='你甩的'&&t[1]==='13px body-700'&&t[2]==='#FFD84D'));
+ world.speeches([f],0,0,375,812);assert.equal(world.speech.child('Floats').child('float-0'),slot);world.speeches([],0,0,375,812);assert.equal(slot.node.active,false);
 });

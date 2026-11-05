@@ -1,8 +1,8 @@
 // 自动生成：npm run cloud:prepare；勿手改。
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RAGE_SPEED = exports.RAGE_TIME = exports.RUSH_AGGR = exports.RUSH_REACT = exports.RUSH_SPEED = exports.RUSH_AT = exports.RAMP_CURVE = exports.NEPHEW_CHASE = exports.CLOSING_FEEDBACK_TIME = exports.CLOSING_BELL_TIME = exports.FINAL_RUSH = exports.P0_BLAME = exports.P0_LIFE = exports.ALERT_SPEED = exports.ALERT_CHASE = exports.ALERT_CD = exports.ALERT_SEE = exports.LEADER_HIT_POTS = exports.AIM_TIME = exports.POT_LIFE = exports.POT_TURN = exports.POT_SPEED = exports.SKY_FIRST = exports.SKY_TIME = exports.VISION_CONE = exports.VISION_RANGE = exports.DUE_DANGER = exports.DUE_WARN = exports.DUE_DEFAULT = exports.CARRY_W = exports.POT_ALARM = exports.MAX_POTS = exports.NO_RETURN = exports.RECV_STUN = exports.RECV_SHIELD = exports.COMBO_WINDOW = exports.WHIFF_LOCK = exports.PARRY_SPEEDUP = exports.PARRY_DECAY = exports.PARRY_WIN = exports.THROW_CD = exports.AIM_CONE = exports.AIM_RANGE = exports.THROW_HIT_R = exports.THROW_RANGE = exports.THROW_TURN = exports.THROW_SPEED = exports.HEAD_R = exports.TURN_ONLY_MAG = exports.BASE_SPEED = void 0;
-exports.STEER_OFFSETS = exports.TUT_RING_R = exports.TUT_BOSS_SPEED = exports.PIE_PROMISES = exports.LEADER_R = exports.NAV_CELL = exports.EVENTS = exports.LEADER_TYPES = exports.PERSONAS = exports.BUFFS = exports.INCIDENT_MSGS = exports.INSPECT_STOP = exports.INSPECT_SPEED = exports.INSPECT_TIME = exports.RAGE_PANIC = exports.RAGE_VISION = exports.RAGE_AIM = exports.RAGE_EVERY = void 0;
+exports.RUSH_REACT = exports.RUSH_SPEED = exports.RUSH_AT = exports.RAMP_CURVE = exports.NEPHEW_CHASE = exports.CLOSING_FEEDBACK_TIME = exports.CLOSING_BELL_TIME = exports.CLEARING = exports.FINAL_RUSH = exports.P0_BLAME = exports.P0_LIFE = exports.ALERT_SPEED = exports.ALERT_CHASE = exports.ALERT_CD = exports.ALERT_SEE = exports.LEADER_HIT_POTS = exports.AIM_TIME = exports.POT_LIFE = exports.POT_TURN = exports.POT_SPEED = exports.SKY_GAP = exports.SKY_FIRST = exports.SKY_TIME = exports.VISION_CONE = exports.VISION_RANGE = exports.DUE_DANGER = exports.DUE_WARN = exports.DUE_DEFAULT = exports.CARRY_W = exports.POT_ALARM = exports.MAX_POTS = exports.NO_RETURN = exports.RECV_STUN = exports.RECV_SHIELD = exports.COMBO_WINDOW = exports.WHIFF_LOCK = exports.PARRY_MAX = exports.PARRY_SPEEDUP = exports.PARRY_DECAY = exports.PARRY_WIN = exports.THROW_CD = exports.AIM_CONE = exports.AIM_RANGE = exports.THROW_HIT_R = exports.THROW_RANGE = exports.THROW_TURN = exports.THROW_SPEED = exports.HEAD_R = exports.TURN_ONLY_MAG = exports.BASE_SPEED = void 0;
+exports.ITEM_DELAY_FX_TIME = exports.ITEM_CLEAR_FX_TIME = exports.ITEM_CLEAR_STAGGER = exports.ITEM_PATH_STEP = exports.ITEM_AI_RANGE = exports.ITEM_PICK_RADIUS = exports.ITEM_DELAY_TIME = exports.ITEM_INVINCIBLE_TIME = exports.ITEM_INVINCIBLE_CHANCE = exports.ITEM_CLEAR_CHANCE = exports.ITEM_BLINK = exports.ITEM_LIFE = exports.ITEM_PREVIEW = exports.ITEM_DROP_JITTER = exports.ITEM_DROP_FRACS = exports.STEER_OFFSETS = exports.TUT_RING_R = exports.TUT_BOSS_SPEED = exports.PIE_PROMISES = exports.LEADER_R = exports.NAV_CELL = exports.EVENTS = exports.LEADER_TYPES = exports.PERSONAS = exports.BUFFS = exports.INCIDENT_MSGS = exports.INSPECT_STOP = exports.INSPECT_SPEED = exports.INSPECT_TIME = exports.RAGE_PANIC = exports.RAGE_VISION = exports.RAGE_AIM = exports.RAGE_EVERY = exports.RAGE_SPEED = exports.RAGE_TIME = exports.RUSH_AGGR = void 0;
 /* ---------------- 手感参数（调数值主要改这里） ---------------- */
 exports.BASE_SPEED = 145; // 移动速度（手机屏幕小，不能太快；背多少锅都不减速）
 exports.TURN_ONLY_MAG = 0.35; // 摇杆只轻推（小于底座半径的这个比例）时原地转向不走，方便站着瞄准
@@ -17,6 +17,7 @@ exports.THROW_CD = 0.6; // 甩一次后多久才能再甩
 exports.PARRY_WIN = 0.22; // 反甩判定窗口：锅离砸中你还剩几秒内按「甩」才算
 exports.PARRY_DECAY = 0.75; // 每反甩一次，下一次判定窗口缩小到几倍（来回几次必有人接住）
 exports.PARRY_SPEEDUP = 1.12; // 每反甩一次锅加速
+exports.PARRY_MAX = 0.6; // 同事反甩成功率上限（人设 × 关卡倍率后封顶）：2026-11-05 由 0.9 降到 0.6，下午甩给老油条不能九成被弹回来，「甩出去」得是本事不是掷骰子
 exports.WHIFF_LOCK = 0.4; // 按空（没锅可甩也没东西可弹）后多久不能反甩，防止狂按
 exports.COMBO_WINDOW = 2.5; // 连甩判定窗口（秒）
 exports.RECV_SHIELD = 0.8; // 刚接锅的人多久内甩不中（锅会弹开，算甩空）
@@ -24,7 +25,7 @@ exports.RECV_STUN = 0.4; // 接锅后愣多久才能甩出去
 exports.NO_RETURN = 1.5; // 同事接锅后多久内不会主动瞄准刚甩给他的人（玩家不受限）
 exports.MAX_POTS = 12; // 身上堆满即被压垮（玩家直接失败，同事出局）
 exports.POT_ALARM = 9; // 堆到这么多开始报警（锅数条变红、冒汗）
-exports.CARRY_W = 0.5; // 下班结算：身上还背着的锅按几口算进总账（炸了的锅算 1 次，没炸的按半口）
+exports.CARRY_W = 0.5; // 仅局内实时总账折算；18:00 所有余锅到期后，结算总账等于背锅次数。
 exports.DUE_DEFAULT = 30; // 锅的截止时间（关卡没配 potLife 时用）：落到人身上开始倒计时，甩来甩去不重置
 exports.DUE_WARN = 10; // 剩几秒变黄
 exports.DUE_DANGER = 5; // 剩几秒变红冒烟
@@ -32,6 +33,7 @@ exports.VISION_RANGE = 220; // 领导视野：扇形长度（比玩家甩锅扇�
 exports.VISION_CONE = 0.52; // 领导视野：扇形半角，左右各约 30°（总开角约 60°）
 exports.SKY_TIME = 1; // 天降锅：阴影出现到砸下来的时间（躲不掉，只是给个准备）
 exports.SKY_FIRST = 3; // 开局第几秒落下第一口天降锅
+exports.SKY_GAP = 20; // 天降锅保底：两口天降锅至少隔这么多秒（2026-11-05 加，坏运气有上限，输了才能归因到操作）
 exports.POT_SPEED = 105; // 领导 / 散会飞出来的锅速度（按移动速度同比例放慢，保证横移躲得开）
 exports.POT_TURN = 1.5; // 飞行锅转向速度（越小越好躲）
 exports.POT_LIFE = 7; // 飞行锅存活时间
@@ -44,6 +46,7 @@ exports.ALERT_SPEED = 120; // 老板追人速度（略慢于人，绕障碍追�
 exports.P0_LIFE = 10; // P0 的截止时间（比普通锅短得多）
 exports.P0_BLAME = 3; // P0 到点算背几次锅
 exports.FINAL_RUSH = 10; // 下班预告秒数，只影响横幅，不改变 AI 和计分
+exports.CLEARING = 15; // 迭代需求§5：正式上班最后15实际秒清账，周一带教不计入。
 exports.CLOSING_BELL_TIME = 0.45; // 到点铃声提示的实际秒数
 exports.CLOSING_FEEDBACK_TIME = 1; // 胜负反馈的实际秒数
 exports.NEPHEW_CHASE = 5; // 小舅子被压垮后，老板追最后甩中他的人几秒
@@ -114,3 +117,20 @@ exports.PIE_PROMISES = [
 exports.TUT_BOSS_SPEED = 3; // 带教时老板走路的倍速，别让人干等
 exports.TUT_RING_R = 34; // 走进黄圈多近算到
 exports.STEER_OFFSETS = [0, 0.35, -0.35, 0.7, -0.7, 1.05, -1.05, 1.5, -1.5, 2, -2, 2.6, -2.6, Math.PI];
+// 随机掉落道具：规则见《这锅你来背-核心玩法》“随机掉落道具”，独立于原派锅数值。
+// 刷新时刻按上班进度算（2026-11-05 改：各关时长不再相同），120 秒的关正好是第 25 / 60 / 95 秒
+exports.ITEM_DROP_FRACS = [25 / 120, 60 / 120, 95 / 120];
+exports.ITEM_DROP_JITTER = 0; // 固定时刻也符合“左右”；便于玩家学习节奏，以后可调至3秒。
+exports.ITEM_PREVIEW = 1;
+exports.ITEM_LIFE = 12;
+exports.ITEM_BLINK = 3;
+exports.ITEM_CLEAR_CHANCE = 0.2;
+exports.ITEM_INVINCIBLE_CHANCE = 0.4;
+exports.ITEM_INVINCIBLE_TIME = 5;
+exports.ITEM_DELAY_TIME = 15;
+exports.ITEM_PICK_RADIUS = exports.HEAD_R + 14;
+exports.ITEM_AI_RANGE = 280;
+exports.ITEM_PATH_STEP = 8;
+exports.ITEM_CLEAR_STAGGER = 0.06;
+exports.ITEM_CLEAR_FX_TIME = 0.6;
+exports.ITEM_DELAY_FX_TIME = 0.8;

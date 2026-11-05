@@ -9,7 +9,7 @@ import {WorldAssets} from './WorldAssets';
 import {RetainedWorld} from './RetainedWorld';
 import {MatchNode} from './MatchNodes';
 interface Pose {name: string; flip?: boolean; dir?: string; walking?: boolean}
-interface Walk {x: number; y: number; vx: number; vy: number; dir: string; flip: boolean; dist: number; still: number}
+interface Walk {x: number; y: number; vx: number; vy: number; dir: string; flip: boolean; dist: number; still: number; sector?: number; diagonal: boolean}
 interface Floor {base: string; alt: string; line: string; size: number; wood?: boolean}
 // 对局世界独立闭包：不在人物/领导状态上挂 walk，不使用 core 随机流。
 export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: DrawSurface, propsLayer: DrawSurface, teaLayer: DrawSurface, assets: WorldAssets, mapReady=false) {
@@ -20,22 +20,39 @@ export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: Draw
  const walks = new WeakMap<object, Walk>();
  // 走路缓存由画面持有，参数数值保持原型。
  function saveWalk(o: object, w: Walk): Walk {walks.set(o, w); return w;}
- const floats: {text: string; x: number; y: number; color: string; life: number}[] = [];
-  // 走路动画：每帧按位移更新朝向（d 朝下 / u 朝上 / s 侧面，往左走时镜像）和步伐
-  // o 上挂 walk 记录；返回 { name 当前帧贴图, flip, dir, walking }，素材缺失时返回 null
+ const floats: {text:string;x:number;y:number;color:string;life:number;size?:number;font?:string;owned?:boolean}[]=[];
+ const mateSpeeches=new Map<number,{text:string;life:number}>();
+ // 核心保留旧飘字供录像校验，画面按紧随的新事件替换最近的同文案。
+ function removeOriginal(text:string):void {for(let i=floats.length-1;i>=0;i--)if(floats[i].text===text){floats.splice(i,1);return;}}
+  // 走路缓存仅在画面 WeakMap；斜向素材齐全才启用八扇区，其余角色沿用四向逻辑。
   const STEP_PX = 13;  // 每走多少像素换一帧
   const STAND_FRAME = 3; // 站着不动时显示的走路帧序号
+  const SECTOR_ANGLE = Math.PI / 4; // 屏幕右方为0°，顺时针每45°一个方向
+  const SWITCH_ANGLE = SECTOR_ANGLE / 2 + Math.PI / 18; // 半宽22.5°，越过边界10°才换
+  const SECTOR_DIRS = ['s', 'dr', 'd', 'dr', 's', 'ur', 'u', 'ur'];
   function walkFrame(o: object, base: string, x: number, y: number) {
-    const w = walks.get(o) || saveWalk(o, { x, y, vx: 0, vy: 0, dir: 'd', flip: false, dist: 0, still: 99 });
+    const w = walks.get(o) || saveWalk(o, { x, y, vx: 0, vy: 0, dir: 'd', flip: false, dist: 0, still: 99,
+      diagonal: ['dr', 'ur'].every(dir => [0, 1, 2, 3].every(i => !!E.spr[`${base}_walk_${dir}${i}`])) });
     const dx = x - w.x, dy = y - w.y, d = Math.hypot(dx, dy);
     w.x = x; w.y = y;
     if (d > 0.3 && d < 60) { // 位移太大是瞬移（复活、开局摆位），不算走路
       w.dist += d; w.still = 0;
       w.vx = w.vx * 0.7 + dx * 0.3; w.vy = w.vy * 0.7 + dy * 0.3; // 平滑一下，斜着走时朝向不来回抖
-      const ax = Math.abs(w.vx), ay = Math.abs(w.vy);
-      if (w.dir === 's' ? ay > ax * 1.4 : ax > ay * 1.4) w.dir = w.dir === 's' ? (w.vy > 0 ? 'd' : 'u') : 's';
-      else if (w.dir !== 's') w.dir = w.vy > 0 ? 'd' : 'u';
-      if (w.dir === 's') w.flip = w.vx < 0;
+      if (w.diagonal) {
+        // 直接用实际位移角做滞回，避免速度平滑再叠一层转向延迟；首次移动直接定向。
+        const angle = Math.atan2(dy, dx);
+        const delta = w.sector === undefined ? Infinity : Math.abs(Math.atan2(Math.sin(angle - w.sector * SECTOR_ANGLE), Math.cos(angle - w.sector * SECTOR_ANGLE)));
+        if (delta > SWITCH_ANGLE) w.sector = (Math.round(angle / SECTOR_ANGLE) + 8) % 8;
+        const sector = w.sector!;
+        w.dir = SECTOR_DIRS[sector];
+        w.flip = sector >= 3 && sector <= 5;
+      } else {
+        // 缺少任一斜向帧就原样走旧四向分支，保留同事/领导的平滑、比例阈值及翻转状态。
+        const ax = Math.abs(w.vx), ay = Math.abs(w.vy);
+        if (w.dir === 's' ? ay > ax * 1.4 : ax > ay * 1.4) w.dir = w.dir === 's' ? (w.vy > 0 ? 'd' : 'u') : 's';
+        else if (w.dir !== 's') w.dir = w.vy > 0 ? 'd' : 'u';
+        if (w.dir === 's') w.flip = w.vx < 0;
+      }
     } else w.still++;
     // 连续 2 帧没动就算停下（只留 1 帧容错，防止偶尔一帧位移太小时闪成站姿）
     const walking = w.still < 2;
@@ -170,7 +187,7 @@ export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: Draw
     retained.camera(x,y,st.width,st.height);retained.ground.at(x,y);retained.vision(time);retained.tails.at(x,y);for(const a of m.S.agents)retained.tail(a,time);
     retained.actors.at(x,y);retained.measure=main.metrics;retained.beginActors();people.sort((a,b)=>yOf(a)-yOf(b)||initialOrder.get(a)!-initialOrder.get(b)!);
     for(const person of people)if('sn'in person){const hunting=!person.isPlayer&&!person.crushed&&person.target===m.S.player&&m.potsOf(person)>0;retained.person(person,personSprite(person,hunting),time);}else retained.leader(person,leaderSprite(person),time);
-    retained.above.at(x,y);retained.aimLines(time);retained.effects.at(x,y);retained.flight(time);retained.speech.at(x,y);retained.speeches(floats,camX,camY,st.width,st.height);retained.hints(camX,camY,st.width,st.height);
+    retained.above.at(x,y);retained.aimLines(time);retained.effects.at(x,y);retained.flight(time);retained.speech.at(x,y);retained.speeches(floats,camX,camY,st.width,st.height,mateSpeeches);retained.hints(camX,camY,st.width,st.height);
   }
 
  // 静态节点只初始化一次，每帧仅改变根节点相机偏移。
@@ -203,7 +220,14 @@ export function createWorldPainter(m: Match, main: DrawSurface, floorLayer: Draw
    nodes:retained,
    destroy() {if(teaNode){teaNode.node.removeFromParent();teaNode.destroy();}retained?.destroy();},
    draw(time: number) { draw(time); },
-   advance(dt: number) {for (const f of floats) {f.life -= dt; f.y -= 38 * dt;} for (let i = floats.length - 1; i >= 0; i--) if (floats[i].life <= 0) floats.splice(i, 1);},
-   event(kind: string, args: unknown[]) {if (kind === 'shake') shake = args[0] as number; if (kind === 'floats') {const [text, x, y, color] = args as [string, number, number, string?]; floats.push({text, x, y, color: color || '#1F2A44', life: 1.1});}},
+   advance(dt: number) {for(const [id,speech]of mateSpeeches){speech.life-=dt;if(speech.life<=0)mateSpeeches.delete(id);}for (const f of floats) {f.life -= dt; f.y -= 38 * dt;} for (let i = floats.length - 1; i >= 0; i--) if (floats[i].life <= 0) floats.splice(i, 1);},
+   event(kind: string, args: unknown[]) {
+     if(kind==='ownedBoom')shake=Math.max(shake,6);
+     if(kind==='ownedBlame'){const info=args[0] as {id:number;n:number;original:string},a=m.S.agents.find(a=>a.id===info.id);removeOriginal(info.original);if(a)floats.push({text:'背锅 +'+info.n,x:a.sn.x,y:a.sn.y-74,color:'#E8504A',life:1.4,size:22,font:'body-900',owned:true});}
+     if(kind==='mateBlame'){const info=args[0] as {text:string;original:string;x:number;y:number};removeOriginal(info.original);floats.push({text:info.text,x:info.x,y:info.y,color:'#E8504A',life:1.1});}
+     if(kind==='mateSpeech'){const info=args[0] as {id:number;text:string};mateSpeeches.set(info.id,{text:info.text,life:1.2});}
+     if(kind==='revenge'){const info=args[0] as {id:number},a=m.S.agents.find(a=>a.id===info.id);if(a)floats.push({text:'礼尚往来',x:a.sn.x,y:a.sn.y-94,color:'#2F9E6B',life:1.2});}
+     if(kind==='finish'){mateSpeeches.clear();floats.length=0;shake=0;}
+     if (kind === 'shake') shake = args[0] as number; if (kind === 'floats') {const [text, x, y, color] = args as [string, number, number, string?]; floats.push({text, x, y, color: color || '#1F2A44', life: 1.1});}},
  };
 }

@@ -6,6 +6,7 @@ require('../register-cloud.cjs');
 const {isBetterBest,mergeProgress}=require('../../assets/scripts/core/progress.ts');
 const {sanitizeConfig,levelForMatch}=require('../../assets/scripts/core/remote-config.ts');
 const {Match}=require('../../assets/scripts/core/match.ts');
+const {LEVELS}=require('../../assets/scripts/core/levels.ts');
 const {WechatPlatform}=require('../../assets/scripts/platform/WechatPlatform.ts');
 const {WebPlatform}=require('../../assets/scripts/platform/WebPlatform.ts');
 
@@ -22,10 +23,10 @@ test('存档比较与core一致：星优先，总账回退旧背锅，时间戳�
 test('白名单与边界过滤，开局快照不受后来配置或调用者对象变化影响',()=>{
   const c=sanitizeConfig({version:1,levels:{1:{duration:80,potLife:0,skyChance:2,startPots:999,'ai.aggr':1.1},99:{duration:100}}});
   assert.deepEqual(c,{version:1,levels:{1:{duration:80,'ai.aggr':1.1}}});
-  const lv=levelForMatch(0,c),m=new Match({seed:1,level:0,levelParams:lv});
+  const lv=levelForMatch(0,c),m=new Match({itemDrops:false,seed:1,level:0,levelParams:lv});
   lv.duration=99;c.levels[1].duration=100;
   assert.equal(m.L.duration,80);assert.equal(m.L.ai.aggr,1.1);
-  assert.equal(new Match({seed:1}).L.duration,70);
+  assert.equal(new Match({itemDrops:false,seed:1}).L.duration,LEVELS[0].duration);
 });
 test('性能比例沿现有配置返回，缺省关、范围合法且不进入Level',()=>{
  assert.equal(sanitizeConfig({version:1,levels:{},perfSampleRate:.25}).perfSampleRate,.25);

@@ -26,8 +26,8 @@ export class WechatAudio {
     try {const a=voice.audio;a.stop();a.src=url;a.volume=Math.max(0,Math.min(1,volume));a.loop=false;a.playbackRate=Math.max(.5,Math.min(2,rate));a.startTime=0;voice.at=++this.sequence;voice.busy=true;a.play();return true;}catch{voice.busy=false;return false;}
   }
   // 新局即使采样还未载入也清除历史位置。
-  reset(name:string):void {this.positions[name]=0;if(name==='work')this.positions.rush=0;if(this.current?.name===name)this.stop(0);this.positions[name]=0;}
-  // 同曲不重启；新局清空work/rush的位置，旧曲位置由原生currentTime记录。
+  reset(name:string):void {if(name==='work'&&(this.current?.name==='rush'||this.current?.name==='clearing'))this.stop(0);this.positions[name]=0;if(name==='work'){this.positions.rush=0;this.positions.clearing=0;}if(this.current?.name===name)this.stop(0);this.positions[name]=0;}
+  // 同曲不重启；新局清空work/rush/clearing的位置，旧曲位置由原生currentTime记录。
   bgm(name:string|null,url='',fromStart=false):void {
     if(this.closed)return;
     if(fromStart&&name)this.reset(name);

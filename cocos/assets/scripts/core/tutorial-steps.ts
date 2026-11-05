@@ -24,8 +24,8 @@ export function createTUT_STEPS(m: Match): Record<string, TutorialStepDef> { ret
     expire: {
       enter() {
         const v = m.S.tut!.victim || m.agentByKey('intern');
-        if (!m.potsOf(v)) v.sn.segs.push(m.newPot(m.S.t));
-        for (const pot of v.sn.segs) pot.due = m.S.t + 2.2; // 带教提速：3.5 → 2.2 秒到点
+        if (!m.potsOf(v)) m.receivePot(v, m.newPot(m.S.t));
+        for (const pot of v.sn.segs) pot.due = m.capDue(m.S.t + 2.2); // 带教提速：3.5 → 2.2 秒到点
       },
       blame() { m.showCoach(m.S.tut!.step!.say2!); m.tutLater(1.8, m.tutNext); },
     },
